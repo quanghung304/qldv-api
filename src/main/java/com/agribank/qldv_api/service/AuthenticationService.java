@@ -1,69 +1,70 @@
 package com.agribank.qldv_api.service;
 
-import com.agribank.qldv_api.config.security.JwtService;
-import com.agribank.qldv_api.enums.ERole;
-import com.agribank.qldv_api.models.Role;
-import com.agribank.qldv_api.models.User;
-import com.agribank.qldv_api.repository.RoleRepository;
-import com.agribank.qldv_api.repository.UserRepository;
-import com.agribank.qldv_api.request.AuthenticationRequest;
+import com.agribank.qldv_api.gateway.IAMClient;
+import com.agribank.qldv_api.gateway.UserGateway;
+import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.RegisterRequest;
-import com.agribank.qldv_api.response.AuthenticationResponse;
+import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.user.UserResponse;
+import com.agribank.qldv_api.response.user.UserTCDResponse;
+import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.entity.User;
+import com.agribank.qldvutils.enums.TrangThai;
+import com.agribank.qldvutils.exception.CommonException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
-    private final RoleRepository roleRepository;
+    @Value("${qldv.app.id}")
+    private Integer QLDV_APP_ID;
 
-    public AuthenticationResponse register(RegisterRequest request) {
-        List<Role> roleList = new ArrayList<>();
-        Role role = roleRepository.findRoleByName(ERole.XDCB_TELLER.name());
-        if (Objects.isNull(role)){
-            role = new Role();
-            role.setName(ERole.XDCB_TELLER.name());
-            role.setId(ERole.XDCB_TELLER.getId());
-            role.setDescription("teller");
-        }
-        roleList.add(role);
-        var user = User.builder()
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
+    private final IAMClient iamClient;
+    private final UserGateway userGateway;
+    private final ModelMapper modelMapper;
+
+    public UserTCDResponse register(RegisterRequest request) {
+        IAMRegisterRequest registerRequest = IAMRegisterRequest.builder()
+                .username(CommonUtils.splitUsername(request.getEmail()))
                 .brcd(request.getBrcd())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .roles(roleList)
+                .phone(request.getTel())
+                .fullName(request.getTen())
+                .applicationIds(List.of(QLDV_APP_ID))
                 .build();
-        userRepository.save(user);
-        var jwtToken = jwtService.generateToken(user);
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+
+        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        String authorHeader = "Bearer " + CommonUtils.getAccessToken(servletRequest);
+        try {
+            DefaultResponse response = iamClient.register(authorHeader, registerRequest);
+            UserResponse userResponse = (UserResponse) response.getData();
+
+            User user = User.builder()
+                    .maSo(request.getMaSo())
+                    .maSoTCD(request.getMaSoTCD())
+                    .ten(userResponse.getFullName())
+                    .quyen(request.getQuyen())
+                    .chucVu(request.getChucVu())
+                    .maSoThamChieu(String.valueOf(userResponse.getId()))
+                    .tel(userResponse.getPhone())
+                    .email(userResponse.getEmail())
+                    .trangThai(TrangThai.ACTIVE.getValue())
+                    .build();
+
+            userGateway.save(user);
+
+            return modelMapper.map(user, UserTCDResponse.class);
+        } catch (Exception e) {
+            throw new CommonException(e.getMessage());
+        }
     }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
-        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        var jwtToken = jwtService.generateToken(user);
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
-    }
 }

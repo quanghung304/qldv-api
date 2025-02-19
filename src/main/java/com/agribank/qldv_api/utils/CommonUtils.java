@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.utils;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -36,5 +37,18 @@ public class CommonUtils {
         }
         pagingSort = PageRequest.of(page, sizePage, Sort.by(orders));
         return pagingSort;
+    }
+
+    public static String splitUsername(String email){
+        if (Objects.isNull(email) || email.contains(" ")) {
+            return "";        }
+        String[] parts = email.split("@");
+        return parts[0];
+    }
+
+    public static String getAccessToken(HttpServletRequest request){
+        String header = request.getHeader("Authorization");
+        String token = header.split(" ")[1];
+        return token;
     }
 }
