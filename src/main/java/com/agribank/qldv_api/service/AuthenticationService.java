@@ -1,7 +1,7 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.gateway.IAMClient;
-import com.agribank.qldv_api.gateway.UserGateway;
+import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.RegisterRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
@@ -20,6 +20,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class AuthenticationService {
     private Integer QLDV_APP_ID;
 
     private final IAMClient iamClient;
-    private final UserGateway userGateway;
+    private final UserClient userClient;
     private final ModelMapper modelMapper;
 
     public UserTCDResponse register(RegisterRequest request) {
@@ -59,9 +60,12 @@ public class AuthenticationService {
                     .trangThai(TrangThai.ACTIVE.getValue())
                     .build();
 
-            userGateway.save(user);
+            DefaultResponse<User> savedUserResponse = userClient.save(user);
+            if (!savedUserResponse.getSuccess() || Objects.isNull(savedUserResponse.getData())) {
+                throw new CommonException(savedUserResponse.getMessage());
+            }
 
-            return modelMapper.map(user, UserTCDResponse.class);
+            return modelMapper.map(savedUserResponse.getData(), UserTCDResponse.class);
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }

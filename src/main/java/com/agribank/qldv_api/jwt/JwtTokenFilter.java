@@ -1,7 +1,8 @@
 package com.agribank.qldv_api.jwt;
 
-import com.agribank.qldv_api.gateway.IAMGateway;
-import com.agribank.qldv_api.gateway.UserGateway;
+import com.agribank.qldv_api.gateway.IAMClient;
+import com.agribank.qldv_api.gateway.UserClient;
+import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.enums.TrangThai;
@@ -24,8 +25,8 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter{
-    final IAMGateway iamGateway;
-    final UserGateway userGateway;
+    final IAMClient iamClient;
+    final UserClient userClient;
     
     @Override
     protected void doFilterInternal(
@@ -39,14 +40,14 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             return;
         }
         token = getAccessToken(request);
-        UserResponse userResponse = iamGateway.verifyToken(token);
+        UserResponse userResponse = iamClient.verifyToken("Bearer " + token).getData();
 
         if (Objects.isNull(userResponse)){
             filterChain.doFilter(request, response);
             return;
         }
 
-        User user = userGateway.getUsersByEmail(userResponse.getEmail());
+        User user = userClient.getUserByEmail(userResponse.getEmail()).getData();
 
         if (Objects.isNull(user) && userResponse.getUsername().equals("admin")) {
             user = generateAdminAccount(userResponse);
@@ -89,7 +90,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
                 .email(userResponse.getEmail())
                 .trangThai(TrangThai.ACTIVE.getValue())
                 .build();
-
-        return userGateway.save(admin);
+        DefaultResponse<User> response = userClient.save(admin);
+        return response.getData();
     }
 }

@@ -17,8 +17,6 @@ public class UserTCDResponse {
     String ten;
     String quyen;
     String chucVu;
-    String matKhau;
-    String ngayMatKhau;
     String maSoThamChieu;
     String tel;
     String email;
