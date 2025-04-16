@@ -20,7 +20,7 @@ public class ApiLogController {
     private final ApiLogService apiLogService;
 
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<ApiLogResponse>>> register(@RequestBody SearchApiLogRequest request) {
+    public ResponseEntity<DefaultResponse<PageResponse<ApiLogResponse>>> search(@RequestBody SearchApiLogRequest request) {
         request.validate();
         return DefaultResponse.success(apiLogService.search(request));
     }
