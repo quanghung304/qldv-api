@@ -54,11 +54,12 @@ public class JwtTokenFilter extends OncePerRequestFilter{
         }
 
         UserDetailsImpl userDetails = new UserDetailsImpl();
-        userDetails.setMaSO(user.getMaSo());
-        userDetails.setMaSoTcd(user.getMaSoTCD());
+        userDetails.setId(user.getId());
+        userDetails.setDvCode(user.getDvCode());
         userDetails.setUsername(userResponse.getUsername());
         userDetails.setEmail(userResponse.getEmail());
-        userDetails.setQuyen(user.getQuyen());
+        userDetails.setRoleId(user.getRoleId());
+        userDetails.setBrcd(user.getBrcd());
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "", null);
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -82,13 +83,14 @@ public class JwtTokenFilter extends OncePerRequestFilter{
 
     private User generateAdminAccount(UserResponse userResponse) {
         User admin = User.builder()
-                .maSo("1")
-                .ten(userResponse.getFullName())
-                .quyen("9")
-                .maSoThamChieu(String.valueOf(userResponse.getId()))
-                .tel(userResponse.getPhone())
+                .idIam(userResponse.getId())
+                .username(userResponse.getUsername())
+                .roleId(userResponse.getId())
                 .email(userResponse.getEmail())
-                .trangThai(TrangThai.ACTIVE.getValue())
+                .fullName(userResponse.getFullName())
+                .brcd(userResponse.getBrcd())
+                .depId(userResponse.getDepartment().getId())
+                .vneid(userResponse.getVneid())
                 .build();
         DefaultResponse<User> response = userClient.save(admin);
         return response.getData();
