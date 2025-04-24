@@ -1,0 +1,12 @@
+{
+  "resource": {
+    "SystemCatalogItem_code": "Mã",
+    "SystemCatalogItem_groupCode": "Loại danh mục",
+    "SystemCatalogItem_name": "Tên",
+    "SystemCatalogItem_value": "Thứ tự",
+    "BranchEntity_branchCode": "Mã CN",
+    "DepartmentEntity_branchCode": "Mã CN",
+    "DepartmentEntity_departmentCode": "Mã phòng ban",
+    "DepartmentEntity_departmentName": "Tên đơn  vị"
+  }
+}

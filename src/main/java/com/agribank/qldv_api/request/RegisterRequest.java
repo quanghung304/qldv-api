@@ -13,14 +13,19 @@ import java.util.regex.Pattern;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RegisterRequest {
-    String maSo;
     Integer brcd;
-    String maSoTCD;
-    String ten;
-    String quyen;
-    String chucVu;
-    String tel;
     String email;
+    String fullName;
+    Integer vneid;
+    String phone;
+    Integer staffCode;
+    String address;
+    Integer gender;
+    String jobPosition;
+    Integer depId;
+    String userKind;
+    @Builder.Default
+    String password = "Agribank@123";
 
     public void validate() {
         if (Objects.isNull(email)) {
@@ -33,6 +38,9 @@ public class RegisterRequest {
             throw new CommonException("Không đúng định dạng email agribank. Vui lòng kiểm tra lại!");
         }
         this.email = email.trim().toLowerCase();
+        if (Objects.isNull(fullName) || fullName.isBlank()) {
+            throw new CommonException("FullName is required");
+        }
     }
 
     private boolean validateEmail(String email) {
