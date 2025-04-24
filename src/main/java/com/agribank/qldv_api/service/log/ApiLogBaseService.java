@@ -1,6 +1,8 @@
-package com.agribank.qldv_api.service;
+package com.agribank.qldv_api.service.log;
 
 import com.agribank.qldv_api.gateway.ApiLogClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.google.gson.Gson;
@@ -19,7 +21,7 @@ public class ApiLogBaseService {
     private final UserService userService;
 
     protected ApiLog initApiLog(){
-        UserDto userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = userService.getUserRequested();
         return ApiLog.builder()
                 .username(userRequested.getUsername())
                 .email(userRequested.getEmail())
@@ -27,11 +29,11 @@ public class ApiLogBaseService {
                 .build();
     }
 
-    public void save(ApiLog apiLog){
+    protected void save(ApiLog apiLog){
         apiLogClient.save(apiLog);
     }
 
-    public List<Field> handleGetPropertyChange(Object newObject, Object oldObject, Class<?> objectClass, List<String> propertyIgnore) {
+    protected List<Field> handleGetPropertyChange(Object newObject, Object oldObject, Class<?> objectClass, List<String> propertyIgnore) {
         if(Objects.isNull(newObject) || Objects.isNull(oldObject)){
             return List.of();
         }
@@ -61,7 +63,7 @@ public class ApiLogBaseService {
         return propertyChange;
     }
 
-    public String handleBuildContent(Object newObject, Object oldObject, Class<?> objectClass, List<Field> propertyChange, List<String> propertyCustom){
+    protected String handleBuildContent(Object newObject, Object oldObject, Class<?> objectClass, List<Field> propertyChange, List<String> propertyCustom){
         StringBuilder content = new StringBuilder();
         for (Field field : propertyChange) {
             field.setAccessible(true); // Enable access to private fields
@@ -95,7 +97,7 @@ public class ApiLogBaseService {
         return content.toString();
     }
 
-    public String handleGenerateChangeContent(String fieldName, String newValue, String oldValue) {
+    private String handleGenerateChangeContent(String fieldName, String newValue, String oldValue) {
         String content = "%s: Từ <%s> thành <%s>";
         return String.format(content, fieldName, newValue, oldValue);
     }

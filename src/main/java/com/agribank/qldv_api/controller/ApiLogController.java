@@ -3,7 +3,7 @@ package com.agribank.qldv_api.controller;
 import com.agribank.qldv_api.request.apiLog.SearchApiLogRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.ApiLogResponse;
-import com.agribank.qldv_api.service.ApiLogService;
+import com.agribank.qldv_api.service.log.ApiLogService;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

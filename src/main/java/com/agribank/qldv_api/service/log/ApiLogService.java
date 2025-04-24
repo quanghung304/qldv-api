@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.service;
+package com.agribank.qldv_api.service.log;
 
 import com.agribank.qldv_api.gateway.ApiLogClient;
 import com.agribank.qldv_api.request.apiLog.SearchApiLogRequest;
@@ -24,7 +24,7 @@ public class ApiLogService {
             return response;
         }
 
-        response.setTotal(apiLogPageResponse.getTotal());
+        response.setTotalPages(apiLogPageResponse.getTotalPages());
         response.setCurrentPage(apiLogPageResponse.getCurrentPage());
         response.setTotalItems(apiLogPageResponse.getTotalItems());
 

@@ -14,11 +14,15 @@ import java.util.Objects;
 @AllArgsConstructor
 
 public class UserDetailsImpl implements UserDetails{
-    private String maSO;
-	private String maSoTcd;
-    private String username;
-    private String email;
-	private String quyen;
+    private String id;
+	private String dvCode;
+    private Integer idIam;
+    private Integer roleId;
+	private String username;
+	private String fullName;
+	private String email;
+	private Integer brcd;
+	private Integer depId;
     private Collection<? extends GrantedAuthority> authorities;
     
 //    public static UserDetailsImpl fromModel(User user){
@@ -73,7 +77,7 @@ public class UserDetailsImpl implements UserDetails{
 		if (o == null || getClass() != o.getClass())
 			return false;
 		UserDetailsImpl user = (UserDetailsImpl) o;
-		return Objects.equals(maSO, user.maSO);
+		return Objects.equals(id, user.id);
 	}
 
 }
