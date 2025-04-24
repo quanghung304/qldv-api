@@ -3,9 +3,8 @@ package com.agribank.qldv_api.jwt;
 import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.user.UserResponse;
+import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldvutils.entity.User;
-import com.agribank.qldvutils.enums.TrangThai;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,28 +39,31 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             return;
         }
         token = getAccessToken(request);
-        UserResponse userResponse = iamClient.verifyToken("Bearer " + token).getData();
+        UserIamResponse userIamResponse = iamClient.verifyToken("Bearer " + token).getData();
 
-        if (Objects.isNull(userResponse)){
+        if (Objects.isNull(userIamResponse)){
             filterChain.doFilter(request, response);
             return;
         }
 
-        User user = userClient.getUserByEmail(userResponse.getEmail()).getData();
+        User user = userClient.getUserByEmail(userIamResponse.getEmail()).getData();
 
-        if (Objects.isNull(user) && userResponse.getUsername().equals("admin")) {
-            user = generateAdminAccount(userResponse);
+        if (Objects.isNull(user) && userIamResponse.getUsername().equals("admin")) {
+            user = generateAdminAccount(userIamResponse);
         }
 
         UserDetailsImpl userDetails = new UserDetailsImpl();
         userDetails.setId(user.getId());
         userDetails.setDvCode(user.getDvCode());
-        userDetails.setUsername(userResponse.getUsername());
-        userDetails.setEmail(userResponse.getEmail());
+        userDetails.setUsername(userIamResponse.getUsername());
+        userDetails.setEmail(userIamResponse.getEmail());
         userDetails.setRoleId(user.getRoleId());
         userDetails.setBrcd(user.getBrcd());
+        userDetails.setAuthorities(userDetails.getAuthorities());
+        userDetails.setIdIam(userIamResponse.getId());
+        userDetails.setDepId(user.getDepId());
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "", null);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "" ,userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
@@ -81,16 +83,16 @@ public class JwtTokenFilter extends OncePerRequestFilter{
         return token;
     }
 
-    private User generateAdminAccount(UserResponse userResponse) {
+    private User generateAdminAccount(UserIamResponse userIamResponse) {
         User admin = User.builder()
-                .idIam(userResponse.getId())
-                .username(userResponse.getUsername())
-                .roleId(userResponse.getId())
-                .email(userResponse.getEmail())
-                .fullName(userResponse.getFullName())
-                .brcd(userResponse.getBrcd())
-                .depId(userResponse.getDepartment().getId())
-                .vneid(userResponse.getVneid())
+                .idIam(userIamResponse.getId())
+                .username(userIamResponse.getUsername())
+                .roleId(userIamResponse.getId())
+                .email(userIamResponse.getEmail())
+                .fullName(userIamResponse.getFullName())
+                .brcd(userIamResponse.getBrcd())
+                .depId(userIamResponse.getDepartment().getId())
+                .vneid(userIamResponse.getVneid())
                 .build();
         DefaultResponse<User> response = userClient.save(admin);
         return response.getData();

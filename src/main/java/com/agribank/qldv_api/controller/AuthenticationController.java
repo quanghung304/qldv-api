@@ -2,7 +2,7 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.RegisterRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.user.UserTCDResponse;
+import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,8 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/register")
-    public ResponseEntity<DefaultResponse<UserTCDResponse>> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<DefaultResponse<UserResponse>> register(@RequestBody RegisterRequest request) {
+        request.validate();
         return DefaultResponse.success(authenticationService.register(request));
     }
 }

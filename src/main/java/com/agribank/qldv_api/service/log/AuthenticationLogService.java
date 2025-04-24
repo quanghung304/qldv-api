@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,6 +22,7 @@ public class AuthenticationLogService extends ApiLogBaseService{
 
     public void writeLogRegister(List<IAMRegisterRequest> registerRequests) {
         ApiLog apiLog = initApiLog();
+        apiLog.setId(UUID.randomUUID().toString());
         apiLog.setObjectReference(OBJECT_REFERENCE);
         apiLog.setAction(EApiLogType.INSERT.getValue());
         apiLog.setDataType(EApiLogType.INSERT.name());

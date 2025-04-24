@@ -5,18 +5,15 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.user.SearchUserRequest;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
 import com.agribank.qldv_api.utils.CommonUtils;
-import com.agribank.qldvutils.dto.UserDto;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
