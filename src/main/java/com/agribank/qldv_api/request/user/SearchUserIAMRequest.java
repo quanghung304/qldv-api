@@ -6,18 +6,31 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 
-@Data
+import java.util.Objects;
+
 @EqualsAndHashCode(callSuper = true)
+@Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SearchUserRequest extends PagingRequest {
+public class SearchUserIAMRequest extends PagingRequest {
+    String brcd;
     String name;
-    Integer brcd;
-    Integer depId;
-    Integer active;
-    Integer delete;
+    String prntbrcd;
 
     @Override
     public void validate() {
         super.validate();
+
+        if(Objects.isNull(brcd)){
+            this.brcd = "";
+        }
+
+        if(Objects.isNull(name)){
+            this.name = "";
+        }
+
+        if(Objects.isNull(prntbrcd)){
+            this.prntbrcd = "";
+        }
     }
 }
+

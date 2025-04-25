@@ -1,6 +1,9 @@
 package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.request.IAMRegisterRequest;
+import com.agribank.qldv_api.request.user.PasswordRequest;
+import com.agribank.qldv_api.request.user.ResetPasswordRequest;
+import com.agribank.qldv_api.request.user.UserIAMUpdate;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
@@ -38,4 +41,21 @@ public interface IAMClient {
             @RequestParam(name = "app_id") Integer appId
     );
 
+    @PutMapping("api/v1/user/change-password")
+    DefaultResponse<String> changePassword(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody PasswordRequest request
+            );
+
+    @PutMapping("api/v1/user/update-user")
+    DefaultResponse<String> updateUserIAM(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody UserIAMUpdate request
+    );
+
+    @PostMapping("api/v1/user/reset-password")
+    DefaultResponse<String> resetPassword(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody ResetPasswordRequest request
+    );
 }

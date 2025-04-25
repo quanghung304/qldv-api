@@ -1,7 +1,10 @@
 package com.agribank.qldv_api.gateway;
 
+import com.agribank.qldv_api.request.user.SearchUserRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldvutils.entity.User;
+import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,5 +18,20 @@ public interface UserClient {
     @PostMapping("api/v1/user/save")
     DefaultResponse<User> save(
             @RequestBody User user
+    );
+
+    @PostMapping("api/v1/user/search")
+    DefaultResponse<PageResponse<User>> search(
+            @RequestBody SearchUserRequest request
+    );
+
+    @GetMapping("api/v1/user/find-by-username")
+    DefaultResponse<User> findByUsername(
+            @RequestParam(name = "username") String username
+    );
+
+    @GetMapping("api/v1/user/find-by-id-iam")
+    DefaultResponse<User> findByIdIAM(
+            @RequestParam(name = "idIam") Integer idIam
     );
 }

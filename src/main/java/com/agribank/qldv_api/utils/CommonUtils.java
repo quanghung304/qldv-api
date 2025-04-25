@@ -63,7 +63,7 @@ public class CommonUtils {
     public static String handleEncryptPassword(String password, String publicKeyPath) {
         try {
             String publicKey = "";
-            if(publicKeyPath.contains("static")){
+            if(publicKeyPath.contains("public")){
                 ClassPathResource classPathResource = new ClassPathResource(publicKeyPath);
                 InputStream inputStream = classPathResource.getInputStream();
                 Scanner s = new Scanner(inputStream).useDelimiter("\\A");
