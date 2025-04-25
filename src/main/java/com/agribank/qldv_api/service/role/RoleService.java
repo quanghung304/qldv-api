@@ -17,11 +17,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class RoleService {
-    @Value("${qldv.app.id}")
-    private Integer QLDV_APP_ID;
-
-    @Value("${app.service.publicKeyPath}")
-    private String publicKeyPath;
 
     private final ModelMapper modelMapper;
 
