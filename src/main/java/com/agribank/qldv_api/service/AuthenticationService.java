@@ -72,6 +72,8 @@ public class AuthenticationService {
                     .depId(userIamResponse.getDepartment().getId())
                     .phone(userIamResponse.getPhone())
                     .vneid(userIamResponse.getVneid())
+                    .active(userIamResponse.getActive())
+                    .deleted(0)
                     .build();
             user.setId(UUID.randomUUID().toString());
 
@@ -85,7 +87,6 @@ public class AuthenticationService {
             authenticationLogService.writeLogRegister(iamRegisterRequests);
             return modelMapper.map(savedUserResponse.getData(), UserResponse.class);
         } catch (Exception e) {
-
             throw new CommonException(e.getMessage());
         }
     }

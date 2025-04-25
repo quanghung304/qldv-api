@@ -94,6 +94,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
                 .depId(userIamResponse.getDepartment().getId())
                 .vneid(userIamResponse.getVneid())
                 .build();
+
         DefaultResponse<User> response = userClient.save(admin);
         return response.getData();
     }
