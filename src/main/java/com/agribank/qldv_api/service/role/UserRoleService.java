@@ -35,14 +35,7 @@ public class UserRoleService {
                     addError.add(data.getUserId());
                     continue;
                 }
-                List<UserRole> userRoleList = new ArrayList<>();
-                for (String role : roles) {
-                    UserRole userRole = new UserRole();
-                    userRole.setUserId(data.getUserId());
-                    userRole.setRoleId(role);
-                    userRole.setId(UUID.randomUUID().toString());
-                    userRoleList.add(userRole);
-                }
+                List<UserRole> userRoleList = roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList();
                 DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(userRoleList);
                 if (!roleDefaultResponse.getSuccess()) {
                     addError.add(data.getUserId());
@@ -57,17 +50,8 @@ public class UserRoleService {
         List<String> updateError = new ArrayList<>();
         try {
             for (UserRoleRequest data : userRoles) {
-                //Truong hop xoa
-                if (data.getRoleIds().isEmpty()) {
-                    DefaultResponse<String> checkUserRole = userRoleClient.deleteById(data.getUserId());
-                    if (!checkUserRole.getSuccess()) {
-                        updateError.add(data.getUserId());
-                    }
-                    continue;
-                }
-                //Truong hop cap nhat
                 List<String> roles = validateRole(data.getRoleIds());
-                if (roles.isEmpty()) {
+                if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
                     updateError.add(data.getUserId());
                     continue;
                 }
@@ -76,14 +60,10 @@ public class UserRoleService {
                     updateError.add(data.getUserId());
                     continue;
                 }
-                List<UserRole> userRoleList = new ArrayList<>();
-                for (String role : roles) {
-                    UserRole userRole = new UserRole();
-                    userRole.setUserId(data.getUserId());
-                    userRole.setRoleId(role);
-                    userRole.setId(UUID.randomUUID().toString());
-                    userRoleList.add(userRole);
+                if (data.getRoleIds().isEmpty()) {
+                    continue;
                 }
+                List<UserRole> userRoleList = roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList();
                 DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(userRoleList);
                 if (!roleDefaultResponse.getSuccess()) {
                     updateError.add(data.getUserId());
