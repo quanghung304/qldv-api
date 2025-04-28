@@ -35,8 +35,7 @@ public class UserRoleService {
                     addError.add(data.getUserId());
                     continue;
                 }
-                List<UserRole> userRoleList = roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList();
-                DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(userRoleList);
+                DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
                 if (!roleDefaultResponse.getSuccess()) {
                     addError.add(data.getUserId());
                 }
@@ -63,8 +62,7 @@ public class UserRoleService {
                 if (data.getRoleIds().isEmpty()) {
                     continue;
                 }
-                List<UserRole> userRoleList = roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList();
-                DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(userRoleList);
+                DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
                 if (!roleDefaultResponse.getSuccess()) {
                     updateError.add(data.getUserId());
                 }
