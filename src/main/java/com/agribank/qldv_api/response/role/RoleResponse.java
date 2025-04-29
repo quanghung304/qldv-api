@@ -9,9 +9,9 @@ import java.util.Date;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoleResponse {
-    private String id;
-    private String name;
-    private String description;
-    private Date createdAt;
-    private Date updatedAt;
+    String id;
+    String name;
+    String description;
+    Date createdAt;
+    Date updatedAt;
 }

@@ -44,4 +44,15 @@ public class UserController {
         request.validate();
         return DefaultResponse.success(userService.update(request), null);
     }
+
+    @PutMapping("/active")
+    public ResponseEntity<DefaultResponse<String>> active(@RequestBody ActiveUserRequest request) {
+        request.validate();
+        return DefaultResponse.success(userService.active(request), null);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<DefaultResponse<String>> delete(@PathVariable("id") String id) {
+        return DefaultResponse.success(userService.delete(id), null);
+    }
 }

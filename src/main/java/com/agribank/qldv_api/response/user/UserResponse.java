@@ -16,7 +16,7 @@ public class UserResponse {
     Integer brcd;
     Integer depId;
     String phone;
-    Integer vneid;
+    String vneid;
     Integer active;
     Integer deleted;
 }

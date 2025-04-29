@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.utils;
 
+import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import org.mis.encrypt.interfaces.ICreateService;
 import org.mis.encrypt.interfaces.IMisEncrypt;
@@ -117,6 +118,12 @@ public class CommonUtils {
         }
 
         return content.toString();
+    }
+
+    public static Object handleCloneObject(Object sourceObject){
+        Gson gson = new Gson();
+        String objStr = gson.toJson(sourceObject);
+        return gson.fromJson(objStr, sourceObject.getClass());
     }
 
 }
