@@ -9,15 +9,17 @@ import java.util.Objects;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
+public class ActiveUserRequest {
     String id;
-    Integer brcd;
-    Integer depId;
-    String fullName;
+    String type;
 
     public void validate(){
-        if (Objects.isNull(id)) {
+        if(Objects.isNull(id)){
             throw new ValidationException("id is null");
+        }
+
+        if (Objects.isNull(type)) {
+            throw new ValidationException("type is required");
         }
     }
 }

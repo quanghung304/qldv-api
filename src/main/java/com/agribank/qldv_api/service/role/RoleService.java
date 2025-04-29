@@ -3,15 +3,12 @@ package com.agribank.qldv_api.service.role;
 import com.agribank.qldv_api.gateway.RoleClient;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.role.RoleResponse;
-import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service

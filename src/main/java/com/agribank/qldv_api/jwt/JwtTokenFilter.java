@@ -57,7 +57,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
         userDetails.setDvCode(user.getDvCode());
         userDetails.setUsername(userIamResponse.getUsername());
         userDetails.setEmail(userIamResponse.getEmail());
-        userDetails.setRoleId(user.getRoleId());
+//        userDetails.setRoleId(user.getRoleId());
         userDetails.setBrcd(user.getBrcd());
         userDetails.setAuthorities(userDetails.getAuthorities());
         userDetails.setIdIam(userIamResponse.getId());
@@ -87,7 +87,6 @@ public class JwtTokenFilter extends OncePerRequestFilter{
         User admin = User.builder()
                 .idIam(userIamResponse.getId())
                 .username(userIamResponse.getUsername())
-                .roleId(userIamResponse.getId())
                 .email(userIamResponse.getEmail())
                 .fullName(userIamResponse.getFullName())
                 .brcd(userIamResponse.getBrcd())

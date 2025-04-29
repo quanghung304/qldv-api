@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,11 +23,13 @@ public class ApiLogBaseService {
 
     protected ApiLog initApiLog(){
         UserDetailsImpl userRequested = userService.getUserRequested();
-        return ApiLog.builder()
+        ApiLog apiLog = ApiLog.builder()
                 .username(userRequested.getUsername())
                 .email(userRequested.getEmail())
                 .brcd(userRequested.getBrcd())
                 .build();
+        apiLog.setId(UUID.randomUUID().toString());
+        return apiLog;
     }
 
     protected void save(ApiLog apiLog){

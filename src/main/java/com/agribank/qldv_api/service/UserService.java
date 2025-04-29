@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service;
 
+import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.exception.ValidationException;
 import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
@@ -8,6 +9,7 @@ import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
+import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.response.PageResponse;
@@ -30,14 +32,11 @@ public class UserService {
 
     @Value("${qldv.app.id}")
     private Integer QLDV_APP_ID;
-
-    private Integer BRANCH_CODE_HEAD_QUARTER = 1090;
-
+    private final Integer BRANCH_CODE_HEAD_QUARTER = 1090;
     private final IAMClient iamClient;
-
     private final UserClient userClient;
-
     private final ModelMapper modelMapper;
+    private final UserLogService userLogService;
 
     @Value("${app.service.publicKeyPath}")
     private String publicKeyPath;
@@ -114,14 +113,16 @@ public class UserService {
 
 
     public String update(UserUpdateRequest userUpdateRequest){
-        User user = userClient.findByIdIAM(userUpdateRequest.getIdIam()).getData();
+        User user = userClient.findById(userUpdateRequest.getId()).getData();
         if(Objects.isNull(user)){
             throw new ValidationException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
+        User userOld = (User) CommonUtils.handleCloneObject(user);
+
         UserIAMUpdate userIAMUpdate = UserIAMUpdate.builder()
                 .appId(QLDV_APP_ID)
-                .userId(userUpdateRequest.getIdIam())
+                .userId(user.getIdIam())
                 .brcd(userUpdateRequest.getBrcd())
                 .depId(userUpdateRequest.getDepId())
                 .fullName(userUpdateRequest.getFullName())
@@ -134,6 +135,53 @@ public class UserService {
             DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
             userClient.save(user);
 
+            userLogService.handlerWriteLogUpdate(userOld, user);
+            return response.getMessage();
+        }catch (Exception e){
+            throw new ValidationException(e.getMessage());
+        }
+    }
+
+    public String active(ActiveUserRequest request){
+        User userNew = userClient.findById(request.getId()).getData();
+
+        if(Objects.isNull(userNew)){
+            throw new ValidationException("Không tồn tại user vui lòng kiểm tra lại");
+        }
+
+        ActiveUserIAMRequest activeUserIAMRequest = ActiveUserIAMRequest.builder()
+                .appId(QLDV_APP_ID)
+                .userId(userNew.getIdIam())
+                .type(request.getType())
+                .build();
+
+        try {
+            DefaultResponse<String> response = iamClient.active(getAuthorHeader(), activeUserIAMRequest);
+            User userOld = (User) CommonUtils.handleCloneObject(userNew);
+
+            userNew.setActive(EUserStatus.getValue(request.getType()));
+            userClient.save(userNew);
+
+            userLogService.handlerWriteLogUpdate(userOld, userNew);
+            return response.getData();
+        }catch (Exception e){
+            throw new ValidationException(e.getMessage());
+        }
+    }
+
+    public String delete(String id){
+        User user = userClient.findById(id).getData();
+        if(Objects.isNull(user)){
+            throw new ValidationException("Không tồn tại user vui lòng kiểm tra lại");
+        }
+
+        try {
+            DefaultResponse<String> response = iamClient.delete(getAuthorHeader(), user.getEmail(), QLDV_APP_ID);
+
+            user.setDeleted(1);
+            userClient.save(user);
+
+            userLogService.handlerWriteLogDelete(user);
             return response.getMessage();
         }catch (Exception e){
             throw new ValidationException(e.getMessage());

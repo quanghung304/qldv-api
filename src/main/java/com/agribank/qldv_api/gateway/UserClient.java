@@ -2,7 +2,6 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.request.user.SearchUserRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -33,5 +32,10 @@ public interface UserClient {
     @GetMapping("api/v1/user/find-by-id-iam")
     DefaultResponse<User> findByIdIAM(
             @RequestParam(name = "idIam") Integer idIam
+    );
+
+    @GetMapping("api/v1/user/find-by-id/{id}")
+    DefaultResponse<User> findById(
+            @PathVariable(name = "id") String id
     );
 }

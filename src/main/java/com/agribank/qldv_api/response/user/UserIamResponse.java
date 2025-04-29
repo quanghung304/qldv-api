@@ -14,7 +14,7 @@ public class UserIamResponse {
     private Integer brcd;
     private String username;
     private String email;
-    private Integer vneid;
+    private String vneid;
     private String phone;
     private Integer staffCode;
     private String fullName;

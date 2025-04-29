@@ -1,9 +1,9 @@
 package com.agribank.qldv_api.request;
-import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -16,7 +16,7 @@ public class RegisterRequest {
     Integer brcd;
     String email;
     String fullName;
-    Integer vneid;
+    String vneid;
     String phone;
     Integer staffCode;
     String address;
@@ -26,6 +26,7 @@ public class RegisterRequest {
     String userKind;
     @Builder.Default
     String password = "Agribank@123";
+    List<String> roleids;
 
     public void validate() {
         if (Objects.isNull(email)) {

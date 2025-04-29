@@ -22,8 +22,9 @@ public class IAMRegisterRequest {
     private List<Integer> roleIds = new ArrayList<Integer>();
     @NotEmpty(message = "application ids is required")
     private List<Integer> applicationIds = new ArrayList<Integer>();
-    private Integer vneid;
+    private String vneid;
     private String phone;
+    @Email(message = "staffCode is required")
     private Integer staffCode;
     private String fullName;
     private String address;
