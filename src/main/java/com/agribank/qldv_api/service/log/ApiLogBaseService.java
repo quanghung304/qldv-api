@@ -7,6 +7,8 @@ import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
@@ -19,7 +21,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ApiLogBaseService {
     private final ApiLogClient apiLogClient;
-    private final UserService userService;
+    @Lazy
+    @Autowired
+    private UserService userService;
 
     protected ApiLog initApiLog(){
         UserDetailsImpl userRequested = userService.getUserRequested();

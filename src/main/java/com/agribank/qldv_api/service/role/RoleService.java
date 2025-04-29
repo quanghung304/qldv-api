@@ -38,4 +38,13 @@ public class RoleService {
             throw new CommonException(e.getMessage());
         }
     }
+
+    public List<Role> getRoleByUserId(String userId) {
+        DefaultResponse<List<Role>> roleDefaultResponse = roleClient.getRolesByUserId(userId);
+        return roleDefaultResponse.getData();
+    }
+
+    public List<Role> findByIdIn(List<String> ids) {
+        return roleClient.findByIdIn(ids).getData();
+    }
 }

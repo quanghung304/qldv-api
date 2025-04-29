@@ -2,18 +2,13 @@ package com.agribank.qldv_api.service.log;
 
 import com.agribank.qldv_api.enums.EApiLogType;
 import com.agribank.qldv_api.gateway.ApiLogClient;
-import com.agribank.qldv_api.request.IAMRegisterRequest;
-import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.User;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -22,8 +17,8 @@ public class DVLogService extends ApiLogBaseService{
     private final String OBJECT_REFERENCE = "DV";
     private final List<String> IGNORED_PROPERTIES = List.of("updatedAt");
 
-    public DVLogService(ApiLogClient apiLogClient, UserService userService) {
-        super(apiLogClient, userService);
+    public DVLogService(ApiLogClient apiLogClient) {
+        super(apiLogClient);
     }
 
     public void writeLogRegister(List<DV> dvs) {

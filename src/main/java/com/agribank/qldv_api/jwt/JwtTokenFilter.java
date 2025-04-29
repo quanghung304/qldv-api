@@ -4,6 +4,8 @@ import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
+import com.agribank.qldv_api.service.role.RoleService;
+import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,19 +15,25 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter{
     final IAMClient iamClient;
     final UserClient userClient;
+    final RoleService roleService;
     
     @Override
     protected void doFilterInternal(
@@ -52,16 +60,23 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             user = generateAdminAccount(userIamResponse);
         }
 
+        List<Role> roles = roleService.getRoleByUserId(user.getId());
+        List<GrantedAuthority> roleNames = new ArrayList<>();
+        if (!roles.isEmpty()){
+            roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+        }
+
         UserDetailsImpl userDetails = new UserDetailsImpl();
         userDetails.setId(user.getId());
         userDetails.setDvCode(user.getDvCode());
         userDetails.setUsername(userIamResponse.getUsername());
         userDetails.setEmail(userIamResponse.getEmail());
-//        userDetails.setRoleId(user.getRoleId());
         userDetails.setBrcd(user.getBrcd());
         userDetails.setAuthorities(userDetails.getAuthorities());
         userDetails.setIdIam(userIamResponse.getId());
         userDetails.setDepId(user.getDepId());
+        userDetails.setFullName(user.getFullName());
+        userDetails.setAuthorities(roleNames);
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "" ,userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);

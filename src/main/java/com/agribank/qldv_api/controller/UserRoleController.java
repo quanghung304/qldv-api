@@ -25,8 +25,15 @@ public class UserRoleController {
     public ResponseEntity<DefaultResponse<List<String>>> addUserRole(@RequestBody List<UserRoleRequest> request) {
         return success(userRoleService.addUserRole(request));
     }
+
     @PostMapping("/update")
     public ResponseEntity<DefaultResponse<List<String>>> updateUserRole(@RequestBody UserRoleRequest request) {
         return success(userRoleService.updateUserRole(request));
+    }
+
+    @PostMapping("/assign")
+    public ResponseEntity<DefaultResponse<String>> assign(@RequestBody UserRoleRequest request) {
+        request.validate();
+        return success(userRoleService.assignUserRole(request));
     }
 }
