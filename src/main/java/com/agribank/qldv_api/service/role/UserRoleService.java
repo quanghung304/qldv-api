@@ -12,9 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +27,15 @@ public class UserRoleService {
     public List<String> addUserRole(List<UserRoleRequest> userRoles) {
         List<String> addError = new ArrayList<>();
         List<UserRole> listRole = new ArrayList<>();
+        List<String> roleData = roleService.getAllRole().stream().map(RoleResponse::getId).toList();
         try {
             for (UserRoleRequest data : userRoles) {
-                List<String> roles = validateRole(data.getRoleIds());
-                if (roles.isEmpty()) {
+                List<String> roles = validateRole(data.getRoleIds(), roleData);
+                if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
                     addError.add(data.getUserId());
+                    continue;
+                }
+                if (data.getRoleIds().isEmpty()) {
                     continue;
                 }
                 listRole.addAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
@@ -50,9 +52,10 @@ public class UserRoleService {
     public List<String> updateUserRole(List<UserRoleRequest> userRoles) {
         List<String> updateError = new ArrayList<>();
         List<UserRole> listRole = new ArrayList<>();
+        List<String> roleData = roleService.getAllRole().stream().map(RoleResponse::getId).toList();
         try {
             for (UserRoleRequest data : userRoles) {
-                List<String> roles = validateRole(data.getRoleIds());
+                List<String> roles = validateRole(data.getRoleIds(), roleData);
                 if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
                     updateError.add(data.getUserId());
                     continue;
@@ -77,18 +80,21 @@ public class UserRoleService {
         }
     }
 
-    private List<String> validateRole(List<String> roles) {
-        List<String> validateList = new ArrayList<>();
-        if (roles.isEmpty()) {
-            return validateList;
-        }
-        List<String> distinctList = roles.stream().distinct().toList();
-        List<String> roleData = roleService.getAllRole().stream().map(RoleResponse::getId).toList();
-        for (String role : distinctList) {
-            if (roleData.contains(role)) {
-                validateList.add(role);
+    private List<String> validateRole(List<String> roles, List<String> roleData) {
+        try {
+            List<String> validateList = new ArrayList<>();
+            if (roles.isEmpty()) {
+                return validateList;
             }
+            List<String> distinctList = roles.stream().distinct().toList();
+            for (String role : distinctList) {
+                if (roleData.contains(role)) {
+                    validateList.add(role);
+                }
+            }
+            return validateList;
+        } catch (Exception e) {
+            throw new CommonException(e.getMessage());
         }
-        return  validateList;
     }
 }
