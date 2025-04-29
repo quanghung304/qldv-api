@@ -29,27 +29,17 @@ public class UserRoleService {
         List<UserRole> listUserRole = new ArrayList<>();
         List<String> roleData = roleService.getAllRole().stream().map(RoleResponse::getId).toList();
         try {
-            Map<String, List<String>> userRoleMap = new HashMap<>();
-            Map<String, String> roleMap = new HashMap<>();
-
-            for (UserRoleRequest ur : userRoles){
-                List<String> userRoleRequests = userRoleMap.getOrDefault(ur.getUserId(), new ArrayList<>());
+            for (UserRoleRequest data : userRoles) {
+                List<String> roles = validateRole(data.getRoleIds(), roleData, new ArrayList<>());
+                if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
+                    addError.add(data.getUserId());
+                    continue;
+                }
+                if (data.getRoleIds().isEmpty()) {
+                    continue;
+                }
+                listUserRole.addAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
             }
-
-            userRoleMap.forEach((s, strings) -> {
-
-            });
-//            for (UserRoleRequest data : userRoles) {
-//                List<String> roles = validateRole(data.getRoleIds(), roleData);
-//                if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
-//                    addError.add(data.getUserId());
-//                    continue;
-//                }
-//                if (data.getRoleIds().isEmpty()) {
-//                    continue;
-//                }
-//                listUserRole.addAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
-//            }
             DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(listUserRole);
             if (!roleDefaultResponse.getSuccess()) {
                 addError.addAll(userRoles.stream().map(UserRoleRequest::getUserId).toList());
@@ -59,30 +49,31 @@ public class UserRoleService {
             throw new CommonException(e.getMessage());
         }
     }
-    public List<String> updateUserRole(List<UserRoleRequest> userRoles) {
+    public List<String> updateUserRole(UserRoleRequest userRoles) {
         List<String> updateError = new ArrayList<>();
-        List<UserRole> listRole = new ArrayList<>();
         List<String> roleData = roleService.getAllRole().stream().map(RoleResponse::getId).toList();
         try {
-            for (UserRoleRequest data : userRoles) {
-                List<String> roles = validateRole(data.getRoleIds(), roleData);
-                if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
-                    updateError.add(data.getUserId());
-                    continue;
-                }
-                DefaultResponse<String> checkUserRole = userRoleClient.deleteById(data.getUserId());
-                if (!checkUserRole.getSuccess()) {
-                    updateError.add(data.getUserId());
-                    continue;
-                }
-                if (data.getRoleIds().isEmpty()) {
-                    continue;
-                }
-                listRole.addAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
+            List<String> oldRoles = userRoleClient.getById(userRoles.getUserId()).getData().stream().map(UserRole::getRoleId).toList();
+            List<String> roles = validateRole(userRoles.getRoleIds(), roleData, oldRoles);
+            if (roles.isEmpty() && !userRoles.getRoleIds().isEmpty()) {
+                updateError.add(userRoles.getUserId());
+                return updateError;
             }
+            UserRoleRequest delRequest = new UserRoleRequest();
+            delRequest.setUserId(userRoles.getUserId());
+            delRequest.setRoleIds(oldRoles.stream().filter(item-> !userRoles.getRoleIds().contains(item)).toList());
+            DefaultResponse<String> checkUserRole = userRoleClient.deleteById(delRequest);
+            if (!checkUserRole.getSuccess()) {
+                updateError.add(userRoles.getUserId());
+                return updateError;
+            }
+            if (userRoles.getRoleIds().isEmpty()) {
+                return updateError;
+            }
+            List<UserRole> listRole = new ArrayList<>(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), userRoles.getUserId(), role)).toList());
             DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(listRole);
             if (!roleDefaultResponse.getSuccess()) {
-                updateError.addAll(userRoles.stream().map(UserRoleRequest::getUserId).toList());
+                updateError.add(userRoles.getUserId());
             }
             return updateError;
         } catch (Exception e) {
@@ -90,7 +81,7 @@ public class UserRoleService {
         }
     }
 
-    private List<String> validateRole(List<String> roles, List<String> roleData) {
+    private List<String> validateRole(List<String> roles, List<String> roleData, List<String> oldRole) {
         try {
             List<String> validateList = new ArrayList<>();
             if (roles.isEmpty()) {
@@ -102,6 +93,10 @@ public class UserRoleService {
                     validateList.add(role);
                 }
             }
+            if (oldRole.isEmpty()) {
+                return validateList;
+            }
+            validateList.removeIf(oldRole::contains);
             return validateList;
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
