@@ -5,11 +5,13 @@ import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 
 import com.agribank.qldv_api.response.role.RoleResponse;
+import com.agribank.qldv_api.service.UserService;
+import com.agribank.qldvutils.entity.Role;
+import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.entity.UserRole;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -20,9 +22,61 @@ public class UserRoleService {
     private final ModelMapper modelMapper;
 
     private final UserRoleClient userRoleClient;
-
-    @Autowired
+    private final UserService userService;
     private final RoleService roleService;
+
+    public String assignUserRole(UserRoleRequest userRoleRequest) {
+        User user = userService.findById(userRoleRequest.getUserId());
+        if (Objects.isNull(user)) {
+            throw new CommonException("User not found");
+        }
+
+        List<String> idRoleRequests = userRoleRequest.getRoleIds().stream().distinct().toList();
+        List<Role> roles = roleService.findByIdIn(idRoleRequests);
+
+        List<Role> userRoleDB = roleService.getRoleByUserId(userRoleRequest.getUserId());
+        Map<String, Role> userRoleDBMap = new HashMap<>();
+        if (!userRoleDB.isEmpty()){
+            for (Role role : userRoleDB) {
+                userRoleDBMap.put(role.getId(), role);
+            }
+        }
+
+        if (roles.isEmpty()) {
+            throw new CommonException("Kiểm tra lại id role");
+        }
+
+        List<UserRole> userRoles = new ArrayList<>();
+        for (Role role : roles) {
+            Role roleDB = userRoleDBMap.getOrDefault(role.getId(), null);
+
+            if (Objects.isNull(roleDB)) {
+                userRoles.add(UserRole.builder()
+                        .id(UUID.randomUUID().toString())
+                        .roleId(role.getId())
+                        .userId(userRoleRequest.getUserId())
+                        .build());
+            }
+        }
+
+        List<String> idRolesDeleted = new ArrayList<>();
+        if (!userRoleDB.isEmpty()){
+            idRolesDeleted = userRoleDB.stream()
+                    .filter(r -> !idRoleRequests.contains(r.getId()))
+                    .map(Role::getId)
+                    .toList();
+        }
+
+        if (!idRolesDeleted.isEmpty()) {
+            deleteById(UserRoleRequest.builder()
+                    .userId(userRoleRequest.getUserId())
+                    .roleIds(idRolesDeleted)
+                    .build());
+        }
+
+        userRoleClient.saveAll(userRoles);
+        return "Gán role thành công!";
+    }
 
     public List<String> addUserRole(List<UserRoleRequest> userRoles) {
         List<String> addError = new ArrayList<>();
@@ -62,7 +116,7 @@ public class UserRoleService {
             UserRoleRequest delRequest = new UserRoleRequest();
             delRequest.setUserId(userRoles.getUserId());
             delRequest.setRoleIds(oldRoles.stream().filter(item-> !userRoles.getRoleIds().contains(item)).toList());
-            DefaultResponse<String> checkUserRole = userRoleClient.deleteById(delRequest);
+            DefaultResponse<String> checkUserRole = deleteById(delRequest);
             if (!checkUserRole.getSuccess()) {
                 updateError.add(userRoles.getUserId());
                 return updateError;
@@ -101,5 +155,14 @@ public class UserRoleService {
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }
+    }
+
+    public DefaultResponse<String> deleteById(UserRoleRequest request) {
+        try {
+            return userRoleClient.deleteById(request);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return null;
     }
 }

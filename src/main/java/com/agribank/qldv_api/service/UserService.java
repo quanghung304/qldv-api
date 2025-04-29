@@ -1,7 +1,6 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.EUserStatus;
-import com.agribank.qldv_api.exception.ValidationException;
 import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -12,6 +11,7 @@ import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.User;
+import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,6 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
     @Value("${qldv.app.id}")
     private Integer QLDV_APP_ID;
     private final Integer BRANCH_CODE_HEAD_QUARTER = 1090;
@@ -104,7 +103,7 @@ public class UserService {
     public String resetPassword(ResetPasswordRequest request){
         User user = userClient.findByUsername(request.getUsername()).getData();
         if(Objects.isNull(user)){
-            throw new ValidationException("Kiểm tra lại username!");
+            throw new CommonException("Kiểm tra lại username!");
         }
 
         request.setPassword(CommonUtils.handleEncryptPassword(request.getPassword(), publicKeyPath));
@@ -113,9 +112,9 @@ public class UserService {
 
 
     public String update(UserUpdateRequest userUpdateRequest){
-        User user = userClient.findById(userUpdateRequest.getId()).getData();
+        User user = findById(userUpdateRequest.getId());
         if(Objects.isNull(user)){
-            throw new ValidationException("Không tồn tại user vui lòng kiểm tra lại");
+            throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
         User userOld = (User) CommonUtils.handleCloneObject(user);
@@ -138,15 +137,15 @@ public class UserService {
             userLogService.handlerWriteLogUpdate(userOld, user);
             return response.getMessage();
         }catch (Exception e){
-            throw new ValidationException(e.getMessage());
+            throw new CommonException(e.getMessage());
         }
     }
 
     public String active(ActiveUserRequest request){
-        User userNew = userClient.findById(request.getId()).getData();
+        User userNew = findById(request.getId());
 
         if(Objects.isNull(userNew)){
-            throw new ValidationException("Không tồn tại user vui lòng kiểm tra lại");
+            throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
         ActiveUserIAMRequest activeUserIAMRequest = ActiveUserIAMRequest.builder()
@@ -165,14 +164,14 @@ public class UserService {
             userLogService.handlerWriteLogUpdate(userOld, userNew);
             return response.getData();
         }catch (Exception e){
-            throw new ValidationException(e.getMessage());
+            throw new CommonException(e.getMessage());
         }
     }
 
     public String delete(String id){
         User user = userClient.findById(id).getData();
         if(Objects.isNull(user)){
-            throw new ValidationException("Không tồn tại user vui lòng kiểm tra lại");
+            throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
         try {
@@ -184,7 +183,11 @@ public class UserService {
             userLogService.handlerWriteLogDelete(user);
             return response.getMessage();
         }catch (Exception e){
-            throw new ValidationException(e.getMessage());
+            throw new CommonException(e.getMessage());
         }
+    }
+
+    public User findById(String id){
+        return userClient.findById(id).getData();
     }
 }

@@ -38,6 +38,10 @@ public class RegisterRequest {
         if (!validateEmail(email)){
             throw new CommonException("Không đúng định dạng email agribank. Vui lòng kiểm tra lại!");
         }
+
+        if (Objects.isNull(roleids) || roleids.isEmpty()) {
+            throw new CommonException("Roleids is required");
+        }
         this.email = email.trim().toLowerCase();
         if (Objects.isNull(fullName) || fullName.isBlank()) {
             throw new CommonException("FullName is required");

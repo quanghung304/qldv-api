@@ -6,11 +6,14 @@ import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.RegisterRequest;
 import com.agribank.qldv_api.request.dv.DVRequest;
+import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
 import com.agribank.qldv_api.service.log.UserLogService;
+import com.agribank.qldv_api.service.role.RoleService;
+import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
@@ -30,6 +33,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
+    private final UserRoleService userRoleService;
     @Value("${qldv.app.id}")
     private Integer QLDV_APP_ID;
 
@@ -42,6 +46,7 @@ public class AuthenticationService {
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
     private final AuthenticationLogService authenticationLogService;
+    private final RoleService roleService;
 
     public UserResponse register(RegisterRequest request) {
         IAMRegisterRequest registerRequest = IAMRegisterRequest.builder()
@@ -120,6 +125,7 @@ public class AuthenticationService {
                 dvService.create(dvRequests);
             }
 
+            assignRole(userNew.getId(), request.getRoleids());
             //ghi log
             writeLog(action, userNew, userOld, registerRequest);
             return modelMapper.map(savedUserResponse.getData(), UserResponse.class);
@@ -139,4 +145,15 @@ public class AuthenticationService {
     }
 
 
+    private void assignRole(String id, List<String> roles) {
+        UserRoleRequest request = UserRoleRequest.builder()
+                .userId(id)
+                .roleIds(roles)
+                .build();
+        try {
+            userRoleService.assignUserRole(request);
+        }catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }

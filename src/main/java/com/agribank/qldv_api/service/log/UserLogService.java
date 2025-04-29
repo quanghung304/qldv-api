@@ -2,7 +2,6 @@ package com.agribank.qldv_api.service.log;
 
 import com.agribank.qldv_api.enums.EApiLogType;
 import com.agribank.qldv_api.gateway.ApiLogClient;
-import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.agribank.qldvutils.entity.User;
 import org.springframework.stereotype.Service;
@@ -18,8 +17,8 @@ import java.util.concurrent.Executors;
 public class UserLogService extends ApiLogBaseService{
     private final List<String> IGNORED_PROPERTIES = Arrays.asList("id", "idIam", "updatedAt");
     private final String OBJECT_REFERENCE = "USER";
-    public UserLogService(ApiLogClient apiLogClient, UserService userService) {
-        super(apiLogClient, userService);
+    public UserLogService(ApiLogClient apiLogClient) {
+        super(apiLogClient);
     }
 
     public void handlerWriteLogUpdate(User userOld, User userNew){
