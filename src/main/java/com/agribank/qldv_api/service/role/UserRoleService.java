@@ -26,21 +26,31 @@ public class UserRoleService {
 
     public List<String> addUserRole(List<UserRoleRequest> userRoles) {
         List<String> addError = new ArrayList<>();
-        List<UserRole> listRole = new ArrayList<>();
+        List<UserRole> listUserRole = new ArrayList<>();
         List<String> roleData = roleService.getAllRole().stream().map(RoleResponse::getId).toList();
         try {
-            for (UserRoleRequest data : userRoles) {
-                List<String> roles = validateRole(data.getRoleIds(), roleData);
-                if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
-                    addError.add(data.getUserId());
-                    continue;
-                }
-                if (data.getRoleIds().isEmpty()) {
-                    continue;
-                }
-                listRole.addAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
+            Map<String, List<String>> userRoleMap = new HashMap<>();
+            Map<String, String> roleMap = new HashMap<>();
+
+            for (UserRoleRequest ur : userRoles){
+                List<String> userRoleRequests = userRoleMap.getOrDefault(ur.getUserId(), new ArrayList<>());
             }
-            DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(listRole);
+
+            userRoleMap.forEach((s, strings) -> {
+
+            });
+//            for (UserRoleRequest data : userRoles) {
+//                List<String> roles = validateRole(data.getRoleIds(), roleData);
+//                if (roles.isEmpty() && !data.getRoleIds().isEmpty()) {
+//                    addError.add(data.getUserId());
+//                    continue;
+//                }
+//                if (data.getRoleIds().isEmpty()) {
+//                    continue;
+//                }
+//                listUserRole.addAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
+//            }
+            DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(listUserRole);
             if (!roleDefaultResponse.getSuccess()) {
                 addError.addAll(userRoles.stream().map(UserRoleRequest::getUserId).toList());
             }
