@@ -8,6 +8,7 @@ import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
 
+    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN')")
     @PostMapping("/iam-search")
     public ResponseEntity<DefaultResponse<UserSearchResponse>> search(@RequestBody SearchUserIAMRequest request) {
         return DefaultResponse.success(userService.searchUserIam(request));
@@ -33,12 +35,14 @@ public class UserController {
         return DefaultResponse.success(userService.changePassword(request), null);
     }
 
+    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
     @PostMapping("/reset-password")
     public ResponseEntity<DefaultResponse<String>> resetPassword(@RequestBody ResetPasswordRequest request) {
         request.validate();
         return DefaultResponse.success(userService.resetPassword(request), null);
     }
 
+    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN')")
     @PutMapping("/update")
     public ResponseEntity<DefaultResponse<String>> update(@RequestBody UserUpdateRequest request) {
         request.validate();
@@ -54,5 +58,17 @@ public class UserController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<DefaultResponse<String>> delete(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.delete(id), null);
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
+    @GetMapping("/{id}")
+    public ResponseEntity<DefaultResponse<UserResponse>> getUserInfo(@PathVariable("id") String id) {
+        return DefaultResponse.success(userService.getUserInfo(id));
+    }
+
+
+    @PutMapping("/update-user-requested")
+    public ResponseEntity<DefaultResponse<String>> updateUserRequested(@RequestBody UserRequestedUpdate request) {
+        return DefaultResponse.success(userService.updateUserRequested(request));
     }
 }

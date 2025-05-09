@@ -4,12 +4,14 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserResponse {
+    String id;
     String dvCode;
     Integer idIam;
-    Integer roleId;
     String username;
     String fullName;
     String email;
@@ -17,6 +19,9 @@ public class UserResponse {
     Integer depId;
     String phone;
     String vneid;
+    String staffCode;
     Integer active;
     Integer deleted;
+    String branchName;
+    List<String> roles;
 }

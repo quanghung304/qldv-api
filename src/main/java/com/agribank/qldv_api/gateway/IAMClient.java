@@ -1,15 +1,16 @@
 package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.request.IAMRegisterRequest;
-import com.agribank.qldv_api.request.user.ActiveUserIAMRequest;
-import com.agribank.qldv_api.request.user.PasswordRequest;
-import com.agribank.qldv_api.request.user.ResetPasswordRequest;
-import com.agribank.qldv_api.request.user.UserIAMUpdate;
+import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
+import com.agribank.qldv_api.response.branch.BranchChildResponse;
+import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @FeignClient(name = "iamClient", url = "${iam.api.url}", configuration = IamFeignConfiguration.class) // IAM service URL from properties
 public interface IAMClient {
@@ -64,5 +65,23 @@ public interface IAMClient {
     DefaultResponse<String> active(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody ActiveUserIAMRequest request
+    );
+
+    @PostMapping("api/v1/branch/filter-brcds")
+    DefaultResponse<List<BranchResponse>> getBranchInfo(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody List<Integer> brcds
+    );
+
+    @PutMapping("api/v1/user/update")
+    DefaultResponse<String> userUpdate(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody UserRequestedUpdate request
+    );
+
+    @PostMapping("api/v1/branch/get-brcd-child")
+    DefaultResponse<List<BranchChildResponse>> getBranchChildInfo(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody List<Integer> brcds
     );
 }
