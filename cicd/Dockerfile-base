@@ -1,0 +1,5 @@
+FROM 10.0.142.13:8443/cicd/eclipse-temurin-setting:17-jdk-focal as base
+WORKDIR /build
+COPY . .
+COPY cicd/maven-wrapper.properties .mvn/wrapper/
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw clean package -Daether.connector.https.securityMode=insecure -DskipTests -f pom.xml && rm -rf /build
