@@ -15,7 +15,7 @@ import java.util.List;
 @FeignClient(name = "dvClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
 public interface DVClient {
 
-    @GetMapping("api/v1/dv//find-by-id/{id}")
+    @GetMapping("api/v1/dv/find-by-id/{id}")
     DefaultResponse<DV> findById(
             @PathVariable("id") String id
     );

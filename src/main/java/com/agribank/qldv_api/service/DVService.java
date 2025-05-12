@@ -50,4 +50,8 @@ public class DVService {
         dvLogService.writeLogRegister(dvs);
         return response.getMessage();
     }
+
+    public DV findById(String id) {
+        return dvClient.findById(id).getData();
+    }
 }

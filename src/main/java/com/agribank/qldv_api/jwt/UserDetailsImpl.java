@@ -23,7 +23,7 @@ public class UserDetailsImpl implements UserDetails{
 	private Integer depId;
 	private String organizationCode;
     private Collection<? extends GrantedAuthority> authorities;
-    
+
 //    public static UserDetailsImpl fromModel(User user){
 //        List<GrantedAuthority> authorities = user.getQuyen().stream()
 //            .map(role -> new SimpleGrantedAuthority(role.getName()))
