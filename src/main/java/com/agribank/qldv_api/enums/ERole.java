@@ -4,14 +4,14 @@ import lombok.Getter;
 
 @Getter
 public enum ERole {
-    XDCB_SYSTEM_ADMIN(1),
-    XDCB_BRANCH_ADMIN(2),
-    XDCB_MANAGER(3),
-    XDCB_TELLER(4);
+    TELLER(1, "QLDV_TELLER"),
+    APPROVER(2, "QLDV_APPROVER");
 
     private final int id;
+    private final String name;
 
-    ERole(int id) {
+    ERole(int id, String name) {
         this.id = id;
+        this.name = name;
     }
 }
