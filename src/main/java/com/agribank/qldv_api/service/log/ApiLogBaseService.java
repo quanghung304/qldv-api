@@ -3,7 +3,6 @@ package com.agribank.qldv_api.service.log;
 import com.agribank.qldv_api.gateway.ApiLogClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.service.UserService;
-import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;

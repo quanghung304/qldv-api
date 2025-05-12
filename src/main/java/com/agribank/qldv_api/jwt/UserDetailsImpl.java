@@ -12,7 +12,6 @@ import java.util.Objects;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class UserDetailsImpl implements UserDetails{
     private String id;
 	private String dvCode;
@@ -22,6 +21,7 @@ public class UserDetailsImpl implements UserDetails{
 	private String email;
 	private Integer brcd;
 	private Integer depId;
+	private String organizationCode;
     private Collection<? extends GrantedAuthority> authorities;
     
 //    public static UserDetailsImpl fromModel(User user){
@@ -36,7 +36,7 @@ public class UserDetailsImpl implements UserDetails{
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return authorities;
     }
 
     @Override

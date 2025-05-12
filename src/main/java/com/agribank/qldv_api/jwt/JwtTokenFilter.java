@@ -5,6 +5,7 @@ import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.service.role.RoleService;
+import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import jakarta.servlet.FilterChain;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -34,6 +36,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
     final IAMClient iamClient;
     final UserClient userClient;
     final RoleService roleService;
+    final ModelMapper modelMapper;
     
     @Override
     protected void doFilterInternal(
@@ -54,10 +57,11 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             return;
         }
 
-        User user = userClient.getUserByEmail(userIamResponse.getEmail()).getData();
+        UserDto user = userClient.getUserInfo(userIamResponse.getEmail()).getData();
 
         if (Objects.isNull(user) && userIamResponse.getUsername().equals("admin")) {
-            user = generateAdminAccount(userIamResponse);
+            User admin = generateAdminAccount(userIamResponse);
+            user = modelMapper.map(admin, UserDto.class);
         }
 
         List<Role> roles = roleService.getRoleByUserId(user.getId());
@@ -72,7 +76,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
         userDetails.setUsername(userIamResponse.getUsername());
         userDetails.setEmail(userIamResponse.getEmail());
         userDetails.setBrcd(user.getBrcd());
-        userDetails.setAuthorities(userDetails.getAuthorities());
+        userDetails.setOrganizationCode(user.getOrganizationCode());
         userDetails.setIdIam(userIamResponse.getId());
         userDetails.setDepId(user.getDepId());
         userDetails.setFullName(user.getFullName());
