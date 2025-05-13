@@ -2,6 +2,7 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.request.role.RoleSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.role.RoleDtoResponse;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -30,4 +31,6 @@ public interface RoleClient {
     @PostMapping("api/v1/role/find-by-id-in")
     DefaultResponse<List<Role>> findByIdIn(@RequestBody List<String> ids);
 
+    @PostMapping("api/v1/role/find-by-user-ids")
+    DefaultResponse<List<RoleDtoResponse>> findByUserIds(@RequestBody List<String> userIds);
 }

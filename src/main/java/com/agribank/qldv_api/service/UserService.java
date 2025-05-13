@@ -2,14 +2,19 @@ package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.gateway.IAMClient;
+import com.agribank.qldv_api.gateway.RoleClient;
 import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
+import com.agribank.qldv_api.response.branch.BranchChildResponse;
+import com.agribank.qldv_api.response.branch.BranchResponse;
+import com.agribank.qldv_api.response.role.RoleDtoResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.PageResponse;
@@ -23,15 +28,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Objects;
+import java.util.*;
 
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    private final RoleClient roleClient;
     @Value("${qldv.app.id}")
     private Integer QLDV_APP_ID;
-    private final Integer BRANCH_CODE_HEAD_QUARTER = 1090;
+    private final Integer BRANCH_CODE_HEAD_QUARTER = 1001;
     private final IAMClient iamClient;
     private final UserClient userClient;
     private final ModelMapper modelMapper;
@@ -74,24 +80,133 @@ public class UserService {
     }
 
     public PageResponse<UserResponse> searchQLDV(SearchUserRequest request){
+        //Kiểm tra quyền search user cho Chi nhánh
+        checkPermissionSearchUser(request);
+
         PageResponse<User> userPageResponse = userClient.search(request).getData();
         PageResponse<UserResponse> response = new PageResponse<>();
         if (Objects.isNull(userPageResponse)) {
             return response;
         }
-
         response.setTotalPages(userPageResponse.getTotalPages());
         response.setCurrentPage(userPageResponse.getCurrentPage());
         response.setTotalItems(userPageResponse.getTotalItems());
 
-        if (Objects.nonNull(userPageResponse.getData())) {
-            response.setData(userPageResponse.getData().stream()
-                    .map( user -> modelMapper.map(user, UserResponse.class)
-                    ).toList()
-            );
+        if (Objects.isNull(userPageResponse.getData())) {
+          return response;
         }
 
+        List<UserResponse> userResponses = userPageResponse.getData().stream()
+                .map( user -> modelMapper.map(user, UserResponse.class)
+                ).toList();
+
+        List<Integer> brcds = new ArrayList<>();
+        List<String> userIds = new ArrayList<>();
+        userResponses.forEach(u -> {
+            brcds.add(u.getBrcd());
+            userIds.add(u.getId());
+        });
+
+        //lấy tên chi nhánh
+        Map<Integer, BranchResponse> branchResponseMap = getBranchInfo(brcds);
+
+        //Lấy role
+        Map<String, List<String>> roleMap = getUserRole(userIds);
+
+        for (UserResponse userResponse : userResponses) {
+            BranchResponse branchResponse = branchResponseMap.getOrDefault(userResponse.getBrcd(), null);
+            if (Objects.nonNull(branchResponse)) {
+                userResponse.setBranchName(branchResponse.getLclbrnm());
+            }
+
+            List<String> roleName = roleMap.getOrDefault(userResponse.getId(), new ArrayList<>());
+            userResponse.setRoles(roleName);
+        }
+
+        response.setData(userResponses);
         return response;
+    }
+
+    private void checkPermissionSearchUser(SearchUserRequest request){
+        UserDetailsImpl userRequested = getUserRequested();
+        //Check user chi nhanh
+        BranchChildResponse branch = null;
+        if (Objects.nonNull(request.getBrcd())) {
+            branch = getBranchChild(request.getBrcd());
+        }
+        List<Integer> brcdChild = new ArrayList<>();
+        brcdChild.add(userRequested.getBrcd());
+        if (Objects.nonNull(branch)) {
+            brcdChild = branch.getBranchChild().stream().map(BranchResponse::getBrcd).toList();
+        }
+
+        if (userRequested.getBrcd() <= BRANCH_CODE_HEAD_QUARTER) {
+            request.setBrcd(null);
+        }
+
+        if (userRequested.getBrcd() > BRANCH_CODE_HEAD_QUARTER
+                && Objects.nonNull(request.getBrcd()) && !brcdChild.contains(request.getBrcd())
+        ){
+            throw new CommonException("Bạn không có quyền tìm kiếm User chi nhánh khác");
+        }
+
+        if (userRequested.getBrcd() > BRANCH_CODE_HEAD_QUARTER && Objects.isNull(request.getBrcd())){
+            request.setBrcd(userRequested.getBrcd());
+        }
+    }
+
+    private BranchChildResponse getBranchChild(Integer brcd){
+        List<Integer> brcds = new ArrayList<>();
+        brcds.add(brcd);
+        try {
+            List<BranchChildResponse> branchChildResponses = iamClient.getBranchChildInfo(getAuthorHeader(), brcds).getData();
+            if (Objects.nonNull(branchChildResponses) || !branchChildResponses.isEmpty()) {
+                return branchChildResponses.get(0);
+            }
+            return null;
+        }catch (Exception e){
+            System.out.println("getBranchChild error");
+            return null;
+        }
+    }
+
+    private Map<Integer, BranchResponse> getBranchInfo(List<Integer> brcds){
+        brcds = brcds.stream().distinct().toList();
+
+        List<BranchResponse> branchResponses = new ArrayList<>();
+        try {
+            branchResponses = iamClient.getBranchInfo(getAuthorHeader(), brcds).getData();
+        }catch (Exception e){
+            System.out.println("getBranchInfo: " + e.getMessage());
+        }
+
+        Map<Integer, BranchResponse> branchResponseMap = new HashMap<>();
+        if (!branchResponses.isEmpty()){
+            for (BranchResponse branchResponse : branchResponses) {
+                branchResponseMap.put(branchResponse.getBrcd(), branchResponse);
+            }
+        }
+
+        return branchResponseMap;
+    }
+
+    private Map<String, List<String>> getUserRole(List<String> userIds){
+        List<RoleDtoResponse> roleDtoResponses = new ArrayList<>();
+        try {
+            roleDtoResponses = roleClient.findByUserIds(userIds).getData();
+        }catch (Exception e){
+            System.out.println("getUserRole: " + e.getMessage());
+        }
+
+        Map<String, List<String>> roleMap = new HashMap<>();
+        if (!roleDtoResponses.isEmpty()){
+            for (RoleDtoResponse roleDtoResponse : roleDtoResponses) {
+                List<String> role = roleMap.getOrDefault(roleDtoResponse.getUserId(), new ArrayList<>());
+                role.add(roleDtoResponse.getRoleName());
+                roleMap.put(roleDtoResponse.getUserId(), role);
+            }
+        }
+        return roleMap;
     }
 
     public String changePassword(PasswordRequest request){
@@ -189,5 +304,53 @@ public class UserService {
 
     public User findById(String id){
         return userClient.findById(id).getData();
+    }
+
+    public UserResponse getUserInfo(String userId){
+        User user = findById(userId);
+        UserResponse userResponse = modelMapper.map(user, UserResponse.class);
+
+        List<Integer> brcds = new ArrayList<>();
+        brcds.add(user.getBrcd());
+        Map<Integer, BranchResponse> branchResponseMap = getBranchInfo(brcds);
+        BranchResponse branchResponse = branchResponseMap.getOrDefault(user.getBrcd(), null);
+
+        if(Objects.nonNull(branchResponse)){
+            userResponse.setBranchName(branchResponse.getLclbrnm());
+        }
+
+        List<Role> roles = getRoles(userId);
+        if(!roles.isEmpty()){
+            userResponse.setRoles(roles.stream().map(Role::getName).toList());
+        }
+
+        return userResponse;
+    }
+
+    private List<Role> getRoles(String userId){
+        try {
+            return roleClient.getRolesByUserId(userId).getData();
+        }catch (Exception e){
+            System.out.println("user-service -> getRoles: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public String updateUserRequested(UserRequestedUpdate request){
+        UserDetailsImpl userRequested = getUserRequested();
+
+        User user = findById(userRequested.getId());
+        if (Objects.isNull(user)) {
+            throw new CommonException("Hệ thống đang không tìm thấy User của bạn. Vui lòng thử lại sau");
+        }
+
+        user.setVneid(request.getVneid());
+        user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
+
+        iamClient.userUpdate(getAuthorHeader(), request);
+        userClient.save(user);
+
+        return "Cập nhật thông tin thành công";
     }
 }
