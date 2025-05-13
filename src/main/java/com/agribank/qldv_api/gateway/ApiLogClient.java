@@ -18,5 +18,5 @@ public interface ApiLogClient {
     @PostMapping("api/v1/api-log/search")
     DefaultResponse<PageResponse<ApiLog>> search(
             @RequestBody SearchApiLogRequest request
-            );
+    );
 }

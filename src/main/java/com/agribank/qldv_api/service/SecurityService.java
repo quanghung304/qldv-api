@@ -7,9 +7,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+import static com.agribank.qldv_api.enums.Constants.BTCDU_CODE;
+
 @Service
 public class SecurityService {
-    public static Integer BTCDU_CODE = 1000;
 
     public boolean isBTCDUTeller (Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
