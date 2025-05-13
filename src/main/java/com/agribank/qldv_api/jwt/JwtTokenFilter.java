@@ -73,7 +73,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
 
         UserDetailsImpl userDetails = new UserDetailsImpl();
         userDetails.setId(user.getId());
-        userDetails.setDvCode(user.getDvCode());
+        userDetails.setStaffCode(user.getStaffCode());
         userDetails.setUsername(userIamResponse.getUsername());
         userDetails.setEmail(userIamResponse.getEmail());
         userDetails.setBrcd(user.getBrcd());

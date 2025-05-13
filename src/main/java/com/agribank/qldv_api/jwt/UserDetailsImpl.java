@@ -14,7 +14,7 @@ import java.util.Objects;
 @AllArgsConstructor
 public class UserDetailsImpl implements UserDetails{
     private String id;
-	private String dvCode;
+	private String staffCode;
     private Integer idIam;
 	private String username;
 	private String fullName;

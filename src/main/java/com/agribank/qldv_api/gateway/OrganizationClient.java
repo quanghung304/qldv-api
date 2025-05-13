@@ -37,13 +37,18 @@ public interface OrganizationClient {
             @RequestBody OrganizationSearchRequest request
     );
 
-    @GetMapping("api/v1/organization/find-by-child-code")
-    DefaultResponse<List<Organization>> findByChildCode(
+    @GetMapping("api/v1/organization/find-by-parent")
+    DefaultResponse<List<Organization>> findByParent(
             @RequestParam(name = "code") String code
     );
 
     @GetMapping("api/v1/organization/find-by-parent-code")
     DefaultResponse<List<Organization>> findByParentCode(
             @RequestParam(name = "code") String code
+    );
+
+    @GetMapping("api/v1/organization/find-all-in-codes")
+    DefaultResponse<List<Organization>> findAllByCode(
+            @RequestParam List<String> codeList
     );
 }

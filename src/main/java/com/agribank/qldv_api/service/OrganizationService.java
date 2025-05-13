@@ -82,7 +82,7 @@ public class OrganizationService {
     }
 
     public List<String> getChildCode(String code){
-        List<Organization> organizations = client.findByChildCode(code).getData();
+        List<Organization> organizations = client.findByParent(code).getData();
         List<String> codeChild = new ArrayList<>();
         if (!organizations.isEmpty()){
             codeChild = organizations.stream().map(Organization::getCode).toList();
