@@ -1,15 +1,13 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.request.establishmentDissolve.EstablishmentDissolveRequest;
+import com.agribank.qldv_api.request.establishmentDissolve.EstablishmentDissolveSearchRequest;
 import com.agribank.qldv_api.response.establishmentDissolve.EstablishmentDissolveResponse;
 import com.agribank.qldv_api.service.EstablishmentDissolveService;
 import com.agribank.qldvutils.response.BaseResponse;
+import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "api/v1/establishment-dissolve", produces = "application/json")
@@ -17,9 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class EstablishmentDissolveController {
     private final EstablishmentDissolveService service;
 
-    @PostMapping("")
-    public ResponseEntity<BaseResponse<EstablishmentDissolveResponse>> create(@RequestBody EstablishmentDissolveRequest request) {
+    @PostMapping("/search")
+    public ResponseEntity<BaseResponse<PageResponse<EstablishmentDissolveResponse>>> search(@RequestBody EstablishmentDissolveSearchRequest request) {
         request.validate();
-        return BaseResponse.success(service.createOrUpdate(request));
+        return BaseResponse.success(service.search(request));
+    }
+
+    @GetMapping("")
+    public ResponseEntity<BaseResponse<EstablishmentDissolveResponse>> get(@RequestParam(name = "code") String code) {
+        return BaseResponse.success(service.get(code));
     }
 }

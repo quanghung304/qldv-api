@@ -7,10 +7,10 @@ import com.agribank.qldv_api.gateway.OrganizationDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
-import com.agribank.qldv_api.request.organizationDraft.OrganizationDraftRequest;
+import com.agribank.qldv_api.request.DraftRequest;
 import com.agribank.qldv_api.request.organizationDraft.OrganizationDraftSearchRequest;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
-import com.agribank.qldv_api.response.organizationDraft.OrganizationDraftApproveResponse;
+import com.agribank.qldv_api.response.DraftResponse;
 import com.agribank.qldv_api.response.organizationDraft.OrganizationDraftResponse;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.OrganizationDraft;
@@ -125,8 +125,8 @@ public class OrganizationDraftService {
         return modelMapper.map(organizationDraft, OrganizationResponse.class);
     }
 
-    public List<OrganizationDraftApproveResponse> approve(List<OrganizationDraftRequest> requests) {
-        List<String> ids = requests.stream().map(OrganizationDraftRequest::getId).distinct().toList();
+    public List<DraftResponse> approve(List<DraftRequest> requests) {
+        List<String> ids = requests.stream().map(DraftRequest::getId).distinct().toList();
 
         //Lấy những Bản ghi cần được duyệt
         List<OrganizationDraft> organizationDrafts = client.findAllById(ids).getData();
@@ -136,46 +136,47 @@ public class OrganizationDraftService {
             organizationDraftRequestMap.put(organizationDraft.getId(), organizationDraft);
         }
 
-        List<OrganizationDraftApproveResponse> responses = new ArrayList<>();
+        List<DraftResponse> responses = new ArrayList<>();
         List<OrganizationDraft> organizationDraftsSave = new ArrayList<>();
         List<Organization> organizationSaves = new ArrayList<>();
 
         UserDetailsImpl userRequested = getUserRequested();
 
-        for (OrganizationDraftRequest organizationDraftRequest : requests) {
+        for (DraftRequest draftRequest : requests) {
             //kiểm tra giá trị approve
-            if (Objects.isNull(organizationDraftRequest.getStatus())
-            || EApprovalStatus.getValue(organizationDraftRequest.getStatus()) == -1
-            || EApprovalStatus.PENDING.getId() == organizationDraftRequest.getStatus()
+            if (Objects.isNull(draftRequest.getStatus())
+            || EApprovalStatus.getValue(draftRequest.getStatus()) == -1
+            || EApprovalStatus.PENDING.getId() == draftRequest.getStatus()
             ){
-                responses.add(fromModel(organizationDraftRequest.getId(),
-                        organizationDraftRequest.getStatus(),
-                        "Sai approve vui lòng kiểm tra lại!"));
+                responses.add(fromModel(draftRequest.getId(),
+                        draftRequest.getStatus(),
+                        "Sai status vui lòng kiểm tra lại!"));
                 continue;
             }
 
-            OrganizationDraft organizationDraftSave = organizationDraftRequestMap.getOrDefault(organizationDraftRequest.getId(), null);
+            OrganizationDraft organizationDraftSave = organizationDraftRequestMap.getOrDefault(draftRequest.getId(), null);
 
             if (Objects.isNull(organizationDraftSave)){
-                responses.add(fromModel(organizationDraftRequest.getId(),
-                        organizationDraftRequest.getStatus(),
+                responses.add(fromModel(draftRequest.getId(),
+                        draftRequest.getStatus(),
                         "Không tồn tại bản ghi id: "
-                                + organizationDraftRequest.getId()));
+                                + draftRequest.getId()));
+                continue;
             }
 
             //nguoi tao va người duyệt phải khác nhau
-            if (userRequested.getUsername().equals(organizationDraftSave.getUsernameCreated())) {
-                responses.add(fromModel(organizationDraftRequest.getId(),
-                        organizationDraftRequest.getStatus(),
-                        "Bạn không thể tự duyệt yêu cầu của chính mình"));
-                continue;
-            }
+//            if (userRequested.getUsername().equals(organizationDraftSave.getUsernameCreated())) {
+//                responses.add(fromModel(organizationDraftRequest.getId(),
+//                        organizationDraftRequest.getStatus(),
+//                        "Bạn không thể tự duyệt yêu cầu của chính mình"));
+//                continue;
+//            }
 
             //chặn duyệt lại những approve đã tùng được thao tác duyệt hoặc từ chối rồi
             if (!organizationDraftSave.getApprove().equals(EApprovalStatus.PENDING.getId())){
                 responses.add(
                         fromModel(organizationDraftSave.getId(),
-                                organizationDraftRequest.getStatus(),
+                                draftRequest.getStatus(),
                                 "Bản ghi id: "
                                         + organizationDraftSave.getId()
                                         + ", " + organizationDraftSave.getName()
@@ -186,11 +187,11 @@ public class OrganizationDraftService {
             organizationDraftSave.setUsernameAccepted(userRequested.getUsername());
             organizationDraftSave.setUserBrcdAccepted(userRequested.getBrcd());
             //trường hợp đông ý
-            if (organizationDraftRequest.getStatus().equals(EApprovalStatus.APPROVED.getId())) {
+            if (draftRequest.getStatus().equals(EApprovalStatus.APPROVED.getId())) {
                 organizationDraftSave.setApprove(EApprovalStatus.APPROVED.getId());
                 organizationDraftsSave.add(organizationDraftSave);
                 responses.add(fromModel(organizationDraftSave.getId(),
-                                organizationDraftRequest.getStatus(),
+                                draftRequest.getStatus(),
                                 "Yêu cầu đã được duyệt thành công!"));
 
                 organizationSaves.add(modelMapper.map(organizationDraftSave, Organization.class));
@@ -198,11 +199,11 @@ public class OrganizationDraftService {
             }
 
             //TH từ chối
-            if (organizationDraftRequest.getStatus().equals(EApprovalStatus.DENIED.getId())) {
+            if (draftRequest.getStatus().equals(EApprovalStatus.DENIED.getId())) {
                 organizationDraftSave.setApprove(EApprovalStatus.DENIED.getId());
                 organizationDraftsSave.add(organizationDraftSave);
                 responses.add(fromModel(organizationDraftSave.getId(),
-                        organizationDraftRequest.getStatus(),
+                        draftRequest.getStatus(),
                         "Yêu cầu từ chối đã được duyệt thành công!"));
             }
         }
@@ -217,8 +218,8 @@ public class OrganizationDraftService {
         return responses;
     }
 
-    private OrganizationDraftApproveResponse fromModel(String id, Integer approve, String mess) {
-        return OrganizationDraftApproveResponse.builder()
+    private DraftResponse fromModel(String id, Integer approve, String mess) {
+        return DraftResponse.builder()
                 .id(id)
                 .approve(approve+"")
                 .message(mess)
