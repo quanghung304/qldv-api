@@ -11,13 +11,14 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum EReport01Type {
-    UPGRADE(0),
-    DOWNGRADE(1),
-    DECOMPOSE(2),
-    MERGE(3),
-    UNION(4),
-    DISSOLVE(5),
-    DISBAND(6);
+    ESTABLISH(0),
+    UPGRADE(1),
+    DOWNGRADE(2),
+    DECOMPOSE(3),
+    MERGE(4),
+    UNION(5),
+    DISSOLVE(6),
+    DISBAND(7);
 
     int id;
 

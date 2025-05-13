@@ -2,10 +2,10 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
-import com.agribank.qldv_api.request.organizationDraft.OrganizationDraftRequest;
+import com.agribank.qldv_api.request.DraftRequest;
 import com.agribank.qldv_api.request.organizationDraft.OrganizationDraftSearchRequest;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
-import com.agribank.qldv_api.response.organizationDraft.OrganizationDraftApproveResponse;
+import com.agribank.qldv_api.response.DraftResponse;
 import com.agribank.qldv_api.response.organizationDraft.OrganizationDraftResponse;
 import com.agribank.qldv_api.service.OrganizationDraftService;
 import com.agribank.qldvutils.response.BaseResponse;
@@ -39,7 +39,7 @@ public class OrganizationDraftController {
 
     @PreAuthorize("@securityService.isBTCDUTeller(authentication)")
     @PostMapping("/approve")
-    public ResponseEntity<BaseResponse<List<OrganizationDraftApproveResponse>>> approve(@RequestBody List<OrganizationDraftRequest> request) {
+    public ResponseEntity<BaseResponse<List<DraftResponse>>> approve(@RequestBody List<DraftRequest> request) {
         return BaseResponse.success(service.approve(request));
     }
 

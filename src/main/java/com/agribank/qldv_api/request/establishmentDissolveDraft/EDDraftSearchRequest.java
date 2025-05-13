@@ -1,18 +1,16 @@
-package com.agribank.qldv_api.request.establishmentDissolve;
+package com.agribank.qldv_api.request.establishmentDissolveDraft;
 
 import com.agribank.qldvutils.request.PagingRequest;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EstablishmentDissolveSearchRequest extends PagingRequest {
+public class EDDraftSearchRequest extends PagingRequest {
     Integer type;
+    Integer status;
     String code;
-    String name;
 }
