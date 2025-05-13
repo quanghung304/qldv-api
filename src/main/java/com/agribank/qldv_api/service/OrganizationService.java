@@ -90,4 +90,12 @@ public class OrganizationService {
 
         return codeChild;
     }
+
+    public List<OrganizationResponse> findByParentCode(String code){
+        List<Organization> organizations = client.findByParentCode(code).getData();
+        if (Objects.isNull(organizations) || organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
 }

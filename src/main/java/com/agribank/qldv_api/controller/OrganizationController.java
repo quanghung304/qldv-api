@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "api/v1/organization", produces = "application/json")
 @RequiredArgsConstructor
@@ -24,5 +26,10 @@ public class OrganizationController {
     @GetMapping("/{code}")
     public ResponseEntity<BaseResponse<OrganizationResponse>> get(@PathVariable(name = "code") String code) {
         return BaseResponse.success(service.get(code));
+    }
+
+    @GetMapping("/get-children")
+    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getChildren(@RequestParam(name = "code") String code) {
+        return BaseResponse.success(service.findByParentCode(code));
     }
 }
