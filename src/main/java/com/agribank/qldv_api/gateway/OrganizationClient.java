@@ -41,4 +41,9 @@ public interface OrganizationClient {
     DefaultResponse<List<Organization>> findByChildCode(
             @RequestParam(name = "code") String code
     );
+
+    @GetMapping("api/v1/organization/find-by-parent-code")
+    DefaultResponse<List<Organization>> findByParentCode(
+            @RequestParam(name = "code") String code
+    );
 }
