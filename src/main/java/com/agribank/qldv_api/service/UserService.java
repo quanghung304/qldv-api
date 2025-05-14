@@ -42,6 +42,7 @@ public class UserService {
     private final UserClient userClient;
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
+    private final BranchService branchService;
 
     @Value("${app.service.publicKeyPath}")
     private String publicKeyPath;
@@ -132,7 +133,7 @@ public class UserService {
         //Check user chi nhanh
         BranchChildResponse branch = null;
         if (Objects.nonNull(request.getBrcd())) {
-            branch = getBranchChild(request.getBrcd());
+            branch = branchService.getBranchChild(request.getBrcd());
         }
         List<Integer> brcdChild = new ArrayList<>();
         brcdChild.add(userRequested.getBrcd());
@@ -155,20 +156,7 @@ public class UserService {
         }
     }
 
-    private BranchChildResponse getBranchChild(Integer brcd){
-        List<Integer> brcds = new ArrayList<>();
-        brcds.add(brcd);
-        try {
-            List<BranchChildResponse> branchChildResponses = iamClient.getBranchChildInfo(getAuthorHeader(), brcds).getData();
-            if (Objects.nonNull(branchChildResponses) || !branchChildResponses.isEmpty()) {
-                return branchChildResponses.get(0);
-            }
-            return null;
-        }catch (Exception e){
-            System.out.println("getBranchChild error");
-            return null;
-        }
-    }
+
 
     private Map<Integer, BranchResponse> getBranchInfo(List<Integer> brcds){
         brcds = brcds.stream().distinct().toList();

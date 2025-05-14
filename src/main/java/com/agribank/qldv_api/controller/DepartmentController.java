@@ -1,7 +1,6 @@
 package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.user.DepartmentResponse;
 import com.agribank.qldv_api.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
