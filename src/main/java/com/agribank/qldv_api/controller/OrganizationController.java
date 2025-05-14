@@ -29,7 +29,7 @@ public class OrganizationController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<BaseResponse<OrganizationResponse>> getOrganizationByUser(@RequestParam(name = "userId") String userId) {
+    public ResponseEntity<BaseResponse<OrganizationResponse>> getOrganizationByUser(@RequestParam(name = "userId", required = false) String userId) {
         return BaseResponse.success(service.findByUserId(userId));
     }
 

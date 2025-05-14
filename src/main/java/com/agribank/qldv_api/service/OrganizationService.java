@@ -100,6 +100,10 @@ public class OrganizationService {
     }
 
     public OrganizationResponse findByUserId(String userId) {
+        if (Objects.isNull(userId)){
+            UserDetailsImpl userRequested = userService.getUserRequested();
+            userId = userRequested.getId();
+        }
         Organization organization = client.findByUserId(userId).getData();
         if (Objects.isNull(organization)){
             return null;
