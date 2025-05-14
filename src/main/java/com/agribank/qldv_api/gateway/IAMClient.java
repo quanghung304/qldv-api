@@ -6,6 +6,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
 import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
+import com.agribank.qldv_api.response.user.DepartmentResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -83,5 +84,16 @@ public interface IAMClient {
     DefaultResponse<List<BranchChildResponse>> getBranchChildInfo(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody List<Integer> brcds
+    );
+
+    @GetMapping("api/v1/branch")
+    DefaultResponse<List<BranchResponse>> getAllBranch(
+            @RequestHeader("Authorization") String authorizationHeader
+    );
+
+    @GetMapping("api/v1/departments")
+    DefaultResponse<List<DepartmentResponse>> getDepartment(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(name = "brcd") Integer brcd
     );
 }
