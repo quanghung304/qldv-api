@@ -28,6 +28,11 @@ public class OrganizationController {
         return BaseResponse.success(service.get(code));
     }
 
+    @GetMapping("/user")
+    public ResponseEntity<BaseResponse<OrganizationResponse>> getOrganizationByUser(@RequestParam(name = "userId") String userId) {
+        return BaseResponse.success(service.findByUserId(userId));
+    }
+
     @GetMapping("/get-children")
     public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getChildren(@RequestParam(name = "code") String code) {
         return BaseResponse.success(service.findByParentCode(code));

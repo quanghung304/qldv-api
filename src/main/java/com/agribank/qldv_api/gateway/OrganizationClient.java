@@ -51,4 +51,9 @@ public interface OrganizationClient {
     DefaultResponse<List<Organization>> findAllByCode(
             @RequestParam List<String> codeList
     );
+
+    @GetMapping("api/v1/organization/find-by-user-id")
+    DefaultResponse<Organization> findByUserId(
+            @RequestParam(name = "userId") String userId
+    );
 }

@@ -296,6 +296,9 @@ public class UserService {
 
     public UserResponse getUserInfo(String userId){
         User user = findById(userId);
+        if (Objects.isNull(user)) {
+            throw new CommonException("Không tìm thấy người dùng. Vui lòng kiểm tra lại!");
+        }
         UserResponse userResponse = modelMapper.map(user, UserResponse.class);
 
         List<Integer> brcds = new ArrayList<>();
