@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.gateway.IAMClient;
+import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.utils.CommonUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -23,5 +26,20 @@ public class BranchService {
     private String getAuthorHeader(){
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         return  "Bearer " + CommonUtils.getAccessToken(servletRequest);
+    }
+
+    public BranchChildResponse getBranchChild(Integer brcd){
+        List<Integer> brcds = new ArrayList<>();
+        brcds.add(brcd);
+        try {
+            List<BranchChildResponse> branchChildResponses = client.getBranchChildInfo(getAuthorHeader(), brcds).getData();
+            if (Objects.nonNull(branchChildResponses) || !branchChildResponses.isEmpty()) {
+                return branchChildResponses.get(0);
+            }
+            return null;
+        }catch (Exception e){
+            System.out.println("getBranchChild error");
+            return null;
+        }
     }
 }
