@@ -98,4 +98,12 @@ public class OrganizationService {
         }
         return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
     }
+
+    public OrganizationResponse findByUserId(String userId) {
+        Organization organization = client.findByUserId(userId).getData();
+        if (Objects.isNull(organization)){
+            return null;
+        }
+        return modelMapper.map(organization, OrganizationResponse.class);
+    }
 }

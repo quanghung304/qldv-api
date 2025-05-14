@@ -60,7 +60,7 @@ public class UserController {
         return DefaultResponse.success(userService.delete(id), null);
     }
 
-    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
+//    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
     @GetMapping("/{id}")
     public ResponseEntity<DefaultResponse<UserResponse>> getUserInfo(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.getUserInfo(id));
