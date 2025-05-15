@@ -24,5 +24,6 @@ public class UserResponse {
     Integer deleted;
     String branchName;
     List<String> roles;
+    List<String> roleIds;
     String organizationCode;
 }

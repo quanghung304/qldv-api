@@ -324,7 +324,14 @@ public class UserService {
 
         List<Role> roles = getRoles(userId);
         if(!roles.isEmpty()){
-            userResponse.setRoles(roles.stream().map(Role::getName).toList());
+            List<String> roleNames = new ArrayList<>();
+            List<String> roleIds = new ArrayList<>();
+            for(Role role : roles){
+                roleNames.add(role.getName());
+                roleIds.add(role.getId());
+            }
+            userResponse.setRoles(roleNames);
+            userResponse.setRoleIds(roleIds);
         }
 
         return userResponse;
