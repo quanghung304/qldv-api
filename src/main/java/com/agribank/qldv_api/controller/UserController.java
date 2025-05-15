@@ -62,8 +62,13 @@ public class UserController {
 
 //    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultResponse<UserResponse>> getUserInfo(@PathVariable("id") String id) {
+    public ResponseEntity<DefaultResponse<UserResponse>> getUserById(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.getUserInfo(id));
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<DefaultResponse<UserResponse>> getUserInfo() {
+        return DefaultResponse.success(userService.getUserInfo(null));
     }
 
 

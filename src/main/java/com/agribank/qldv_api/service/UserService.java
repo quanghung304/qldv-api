@@ -1,9 +1,7 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.EUserStatus;
-import com.agribank.qldv_api.gateway.IAMClient;
-import com.agribank.qldv_api.gateway.RoleClient;
-import com.agribank.qldv_api.gateway.UserClient;
+import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
@@ -14,6 +12,8 @@ import com.agribank.qldv_api.response.role.RoleDtoResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.entity.OrganizationDraft;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
@@ -43,6 +43,7 @@ public class UserService {
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
     private final BranchService branchService;
+    private final OrganizationClient organizationClient;
 
     @Value("${app.service.publicKeyPath}")
     private String publicKeyPath;
@@ -159,6 +160,9 @@ public class UserService {
 
 
     private Map<Integer, BranchResponse> getBranchInfo(List<Integer> brcds){
+        if (brcds.isEmpty()){
+            return null;
+        }
         brcds = brcds.stream().distinct().toList();
 
         List<BranchResponse> branchResponses = new ArrayList<>();
@@ -295,11 +299,19 @@ public class UserService {
     }
 
     public UserResponse getUserInfo(String userId){
+        if (Objects.isNull(userId)){
+            userId = getUserRequested().getId();
+        }
         User user = findById(userId);
         if (Objects.isNull(user)) {
             throw new CommonException("Không tìm thấy người dùng. Vui lòng kiểm tra lại!");
         }
         UserResponse userResponse = modelMapper.map(user, UserResponse.class);
+
+        Organization o = organizationClient.findByUserId(userResponse.getId()).getData();
+        if (Objects.nonNull(o)) {
+            userResponse.setOrganizationCode(o.getCode());
+        }
 
         List<Integer> brcds = new ArrayList<>();
         brcds.add(user.getBrcd());
