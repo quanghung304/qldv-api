@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service;
 import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
@@ -11,9 +12,9 @@ import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
+import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.Organization;
-import com.agribank.qldvutils.entity.OrganizationDraft;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
@@ -44,6 +45,7 @@ public class UserService {
     private final UserLogService userLogService;
     private final BranchService branchService;
     private final OrganizationClient organizationClient;
+    private final UserRoleService userRoleService;
 
     @Value("${app.service.publicKeyPath}")
     private String publicKeyPath;
@@ -240,6 +242,14 @@ public class UserService {
         try {
             DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
             userClient.save(user);
+
+            if (!userUpdateRequest.getRoleIds().isEmpty()){
+                UserRoleRequest userRoleRequest = UserRoleRequest.builder()
+                        .userId(userUpdateRequest.getId())
+                        .roleIds(userUpdateRequest.getRoleIds())
+                        .build();
+                userRoleService.assignUserRole(userRoleRequest);
+            }
 
             userLogService.handlerWriteLogUpdate(userOld, user);
             return response.getMessage();

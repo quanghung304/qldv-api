@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Data
@@ -14,10 +16,15 @@ public class UserUpdateRequest {
     Integer brcd;
     Integer depId;
     String fullName;
+    List<String> roleIds;
 
     public void validate(){
         if (Objects.isNull(id)) {
             throw new ValidationException("id is null");
+        }
+
+        if (Objects.isNull(roleIds)) {
+            this.roleIds = new ArrayList<>();
         }
     }
 }
