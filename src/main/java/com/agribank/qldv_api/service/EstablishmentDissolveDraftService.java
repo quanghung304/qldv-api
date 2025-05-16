@@ -8,7 +8,7 @@ import com.agribank.qldv_api.request.DraftRequest;
 import com.agribank.qldv_api.request.establishmentDissolve.EstablishmentDissolveRequest;
 import com.agribank.qldv_api.request.establishmentDissolveDraft.EDDraftSearchRequest;
 import com.agribank.qldv_api.response.DraftResponse;
-import com.agribank.qldv_api.response.EstablishmentDissolveDraftResponse.EDDraftResponse;
+import com.agribank.qldv_api.response.establishmentDissolveDraft.EDDraftResponse;
 import com.agribank.qldvutils.entity.EstablishmentDissolve;
 import com.agribank.qldvutils.entity.EstablishmentDissolveDraft;
 import com.agribank.qldvutils.entity.Organization;
@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
+
 @Service
 @RequiredArgsConstructor
 public class EstablishmentDissolveDraftService {
@@ -28,9 +30,10 @@ public class EstablishmentDissolveDraftService {
     private final OrganizationService organizationService;
     private final EstablishmentDissolveService establishmentDissolveService;
     private final UserService userService;
-    private final Integer BRANCH_CODE_HEAD_QUARTER = 1001;
+    private final CheckAuthorityService checkAuthorityService;
 
     public String createOrUpdate(EstablishmentDissolveRequest request) {
+        checkAuthorityService.hasAuthorityOverOrganization(request.getCode());
         EstablishmentDissolveDraft establishmentDissolve = null;
         if (Objects.nonNull(request.getId())) {
             establishmentDissolve = client.findById(request.getId()).getData();
@@ -198,5 +201,19 @@ public class EstablishmentDissolveDraftService {
                 .approve(approve+"")
                 .message(mess)
                 .build();
+    }
+
+    public String delete(String id){
+        EstablishmentDissolveDraft establishmentDissolveDraft = client.findById(id).getData();
+        if (Objects.isNull(establishmentDissolveDraft)) {
+            throw new CommonException("Không xóa được yêu cầu! Vui lòng kiểm tra lại sau");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != establishmentDissolveDraft.getStatus()){
+            throw new CommonException("Yêu cầu đã được duyệt, nên bạn không thể xóa yêu cầu này!");
+        }
+
+        client.delete(id);
+        return "Xóa yêu cầu thành công!";
     }
 }

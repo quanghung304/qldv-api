@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.response.EstablishmentDissolveDraftResponse;
+package com.agribank.qldv_api.response.establishmentDissolveDraft;
 
 import com.agribank.qldv_api.response.establishmentDissolve.EstablishmentDissolveResponse;
 import lombok.AccessLevel;

@@ -23,30 +23,35 @@ import java.util.List;
 public class OrganizationDraftController {
     private final OrganizationDraftService service;
 
-    @PreAuthorize("@securityService.isBTCDUTeller(authentication)")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PostMapping("/create")
     public ResponseEntity<BaseResponse<OrganizationResponse>> create(@RequestBody OrganizationCreateRequest request) {
         request.validate();
         return BaseResponse.success(service.create(request));
     }
 
-    @PreAuthorize("@securityService.isBTCDUTeller(authentication)")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PutMapping("/update")
     public ResponseEntity<BaseResponse<OrganizationResponse>> update(@RequestBody OrganizationRequest request) {
         request.validate();
         return BaseResponse.success(service.update(request));
     }
 
-    @PreAuthorize("@securityService.isBTCDUTeller(authentication)")
+    @PreAuthorize("hasAuthority('QLDV_APPROVER')")
     @PostMapping("/approve")
     public ResponseEntity<BaseResponse<List<DraftResponse>>> approve(@RequestBody List<DraftRequest> request) {
         return BaseResponse.success(service.approve(request));
     }
 
-    @PreAuthorize("@securityService.isBTCDUTeller(authentication)")
     @PostMapping("/search")
     public ResponseEntity<BaseResponse<PageResponse<OrganizationDraftResponse>>> search(@RequestBody OrganizationDraftSearchRequest request) {
         request.validate();
         return BaseResponse.success(service.search(request));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PostMapping("/delete/{id}")
+    public ResponseEntity<BaseResponse<String>> delete(@PathVariable(name = "id") String id) {
+        return BaseResponse.success(service.delete(id), null);
     }
 }

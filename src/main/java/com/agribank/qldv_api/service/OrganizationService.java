@@ -15,13 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
+
 @Service
 @RequiredArgsConstructor
 public class OrganizationService {
     private final OrganizationClient client;
     private final ModelMapper modelMapper;
     private final UserService userService;
-    private final Integer BRANCH_CODE_HEAD_QUARTER = 1002;
 
     public Organization getByParentCodeMax(String parentCode){
         return  client.getByParentCodeMax(parentCode).getData();
@@ -47,11 +48,11 @@ public class OrganizationService {
 
         List<String> codeChild = getChildCode(userRequested.getOrganizationCode());
         if (Objects.nonNull(request.getCode()) && !codeChild.contains(request.getCode())
-                && BRANCH_CODE_HEAD_QUARTER < Integer.parseInt(userRequested.getOrganizationCode())){
+                && BRANCH_CODE_HEAD_QUARTER <= Integer.parseInt(userRequested.getOrganizationCode())){
             return response;
         }
 
-        if (BRANCH_CODE_HEAD_QUARTER < userRequested.getBrcd() && Objects.isNull(request.getCode())){
+        if (BRANCH_CODE_HEAD_QUARTER <= userRequested.getBrcd() && Objects.isNull(request.getCode())){
             request.setCode(userRequested.getOrganizationCode());
         }
 

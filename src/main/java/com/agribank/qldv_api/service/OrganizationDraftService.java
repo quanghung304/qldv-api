@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
+
 @Service
 @RequiredArgsConstructor
 public class OrganizationDraftService {
@@ -31,7 +33,7 @@ public class OrganizationDraftService {
     private final OrganizationReferenceService organizationReferenceService;
     private final OrganizationDraftClient client;
     private final UserService userService;
-    private final Integer BRANCH_CODE_HEAD_QUARTER = 1001;
+    private final CheckAuthorityService checkAuthorityService;
 
     //mã đang bộ sẽ được nhập khi nó là Đảng bộ cơ sở
     //Nhóm B mã Chi Đảng bộ sẽ lấy là mã CN
@@ -285,5 +287,18 @@ public class OrganizationDraftService {
 
     private UserDetailsImpl getUserRequested(){
         return userService.getUserRequested();
+    }
+
+    public String delete(String id){
+        OrganizationDraft organizationDraft = client.findById(id).getData();
+        if (Objects.isNull(organizationDraft)) {
+            throw new CommonException("Không xóa được yêu cầu. Vui lòng kiểm tra lại sau!");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != organizationDraft.getApprove()){
+            throw new CommonException("Yêu cầu đã được duyệt, nên bạn không thể xóa yêu cầu này!");
+        }
+        client.delete(id);
+        return "Xóa yêu cầu thành công";
     }
 }
