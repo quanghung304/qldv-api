@@ -1,13 +1,13 @@
 package com.agribank.qldv_api.request.organization;
 
 import com.agribank.qldvutils.request.PagingRequest;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrganizationSearchRequest extends PagingRequest {
     String name;
