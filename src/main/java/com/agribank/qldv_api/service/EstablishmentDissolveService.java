@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
+import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
+
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +24,6 @@ public class EstablishmentDissolveService {
     private final ModelMapper modelMapper;
     private final UserService userService;
     private final OrganizationService organizationService;
-    private final Integer BRANCH_CODE_HEAD_QUARTER = 1001;
 
     public void save(EstablishmentDissolve establishmentDissolve) {
         client.save(establishmentDissolve);

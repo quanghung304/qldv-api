@@ -5,8 +5,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.OrganizationDraft;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,5 +29,15 @@ public interface OrganizationDraftClient {
     @PostMapping("api/v1/organization-draft/search")
     DefaultResponse<PageResponse<OrganizationDraft>> search(
             @RequestBody OrganizationDraftSearchRequest requests
+    );
+
+    @DeleteMapping("api/v1/organization-draft/delete-by-id/{id}")
+    DefaultResponse<OrganizationDraft> delete(
+            @PathVariable(name = "id") String id
+    );
+
+    @GetMapping("api/v1/organization-draft/find-by-id/{id}")
+    DefaultResponse<OrganizationDraft> findById(
+            @PathVariable(name = "id") String id
     );
 }

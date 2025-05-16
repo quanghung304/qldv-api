@@ -31,6 +31,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
 
+import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
+
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +40,6 @@ public class UserService {
     private final RoleClient roleClient;
     @Value("${qldv.app.id}")
     private Integer QLDV_APP_ID;
-    private final Integer BRANCH_CODE_HEAD_QUARTER = 1001;
     private final IAMClient iamClient;
     private final UserClient userClient;
     private final ModelMapper modelMapper;
