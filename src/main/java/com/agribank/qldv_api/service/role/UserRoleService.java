@@ -1,11 +1,11 @@
 package com.agribank.qldv_api.service.role;
 
+import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.gateway.UserRoleClient;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 
 import com.agribank.qldv_api.response.role.RoleResponse;
-import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.entity.UserRole;
@@ -22,11 +22,11 @@ public class UserRoleService {
     private final ModelMapper modelMapper;
 
     private final UserRoleClient userRoleClient;
-    private final UserService userService;
+    private final UserClient userClient;
     private final RoleService roleService;
 
     public String assignUserRole(UserRoleRequest userRoleRequest) {
-        User user = userService.findById(userRoleRequest.getUserId());
+        User user = userClient.findById(userRoleRequest.getUserId()).getData();
         if (Objects.isNull(user)) {
             throw new CommonException("User not found");
         }
