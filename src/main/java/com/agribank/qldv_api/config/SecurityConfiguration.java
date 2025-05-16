@@ -2,6 +2,7 @@ package com.agribank.qldv_api.config;
 
 import com.agribank.qldv_api.jwt.JwtTokenFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +29,9 @@ import java.util.Arrays;
 )
 public class SecurityConfiguration {
     private final JwtTokenFilter jwtTokenFilter;
+
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
@@ -56,9 +60,7 @@ public class SecurityConfiguration {
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8085", "http://localhost:3000"
-        ));
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
