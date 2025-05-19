@@ -2,9 +2,9 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.DevelopmentPlan;
-import com.agribank.qldvutils.request.developPlan.DevelopPrntBrcdRequest;
-import com.agribank.qldvutils.request.developPlan.GetChildPlanRequest;
-import com.agribank.qldvutils.request.developPlan.GetPlanRequest;
+import com.agribank.qldvutils.request.developplan.DevelopPrntBrcdRequest;
+import com.agribank.qldvutils.request.developplan.GetChildPlanRequest;
+import com.agribank.qldvutils.request.developplan.GetPlanRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -8,7 +8,7 @@ import com.agribank.qldv_api.response.developPlan.DevelopPlanResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldvutils.entity.DevelopmentPlanDetail;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.developPlan.DevelopPlanUpdateRequest;
+import com.agribank.qldvutils.request.developplan.DevelopPlanUpdateRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

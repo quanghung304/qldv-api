@@ -2,7 +2,7 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.DevelopmentPlanDetail;
-import com.agribank.qldvutils.request.developPlan.DevelopPlanUpdateRequest;
+import com.agribank.qldvutils.request.developplan.DevelopPlanUpdateRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -21,5 +21,4 @@ public class OrganizationTransformRequest {
     String decisionNumber;
     Date decisionDate;
     Date effectiveDate;
-    String status;
 }

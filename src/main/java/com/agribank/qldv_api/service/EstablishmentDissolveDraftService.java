@@ -32,7 +32,7 @@ public class EstablishmentDissolveDraftService {
     private final UserService userService;
     private final CheckAuthorityService checkAuthorityService;
 
-    public String createOrUpdate(EstablishmentDissolveRequest request) {
+    public EstablishmentDissolveDraft createOrUpdate(EstablishmentDissolveRequest request) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getCode());
         EstablishmentDissolveDraft establishmentDissolve = null;
         if (Objects.nonNull(request.getId())) {
@@ -45,7 +45,7 @@ public class EstablishmentDissolveDraftService {
         }
 
         if (EReport01Type.getValue(request.getType()) != EReport01Type.ESTABLISH.getId()
-                || EReport01Type.getValue(request.getType()) != EReport01Type.DISSOLVE.getId()){
+                && EReport01Type.getValue(request.getType()) != EReport01Type.DISSOLVE.getId()){
             throw new CommonException("Kiểm tra lại type");
         }
 
@@ -69,8 +69,8 @@ public class EstablishmentDissolveDraftService {
         establishmentDissolve.setUserBrcdCreated(userRequested.getBrcd());
         establishmentDissolve.setUsernameCreated(userRequested.getUsername());
 
-        client.save(establishmentDissolve);
-        return "Tạo yêu cầu thành công!";
+        return client.save(establishmentDissolve).getData();
+//        return "Tạo yêu cầu thành công!";
     }
 
     public PageResponse<EDDraftResponse> search(EDDraftSearchRequest request){
