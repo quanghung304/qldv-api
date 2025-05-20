@@ -60,9 +60,9 @@ public class EstablishmentDissolveDraftService {
         establishmentDissolve.setName(request.getName());
         establishmentDissolve.setForm(request.getForm());
         establishmentDissolve.setType(request.getType());
-        establishmentDissolve.setResolutionNumber(request.getResolutionNumber());
-        establishmentDissolve.setResolutionDate(request.getResolutionDate());
-        establishmentDissolve.setEstablishmentDecisionNumber(request.getEstablishmentDecisionNumber());
+        establishmentDissolve.setConclusionNumber(request.getConclusionNumber());
+        establishmentDissolve.setConclusionDate(request.getConclusionDate());
+        establishmentDissolve.setDecisionNumber(request.getDecisionNumber());
         establishmentDissolve.setDecisionDate(request.getDecisionDate());
         establishmentDissolve.setEffectiveDate(request.getEffectiveDate());
         establishmentDissolve.setStatus(EApprovalStatus.PENDING.getId());
