@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.organizationTransform;
 
+import com.agribank.qldv_api.response.BaseFormDto;
 import jakarta.persistence.Column;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -9,16 +10,8 @@ import java.sql.Date;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrganizationTransformRequest {
+public class OrganizationTransformRequest extends BaseFormDto {
     String organizationCode;
-    String oldName;
-    String oldForm;
     String newName;
     String newForm;
-    String decisionCommittee;
-    String conclusionNumber;
-    Date conclusionDate;
-    String decisionNumber;
-    Date decisionDate;
-    Date effectiveDate;
 }

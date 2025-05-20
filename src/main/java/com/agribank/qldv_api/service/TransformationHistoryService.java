@@ -2,12 +2,15 @@ package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EApprovalStatus;
+import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.gateway.OrganizationClient;
+import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.TransformationHistoryDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.ApproveRequest;
 import com.agribank.qldv_api.request.organizationTransform.OrganizationTransformRequest;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.TransformationHistoryDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.RequiredArgsConstructor;
@@ -22,18 +25,34 @@ import java.util.*;
 public class TransformationHistoryService {
     private final TransformationHistoryDraftClient historyDraftClient;
     private final OrganizationClient organizationClient;
+    private final RequestClient requestClient;
     private final CheckAuthorityService checkAuthorityService;
+    private final OrganizationService organizationService;
+    private final RequestService requestService;
     private final ModelMapper modelMapper;
 
-    public TransformationHistoryDraft createTransformRequest(OrganizationTransformRequest request) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    private final EForm form = EForm.BIEU_02;
+    private final Set<String> ignoredProperties = Set.of("id", "createdBy", "approvedBy", "created_at", "updated_at");
 
+    public TransformationHistoryDraft createTransformRequest(OrganizationTransformRequest request) {
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+        if (Objects.isNull(organization)){
+            throw new CommonException("Không tồn tại TCD có mã: " + request.getOrganizationCode());
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+
         TransformationHistoryDraft draft = modelMapper.map(request, TransformationHistoryDraft.class);
         draft.setSubmitter(userDetails.getStaffCode());
         draft.setStatus(EApprovalStatus.PENDING.getId());
+        TransformationHistoryDraft transformationHistoryDraft = historyDraftClient.save(draft).getData();
 
-        return historyDraftClient.save(draft).getData();
+        Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, TransformationHistoryDraft.class, ignoredProperties);
+        transformRequest.setCreatedBy(userDetails.getStaffCode());
+        requestClient.save(transformRequest);
+
+        return transformationHistoryDraft;
     }
 
     public List<TransformationHistoryDraft> getDrafttList(Integer status) {

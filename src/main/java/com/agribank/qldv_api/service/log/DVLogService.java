@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.service.log;
 
-import com.agribank.qldv_api.enums.EApiLogType;
+import com.agribank.qldv_api.enums.EAction;
 import com.agribank.qldv_api.gateway.ApiLogClient;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.agribank.qldvutils.entity.DV;
@@ -24,8 +24,8 @@ public class DVLogService extends ApiLogBaseService{
     public void writeLogRegister(List<DV> dvs) {
         ApiLog apiLog = initApiLog();
         apiLog.setObjectReference(OBJECT_REFERENCE);
-        apiLog.setAction(EApiLogType.INSERT.getValue());
-        apiLog.setDataType(EApiLogType.INSERT.name());
+        apiLog.setAction(EAction.INSERT.getValue());
+        apiLog.setDataType(EAction.INSERT.name());
         ExecutorService executor = Executors.newFixedThreadPool(5);
         executor.submit(() -> {
             try {
@@ -50,8 +50,8 @@ public class DVLogService extends ApiLogBaseService{
 //        ApiLog apiLog = initApiLog();
 //        apiLog.setId(UUID.randomUUID().toString());
 //        apiLog.setObjectReference(OBJECT_REFERENCE);
-//        apiLog.setAction(EApiLogType.INSERT.getValue());
-//        apiLog.setDataType(EApiLogType.INSERT.name());
+//        apiLog.setAction(EAction.INSERT.getValue());
+//        apiLog.setDataType(EAction.INSERT.name());
 //        ExecutorService executor = Executors.newFixedThreadPool(5);
 //        executor.submit(() -> {
 //            try {

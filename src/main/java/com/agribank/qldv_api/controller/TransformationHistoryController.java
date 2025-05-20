@@ -36,7 +36,7 @@ public class TransformationHistoryController {
     }
 
     @PreAuthorize("hasAuthority('QLDV_APPROVER')")
-    @PutMapping("update")
+    @PutMapping()
     public ResponseEntity<DefaultResponse<Object>> update(@RequestBody List<ApproveRequest> requestList) {
         return DefaultResponse.success(historyService.update(requestList));
     }

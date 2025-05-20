@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.service;
 
-import com.agribank.qldv_api.enums.EApiLogType;
+import com.agribank.qldv_api.enums.EAction;
 import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
@@ -73,12 +73,12 @@ public class AuthenticationService {
 
             User userNew = userClient.getUserByEmail(userIamResponse.getEmail()).getData();
             User userOld = new User();
-            String action = EApiLogType.UPDATE.getValue();
+            String action = EAction.UPDATE.getValue();
 
             if (Objects.isNull(userNew)) {
                 userNew = new User();
                 userNew.setId(UUID.randomUUID().toString());
-                action = EApiLogType.INSERT.getValue();
+                action = EAction.INSERT.getValue();
                 userNew.setIdIam(userIamResponse.getId());
                 userNew.setEmail(userIamResponse.getEmail());
                 userNew.setUsername(userIamResponse.getUsername());
@@ -135,7 +135,7 @@ public class AuthenticationService {
     }
 
     private void writeLog(String action, User userNew, User userOld, IAMRegisterRequest registerRequest) {
-        if (EApiLogType.UPDATE.getValue().equals(action)) {
+        if (EAction.UPDATE.getValue().equals(action)) {
             userLogService.handlerWriteLogUpdate(userOld, userNew);
         }else {
             List<IAMRegisterRequest> iamRegisterRequests = new ArrayList<>();

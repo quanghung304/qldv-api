@@ -7,7 +7,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public enum EApiLogType {
+public enum EAction {
     INSERT("Thêm mới",0),
     UPDATE("Cập nhật", 1),
     DELETE("Xóa", 2);

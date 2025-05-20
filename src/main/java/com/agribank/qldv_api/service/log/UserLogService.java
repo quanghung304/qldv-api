@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.service.log;
 
-import com.agribank.qldv_api.enums.EApiLogType;
+import com.agribank.qldv_api.enums.EAction;
 import com.agribank.qldv_api.gateway.ApiLogClient;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.agribank.qldvutils.entity.User;
@@ -28,8 +28,8 @@ public class UserLogService extends ApiLogBaseService{
             try {
                 apiLog.setObjectReference(OBJECT_REFERENCE);
                 apiLog.setReferenceId(userOld.getId());
-                apiLog.setAction(EApiLogType.UPDATE.getValue());
-                apiLog.setDataType(EApiLogType.UPDATE.name());
+                apiLog.setAction(EAction.UPDATE.getValue());
+                apiLog.setDataType(EAction.UPDATE.name());
                 List<Field> propertyChange = handleGetPropertyChange(userNew, userOld, User.class, IGNORED_PROPERTIES);
                 List<String> propertyCustom = List.of();
                 String description = handleBuildContent(userNew, userOld, User.class, propertyChange, propertyCustom);
@@ -45,8 +45,8 @@ public class UserLogService extends ApiLogBaseService{
     public void handlerWriteLogDelete(User user) {
         ApiLog apiLog = initApiLog();
         apiLog.setObjectReference(OBJECT_REFERENCE);
-        apiLog.setAction(EApiLogType.DELETE.getValue());
-        apiLog.setDataType(EApiLogType.DELETE.name());
+        apiLog.setAction(EAction.DELETE.getValue());
+        apiLog.setDataType(EAction.DELETE.name());
         ExecutorService executor = Executors.newFixedThreadPool(5);
         executor.submit(() -> {
             try {
