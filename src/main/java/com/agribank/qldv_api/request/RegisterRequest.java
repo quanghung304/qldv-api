@@ -30,9 +30,9 @@ public class RegisterRequest {
 
     public void validate() {
         if (Objects.isNull(email)) {
-            throw new CommonException("email is required");
+            throw new CommonException("Email is required");
         }  else if (Objects.isNull(brcd)) {
-            throw new CommonException("brcd is required");
+            throw new CommonException("Brcd is required");
         }
 
         if (!validateEmail(email)){
@@ -40,11 +40,11 @@ public class RegisterRequest {
         }
 
         if (Objects.isNull(roleIds) || roleIds.isEmpty()) {
-            throw new CommonException("roleIds is required");
+            throw new CommonException("Roleids is required");
         }
         this.email = email.trim().toLowerCase();
         if (Objects.isNull(fullName) || fullName.isBlank()) {
-            throw new CommonException("fullName is required");
+            throw new CommonException("FullName is required");
         }
     }
 
