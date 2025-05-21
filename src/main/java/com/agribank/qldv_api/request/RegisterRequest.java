@@ -26,7 +26,7 @@ public class RegisterRequest {
     String userKind;
     @Builder.Default
     String password = "Agribank@123";
-    List<String> roleids;
+    List<String> roleIds;
 
     public void validate() {
         if (Objects.isNull(email)) {
@@ -39,7 +39,7 @@ public class RegisterRequest {
             throw new CommonException("Không đúng định dạng email agribank. Vui lòng kiểm tra lại!");
         }
 
-        if (Objects.isNull(roleids) || roleids.isEmpty()) {
+        if (Objects.isNull(roleIds) || roleIds.isEmpty()) {
             throw new CommonException("Roleids is required");
         }
         this.email = email.trim().toLowerCase();
