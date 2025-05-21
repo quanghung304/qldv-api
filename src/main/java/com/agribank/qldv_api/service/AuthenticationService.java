@@ -125,7 +125,7 @@ public class AuthenticationService {
                 dvService.create(dvRequests);
             }
 
-            assignRole(userNew.getId(), request.getRoleids());
+            assignRole(userNew.getId(), request.getRoleIds());
             //ghi log
             writeLog(action, userNew, userOld, registerRequest);
             return modelMapper.map(savedUserResponse.getData(), UserResponse.class);
