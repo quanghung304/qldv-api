@@ -26,25 +26,25 @@ public class RegisterRequest {
     String userKind;
     @Builder.Default
     String password = "Agribank@123";
-    List<String> roleids;
+    List<String> roleIds;
 
     public void validate() {
         if (Objects.isNull(email)) {
-            throw new CommonException("Email is required");
+            throw new CommonException("email is required");
         }  else if (Objects.isNull(brcd)) {
-            throw new CommonException("Brcd is required");
+            throw new CommonException("brcd is required");
         }
 
         if (!validateEmail(email)){
             throw new CommonException("Không đúng định dạng email agribank. Vui lòng kiểm tra lại!");
         }
 
-        if (Objects.isNull(roleids) || roleids.isEmpty()) {
-            throw new CommonException("Roleids is required");
+        if (Objects.isNull(roleIds) || roleIds.isEmpty()) {
+            throw new CommonException("roleIds is required");
         }
         this.email = email.trim().toLowerCase();
         if (Objects.isNull(fullName) || fullName.isBlank()) {
-            throw new CommonException("FullName is required");
+            throw new CommonException("fullName is required");
         }
     }
 
