@@ -31,9 +31,7 @@ public class DVLogService extends ApiLogBaseService{
             try {
                 List<String> descriptions = new ArrayList<>();
                 for (DV dv : dvs) {
-                    List<Field> propertyChange = handleGetPropertyChange(dv, new DV(), DV.class, IGNORED_PROPERTIES);
-                    List<String> propertyCustom = List.of();
-                    descriptions.add(handleBuildContent(dv, new DV(), DV.class, propertyChange, propertyCustom));
+                    descriptions.add(String.format("DV: staffCode: <%s>, fullName: <%s>", dv.getCode(), dv.getFullName()));
                 }
 
                 apiLog.setDescription(String.join("\n", descriptions));

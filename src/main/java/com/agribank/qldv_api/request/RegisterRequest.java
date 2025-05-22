@@ -46,6 +46,14 @@ public class RegisterRequest {
         if (Objects.isNull(fullName) || fullName.isBlank()) {
             throw new CommonException("FullName is required");
         }
+
+        if (Objects.isNull(staffCode)) {
+            throw new CommonException("StaffCode is required");
+        }
+
+        if (Objects.isNull(brcd)) {
+            throw new CommonException("Brcd is required");
+        }
     }
 
     private boolean validateEmail(String email) {
