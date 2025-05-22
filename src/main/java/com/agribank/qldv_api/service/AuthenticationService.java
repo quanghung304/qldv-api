@@ -8,6 +8,7 @@ import com.agribank.qldv_api.request.RegisterRequest;
 import com.agribank.qldv_api.request.dv.DVRequest;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.user.ADResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
@@ -69,6 +70,12 @@ public class AuthenticationService {
 
         UserIamResponse userIamResponse = null;
         try {
+            DefaultResponse<ADResponse> adResponse = iamClient.checkAd(authorHeader, registerRequest.getUsername(), 0);
+
+            if (Objects.isNull(adResponse) || Objects.isNull(adResponse.getData())) {
+                throw new CommonException("Email không đúng định dạng Agribank vui lòng kiểm tra lại");
+            }
+
             EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode()+"");
             if (Objects.isNull(employeeInfoDto)) {
                 throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");

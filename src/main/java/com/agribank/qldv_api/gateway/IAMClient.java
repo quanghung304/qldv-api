@@ -6,8 +6,10 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
 import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
+import com.agribank.qldv_api.response.user.ADResponse;
 import com.agribank.qldv_api.response.user.DepartmentResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,13 @@ public interface IAMClient {
     DefaultResponse<UserIamResponse> register(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody IAMRegisterRequest request
+    );
+
+    @GetMapping("api/v1/auth/ad/check-user")
+    DefaultResponse<ADResponse> checkAd(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(name = "username") String username,
+            @RequestParam(name = "ldapType") Integer ldapType
     );
 
     @GetMapping("api/v1/check/token")
