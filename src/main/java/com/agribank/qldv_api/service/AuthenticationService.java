@@ -69,11 +69,12 @@ public class AuthenticationService {
 
         UserIamResponse userIamResponse = null;
         try {
-            DefaultResponse<UserIamResponse> response = iamClient.register(authorHeader, registerRequest);
+            EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode()+"");
+            if (Objects.isNull(employeeInfoDto)) {
+                throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
+            }
 
-            userIamResponse = response.getData();
-
-            User userNew = userClient.getUserByEmail(userIamResponse.getEmail()).getData();
+            User userNew = userClient.getUserByEmail(request.getEmail()).getData();
             User userOld = new User();
             String action = EApiLogType.UPDATE.getValue();
 
@@ -99,18 +100,11 @@ public class AuthenticationService {
                 userNew.setDeleted(userNew.getDeleted());
             }
 
-            userNew.setFullName(userIamResponse.getFullName());
-            userNew.setPhone(userIamResponse.getPhone());
-            userNew.setVneid(userIamResponse.getVneid());
-            userNew.setBrcd(userIamResponse.getBrcd());
-            userNew.setDepId(userIamResponse.getDepartment().getId());
-            userNew.setActive(userIamResponse.getActive());
+            userNew.setFullName(request.getFullName());
+            userNew.setActive(0);
             userNew.setDeleted(0);
-
-            EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode()+"");
-            if (Objects.isNull(employeeInfoDto)) {
-                throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
-            }
+            userNew.setBrcd(request.getBrcd());
+            userNew.setDepId(request.getDepId());
 
             if (!String.valueOf(request.getBrcd()).equals(employeeInfoDto.getBrcd())){
                 throw new CommonException("Kiểm tra lại mã nhân viên và chi nhánh trực thuộc");
@@ -121,10 +115,14 @@ public class AuthenticationService {
             if (!savedUserResponse.getSuccess() || Objects.isNull(savedUserResponse.getData())) {
                 throw new CommonException(savedUserResponse.getMessage());
             }
-            createDV(request, userIamResponse, employeeInfoDto);
 
             assignRole(userNew.getId(), request.getRoleIds());
             //ghi log
+            DefaultResponse<UserIamResponse> response = iamClient.register(authorHeader, registerRequest);
+
+            userIamResponse = response.getData();
+            createDV(request, userIamResponse, employeeInfoDto);
+
             writeLog(action, userNew, userOld, registerRequest);
             return modelMapper.map(savedUserResponse.getData(), UserResponse.class);
         } catch (Exception e) {
