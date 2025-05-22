@@ -22,6 +22,7 @@ public class UserDetailsImpl implements UserDetails{
 	private Integer brcd;
 	private Integer depId;
 	private String organizationCode;
+	private String formOrganization;
     private Collection<? extends GrantedAuthority> authorities;
 
 //    public static UserDetailsImpl fromModel(User user){
