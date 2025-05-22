@@ -7,7 +7,6 @@ import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldv_api.service.log.DVLogService;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.request.SearchDVRequest;
-import com.agribank.qldvutils.response.DefaultListResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -46,9 +45,13 @@ public class DVService {
 
     public String create(List<DVRequest> requests) {
         List<DV> dvs = requests.stream().map(dv -> modelMapper.map(dv, DV.class)).toList();
-        DefaultListResponse<DV> response = dvClient.saveAll(dvs);
+        DefaultResponse<List<DV>> response = dvClient.saveAll(dvs);
 
         dvLogService.writeLogRegister(dvs);
         return response.getMessage();
+    }
+
+    public DV findById(String id) {
+        return dvClient.findById(id).getData();
     }
 }
