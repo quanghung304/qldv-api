@@ -40,6 +40,14 @@ public class DefaultResponse<T> {
                 .build(), HttpStatus.OK);
     }
 
+    public static <T> ResponseEntity<DefaultResponse<T>> error(String message, T data) {
+        return new ResponseEntity<>(DefaultResponse.<T>builder()
+                .success(false)
+                .data(data)
+                .message(message)
+                .build(), HttpStatus.OK);
+    }
+
     public static <T> ResponseEntity<DefaultResponse<T>> errorAccessDeny(String message) {
         return new ResponseEntity<>(DefaultResponse.<T>builder()
                 .success(false)

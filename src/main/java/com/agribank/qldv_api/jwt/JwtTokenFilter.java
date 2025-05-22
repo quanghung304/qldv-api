@@ -4,11 +4,11 @@ import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
-import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.role.RoleService;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
+import com.agribank.qldvutils.exception.CommonException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,49 +45,52 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        final String token;
-        if(!hasAuthorizationBearer(request)){
+        try {
+            final String token;
+            if (!hasAuthorizationBearer(request)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+            token = getAccessToken(request);
+            UserIamResponse userIamResponse = iamClient.verifyToken("Bearer " + token).getData();
+
+            if (Objects.isNull(userIamResponse)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            UserDto user = userClient.getUserInfo(userIamResponse.getEmail()).getData();
+
+            if (Objects.isNull(user) && userIamResponse.getUsername().equals("admin")) {
+                User admin = generateAdminAccount(userIamResponse);
+                user = modelMapper.map(admin, UserDto.class);
+            }
+
+            List<Role> roles = roleService.getRoleByUserId(user.getId());
+            List<GrantedAuthority> roleNames = new ArrayList<>();
+            if (!roles.isEmpty()) {
+                roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+            }
+
+            UserDetailsImpl userDetails = new UserDetailsImpl();
+            userDetails.setId(user.getId());
+            userDetails.setStaffCode(user.getStaffCode());
+            userDetails.setUsername(userIamResponse.getUsername());
+            userDetails.setEmail(userIamResponse.getEmail());
+            userDetails.setBrcd(user.getBrcd());
+            userDetails.setOrganizationCode(user.getOrganizationCode());
+            userDetails.setIdIam(userIamResponse.getId());
+            userDetails.setDepId(user.getDepId());
+            userDetails.setFullName(user.getFullName());
+            userDetails.setAuthorities(roleNames);
+
+            Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
             filterChain.doFilter(request, response);
-            return;
+        } catch (Exception e) {
+            throw new CommonException("Token khong hop le.");
         }
-        token = getAccessToken(request);
-        UserIamResponse userIamResponse = iamClient.verifyToken("Bearer " + token).getData();
-
-        if (Objects.isNull(userIamResponse)){
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        UserDto user = userClient.getUserInfo(userIamResponse.getEmail()).getData();
-
-        if (Objects.isNull(user) && userIamResponse.getUsername().equals("admin")) {
-            User admin = generateAdminAccount(userIamResponse);
-            user = modelMapper.map(admin, UserDto.class);
-        }
-
-        List<Role> roles = roleService.getRoleByUserId(user.getId());
-        List<GrantedAuthority> roleNames = new ArrayList<>();
-        if (!roles.isEmpty()){
-            roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
-        }
-
-        UserDetailsImpl userDetails = new UserDetailsImpl();
-        userDetails.setId(user.getId());
-        userDetails.setStaffCode(user.getStaffCode());
-        userDetails.setUsername(userIamResponse.getUsername());
-        userDetails.setEmail(userIamResponse.getEmail());
-        userDetails.setBrcd(user.getBrcd());
-        userDetails.setOrganizationCode(user.getOrganizationCode());
-        userDetails.setFormOrganization(user.getFormOrganization());
-        userDetails.setIdIam(userIamResponse.getId());
-        userDetails.setDepId(user.getDepId());
-        userDetails.setFullName(user.getFullName());
-        userDetails.setAuthorities(roleNames);
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "" ,userDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        filterChain.doFilter(request, response);
     }
 
     private boolean hasAuthorizationBearer(HttpServletRequest request){

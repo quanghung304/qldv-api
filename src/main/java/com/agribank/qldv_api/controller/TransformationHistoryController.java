@@ -6,6 +6,7 @@ import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.TransformationHistoryService;
 import com.agribank.qldvutils.entity.TransformationHistoryDraft;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +22,7 @@ public class TransformationHistoryController {
 
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PostMapping("create")
-    public ResponseEntity<DefaultResponse<TransformationHistoryDraft>> createTransformRequest(@RequestBody OrganizationTransformRequest request) {
+    public ResponseEntity<DefaultResponse<TransformationHistoryDraft>> createTransformRequest(@RequestBody @Valid OrganizationTransformRequest request) {
         return DefaultResponse.success(historyService.createTransformRequest(request));
     }
 

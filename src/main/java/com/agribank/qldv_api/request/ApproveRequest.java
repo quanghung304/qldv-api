@@ -9,4 +9,5 @@ import lombok.experimental.FieldDefaults;
 public class ApproveRequest {
     String id;
     Integer status;
+    String deniedReason;
 }
