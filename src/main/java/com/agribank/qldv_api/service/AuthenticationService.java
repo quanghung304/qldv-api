@@ -128,9 +128,11 @@ public class AuthenticationService {
 
             userIamResponse = response.getData();
 
+            userNew = userClient.getUserByEmail(request.getEmail()).getData();
             userNew.setPhone(userIamResponse.getPhone());
             userNew.setVneid(userIamResponse.getVneid());
             userNew.setIdIam(userIamResponse.getId());
+
             savedUserResponse = userClient.save(userNew);
             createDV(request, userIamResponse, employeeInfoDto);
 
