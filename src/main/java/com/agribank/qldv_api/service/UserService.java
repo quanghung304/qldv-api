@@ -145,10 +145,6 @@ public class UserService {
             brcdChild = branch.getBranchChild().stream().map(BranchResponse::getBrcd).toList();
         }
 
-        if (userRequested.getBrcd() <= BRANCH_CODE_HEAD_QUARTER) {
-            request.setBrcd(null);
-        }
-
         if (userRequested.getBrcd() > BRANCH_CODE_HEAD_QUARTER
                 && Objects.nonNull(request.getBrcd()) && !brcdChild.contains(request.getBrcd())
         ){
