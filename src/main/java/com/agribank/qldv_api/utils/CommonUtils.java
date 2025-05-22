@@ -14,9 +14,11 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.sql.Timestamp;
 
 public class CommonUtils {
     public static final Integer PAGE_SIZE_DEFAULT = 10;
@@ -124,6 +126,16 @@ public class CommonUtils {
         Gson gson = new Gson();
         String objStr = gson.toJson(sourceObject);
         return gson.fromJson(objStr, sourceObject.getClass());
+    }
+
+    public static Timestamp timestampConvert(String dateStr){
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+            Date date = sdf.parse(dateStr);
+            return new Timestamp(date.getTime());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 }

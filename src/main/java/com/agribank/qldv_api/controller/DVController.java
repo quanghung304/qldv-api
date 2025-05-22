@@ -1,9 +1,10 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.request.dv.SearchDVRequest;
+
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldv_api.service.DVService;
+import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,6 @@ public class DVController {
 
     @PostMapping("/search")
     public ResponseEntity<DefaultResponse<PageResponse<DVResponse>>> search(@RequestBody SearchDVRequest request) {
-        request.validate();
         return DefaultResponse.success(service.search(request));
     }
 }

@@ -25,7 +25,7 @@ public interface BaseClient<TEntity, TID> {
     DefaultListResponse<TEntity> findAll();
 
     @GetMapping("/find-by-ids")
-    DefaultListResponse<TEntity> findAllById( @RequestParam("ids") List<TID> ids);
+    DefaultListResponse<TEntity> findAllById(List<TID> ids);
 
     @DeleteMapping("/delete/{id}")
     BaseResponse<String> deleteById( @PathVariable("id") TID id);
@@ -34,7 +34,7 @@ public interface BaseClient<TEntity, TID> {
     BaseResponse<String> delete( @RequestBody TEntity entityObj);
 
     @DeleteMapping("/delete-by-ids")
-    BaseResponse<String> deleteByIds( @RequestParam("ids") List<TID> ids);
+    BaseResponse<String> deleteByIds(List<TID> ids);
 
     @DeleteMapping("/delete-all")
     BaseResponse<String> deleteAll( @RequestBody List<TEntity> entityList);

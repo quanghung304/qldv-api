@@ -12,9 +12,9 @@ import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
 import com.agribank.qldv_api.service.log.UserLogService;
-import com.agribank.qldv_api.service.role.RoleService;
 import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,7 +46,7 @@ public class AuthenticationService {
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
     private final AuthenticationLogService authenticationLogService;
-    private final RoleService roleService;
+    private final EmployeeInfoService employeeInfoService;
 
     public UserResponse register(RegisterRequest request) {
         IAMRegisterRequest registerRequest = IAMRegisterRequest.builder()
@@ -66,10 +66,12 @@ public class AuthenticationService {
 
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String authorHeader = "Bearer " + CommonUtils.getAccessToken(servletRequest);
+
+        UserIamResponse userIamResponse = null;
         try {
             DefaultResponse<UserIamResponse> response = iamClient.register(authorHeader, registerRequest);
 
-            UserIamResponse userIamResponse = response.getData();
+            userIamResponse = response.getData();
 
             User userNew = userClient.getUserByEmail(userIamResponse.getEmail()).getData();
             User userOld = new User();
@@ -104,26 +106,22 @@ public class AuthenticationService {
             userNew.setDepId(userIamResponse.getDepartment().getId());
             userNew.setActive(userIamResponse.getActive());
             userNew.setDeleted(0);
-            if (Objects.nonNull(userIamResponse.getStaffCode())){
-                userNew.setStaffCode(String.valueOf(userIamResponse.getStaffCode()));
+
+            EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode()+"");
+            if (Objects.isNull(employeeInfoDto)) {
+                throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
             }
+
+            if (!String.valueOf(request.getBrcd()).equals(employeeInfoDto.getBrcd())){
+                throw new CommonException("Kiểm tra lại mã nhân viên và chi nhánh trực thuộc");
+            }
+            userNew.setStaffCode(String.valueOf(request.getStaffCode()));
 
             DefaultResponse<User> savedUserResponse = userClient.save(userNew);
             if (!savedUserResponse.getSuccess() || Objects.isNull(savedUserResponse.getData())) {
                 throw new CommonException(savedUserResponse.getMessage());
             }
-
-            if (Objects.nonNull(userIamResponse.getStaffCode())) {
-                DVRequest dvRequest = DVRequest.builder()
-                        .code(String.valueOf(userIamResponse.getStaffCode()))
-                        .fullName(userIamResponse.getFullName())
-                        .gender(userIamResponse.getGender())
-                        .vneid(String.valueOf(userIamResponse.getVneid()))
-                        .build();
-                List<DVRequest> dvRequests = new ArrayList<>();
-                dvRequests.add(dvRequest);
-                dvService.create(dvRequests);
-            }
+            createDV(request, userIamResponse, employeeInfoDto);
 
             assignRole(userNew.getId(), request.getRoleIds());
             //ghi log
@@ -131,6 +129,28 @@ public class AuthenticationService {
             return modelMapper.map(savedUserResponse.getData(), UserResponse.class);
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
+        }
+    }
+
+    private void createDV(RegisterRequest request, UserIamResponse userIamResponse, EmployeeInfoDto employeeInfoDto){
+        DVRequest dvRequest = DVRequest.builder()
+                .code(String.valueOf(request.getStaffCode()))
+                .fullName(userIamResponse.getFullName())
+                .usingName(employeeInfoDto.getEmpUsualName())
+                .gender(userIamResponse.getGender())
+                .vneid(String.valueOf(userIamResponse.getVneid()))
+                .birthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthdt()))
+                .birthPlace(employeeInfoDto.getBirthAddress())
+                .hometown(employeeInfoDto.getNativeAddress())
+                .permanentResidence(employeeInfoDto.getPermanentResidenceAddress())
+                .temporaryResidence(employeeInfoDto.getTempResidenceAddress())
+                .build();
+        List<DVRequest> dvRequests = new ArrayList<>();
+        dvRequests.add(dvRequest);
+        try {
+            dvService.create(dvRequests);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
     }
 
