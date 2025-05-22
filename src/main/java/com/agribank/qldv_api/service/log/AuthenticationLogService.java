@@ -6,7 +6,6 @@ import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldvutils.entity.ApiLog;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;

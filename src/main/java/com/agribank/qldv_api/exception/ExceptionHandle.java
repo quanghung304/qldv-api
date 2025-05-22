@@ -1,27 +1,43 @@
 package com.agribank.qldv_api.exception;
 
+import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @ControllerAdvice
 @Slf4j
 public class ExceptionHandle {
 
-    @ExceptionHandler(value = ValidationException.class)
-    public ResponseEntity<BaseResponse<Object>> exception(ValidationException exception) {
+    @ExceptionHandler(value = CommonException.class)
+    public ResponseEntity<BaseResponse<Object>> exception(CommonException exception) {
         return BaseResponse.error(exception.getMessage());
     }
 
     @ExceptionHandler(value = MissingServletRequestParameterException.class)
     public ResponseEntity<BaseResponse<Object>> exception(MissingServletRequestParameterException exception) {
         return BaseResponse.error("Không được để trống param " + exception.getParameterName());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<DefaultResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errors.put(error.getField(), error.getDefaultMessage());
+        }
+        return DefaultResponse.error("Validation failed", errors);
     }
 
     @ExceptionHandler(value = Exception.class)

@@ -2,12 +2,19 @@ package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EApprovalStatus;
+import com.agribank.qldv_api.enums.EForm;
+import com.agribank.qldv_api.enums.ERequestType;
 import com.agribank.qldv_api.gateway.OrganizationClient;
+import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.gateway.TransformationHistoryClient;
 import com.agribank.qldv_api.gateway.TransformationHistoryDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.ApproveRequest;
 import com.agribank.qldv_api.request.organizationTransform.OrganizationTransformRequest;
+import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.entity.Request;
+import com.agribank.qldvutils.entity.TransformationHistory;
 import com.agribank.qldvutils.entity.TransformationHistoryDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.RequiredArgsConstructor;
@@ -19,21 +26,54 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class TransformationHistoryService {
+public class TransformationHistoryService implements EntityHandler {
     private final TransformationHistoryDraftClient historyDraftClient;
     private final OrganizationClient organizationClient;
+    private final TransformationHistoryClient historyClient;
+    private final RequestClient requestClient;
     private final CheckAuthorityService checkAuthorityService;
+    private final OrganizationService organizationService;
+    private final RequestService requestService;
     private final ModelMapper modelMapper;
 
+    private final EForm form = EForm.BIEU_02_HIST;
+    private final Set<String> ignoredProperties = Set.of("id", "createdBy", "approvedBy", "created_at", "updated_at");
+
     public TransformationHistoryDraft createTransformRequest(OrganizationTransformRequest request) {
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+        if (Objects.isNull(organization)){
+            throw new CommonException("Không tồn tại TCD có mã: " + request.getOrganizationCode());
+        }
+
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
-        TransformationHistoryDraft draft = modelMapper.map(request, TransformationHistoryDraft.class);
-        draft.setSubmitter(userDetails.getStaffCode());
-        draft.setStatus(EApprovalStatus.PENDING.getId());
 
-        return historyDraftClient.save(draft).getData();
+        TransformationHistoryDraft draft = new TransformationHistoryDraft();
+
+        draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setOldName(request.getOldName());
+        draft.setOldForm(request.getOldForm());
+        draft.setNewName(request.getNewName());
+        draft.setNewForm(request.getNewForm());
+        draft.setDecisionCommittee(request.getDecisionCommittee());
+        draft.setConclusionNumber(request.getConclusionNumber());
+        draft.setConclusionDate(request.getConclusionDate());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+        draft.setCreatedBy(userDetails.getId());
+        draft.setStatus(EApprovalStatus.PENDING.getId());
+        TransformationHistoryDraft transformationHistoryDraft = historyDraftClient.save(draft).getData();
+
+        Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, TransformationHistoryDraft.class, ignoredProperties);
+        transformRequest.setType(ERequestType.TO_CHUC_DANG.getId());
+        transformRequest.setFormCode(form.getCode());
+        transformRequest.setFormName(form.getName());
+        transformRequest.setReferenceId(transformationHistoryDraft.getId());
+        transformRequest.setCreatedBy(userDetails.getId());
+        requestClient.save(transformRequest);
+
+        return transformationHistoryDraft;
     }
 
     public List<TransformationHistoryDraft> getDrafttList(Integer status) {
@@ -43,7 +83,8 @@ public class TransformationHistoryService {
     }
 
     public TransformationHistoryDraft getDraft(String id) {
-        return historyDraftClient.findById(id).getData();
+        return historyDraftClient.findById(id).getData()
+                .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
     }
 
     public List<String> update(List<ApproveRequest> requestList) {
@@ -56,7 +97,7 @@ public class TransformationHistoryService {
                 idAndStatusMap.put(request.getId(), request.getStatus());
             }
 
-            List<TransformationHistoryDraft> draftList = historyDraftClient.findAllById(idList);
+            List<TransformationHistoryDraft> draftList = historyDraftClient.findAllById(idList).getData();
 
             List<String> codeList = new ArrayList<>();
             for (TransformationHistoryDraft draft : draftList) {
@@ -79,7 +120,7 @@ public class TransformationHistoryService {
                         Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE) || draft.getOrganizationCode().contains(userDetails.getOrganizationCode())
                 ) {
                     draft.setStatus(idAndStatusMap.get(draft.getId()));
-                    draft.setApprover(userDetails.getStaffCode());
+                    draft.setApprovedBy(userDetails.getStaffCode());
                     updatedDrafts.add(draft);
 
                     Organization organization = codeAndOrganizationMap.get(draft.getOrganizationCode());
@@ -101,5 +142,52 @@ public class TransformationHistoryService {
         } catch (Exception e) {
             throw new CommonException("Phe duyet that bai");
         }
+    }
+
+    @Override
+    public boolean applyCreate(String draftId, UserDetailsImpl userDetails) {
+        TransformationHistoryDraft draft = historyDraftClient.findById(draftId).getData()
+                .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
+
+        if (Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE) || draft.getOrganizationCode().contains(userDetails.getOrganizationCode())) {
+            TransformationHistory history = modelMapper.map(draft, TransformationHistory.class);
+
+            Organization organization = organizationClient.findByCode(history.getOrganizationCode()).getData();
+            if (Objects.isNull(organization)) return false;
+
+            organization.setName(draft.getNewName());
+            organization.setForm(draft.getNewForm());
+
+            draft.setStatus(EApprovalStatus.APPROVED.getId());
+            draft.setApprovedBy(userDetails.getId());
+
+            historyClient.save(history);
+            organizationClient.save(organization);
+            historyDraftClient.save(draft);
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean applyUpdate(String referenceId) {
+        return true;
+    }
+
+    @Override
+    public boolean applyDelete(String referenceId) {
+        return true;
+    }
+
+    @Override
+    public void setDenied(String draftId) {
+        TransformationHistoryDraft draft = historyDraftClient.findById(draftId).getData()
+                .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
+        draft.setStatus(EApprovalStatus.DENIED.getId());
+    }
+
+    @Override
+    public Object getRequestDetail(String draftId) {
+        return historyDraftClient.findById(draftId);
     }
 }

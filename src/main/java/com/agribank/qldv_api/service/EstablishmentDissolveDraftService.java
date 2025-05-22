@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.EApprovalStatus;
+import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.enums.EReport01Type;
 import com.agribank.qldv_api.gateway.EstablishmentDissolveDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -31,6 +32,8 @@ public class EstablishmentDissolveDraftService {
     private final EstablishmentDissolveService establishmentDissolveService;
     private final UserService userService;
     private final CheckAuthorityService checkAuthorityService;
+
+    private final EForm form = EForm.BIEU_02_ESTA;
 
     public EstablishmentDissolveDraft createOrUpdate(EstablishmentDissolveRequest request) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getCode());

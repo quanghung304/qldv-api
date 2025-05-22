@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-@FeignClient(name = "baseClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
+@FeignClient(name = "baseClient", configuration = DatabaseFeignConfiguration.class)
 public interface BaseClient<TEntity, TID> {
 
     @PostMapping("/save")
@@ -24,8 +24,8 @@ public interface BaseClient<TEntity, TID> {
     @GetMapping("/find-all")
     DefaultListResponse<TEntity> findAll();
 
-    @GetMapping("/find-by-ids")
-    DefaultListResponse<TEntity> findAllById(List<TID> ids);
+    @PostMapping("/find-by-ids")
+    DefaultListResponse<TEntity> findAllById(@RequestBody List<TID> ids);
 
     @DeleteMapping("/delete/{id}")
     BaseResponse<String> deleteById( @PathVariable("id") TID id);
@@ -33,8 +33,8 @@ public interface BaseClient<TEntity, TID> {
     @DeleteMapping("/delete")
     BaseResponse<String> delete( @RequestBody TEntity entityObj);
 
-    @DeleteMapping("/delete-by-ids")
-    BaseResponse<String> deleteByIds(List<TID> ids);
+//    @DeleteMapping("/delete-by-ids")
+//    BaseResponse<String> deleteByIds( @RequestParam("ids") List<TID> ids);
 
     @DeleteMapping("/delete-all")
     BaseResponse<String> deleteAll( @RequestBody List<TEntity> entityList);

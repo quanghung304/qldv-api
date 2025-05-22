@@ -3,6 +3,7 @@ package com.agribank.qldv_api.gateway;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,7 @@ public interface OrganizationClient {
     );
 
     @GetMapping("api/v1/organization/find-all-in-codes")
-    DefaultResponse<List<Organization>> findAllByCode(
+    BaseResponse<List<Organization>> findAllByCode(
             @RequestParam List<String> codeList
     );
 
