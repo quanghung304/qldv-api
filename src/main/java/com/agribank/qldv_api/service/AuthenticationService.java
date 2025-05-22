@@ -82,9 +82,8 @@ public class AuthenticationService {
                 userNew = new User();
                 userNew.setId(UUID.randomUUID().toString());
                 action = EApiLogType.INSERT.getValue();
-                userNew.setIdIam(userIamResponse.getId());
-                userNew.setEmail(userIamResponse.getEmail());
-                userNew.setUsername(userIamResponse.getUsername());
+                userNew.setEmail(request.getEmail());
+                userNew.setUsername(registerRequest.getUsername());
             }else {
                 userOld.setId(userNew.getId());
                 userOld.setIdIam(userNew.getIdIam());
@@ -121,6 +120,11 @@ public class AuthenticationService {
             DefaultResponse<UserIamResponse> response = iamClient.register(authorHeader, registerRequest);
 
             userIamResponse = response.getData();
+
+            userNew.setPhone(userIamResponse.getPhone());
+            userNew.setVneid(userIamResponse.getVneid());
+            userNew.setIdIam(userIamResponse.getId());
+            savedUserResponse = userClient.save(userNew);
             createDV(request, userIamResponse, employeeInfoDto);
 
             writeLog(action, userNew, userOld, registerRequest);
