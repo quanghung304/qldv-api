@@ -4,6 +4,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.RequestDto;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.request.FilterRequest;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -18,5 +19,10 @@ public interface RequestClient extends BaseClient<Request, String> {
     @PostMapping("/list")
     DefaultResponse<PageResponse<RequestDto>> getRequestList(
             @RequestBody FilterRequest request
+    );
+
+    @GetMapping("/{id}")
+    BaseResponse<RequestDto> getDetail(
+            @PathVariable String id
     );
 }

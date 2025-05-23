@@ -9,6 +9,7 @@ import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
 import com.agribank.qldvutils.entity.EstablishmentDissolveDraft;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +25,7 @@ public class EstablishmentDissolveDraftController {
 
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PostMapping("/create-or-update")
-    public ResponseEntity<BaseResponse<EstablishmentDissolveDraft>> createOrUpdate(@RequestBody EstablishmentDissolveRequest request) {
+    public ResponseEntity<BaseResponse<EstablishmentDissolveDraft>> createOrUpdate(@RequestBody @Valid EstablishmentDissolveRequest request) {
         request.validate();
         return BaseResponse.success(service.createOrUpdate(request));
     }

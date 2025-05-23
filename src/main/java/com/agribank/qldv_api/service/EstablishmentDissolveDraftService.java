@@ -1,18 +1,18 @@
 package com.agribank.qldv_api.service;
 
-import com.agribank.qldv_api.enums.EApprovalStatus;
-import com.agribank.qldv_api.enums.EForm;
-import com.agribank.qldv_api.enums.EReport01Type;
+import com.agribank.qldv_api.enums.*;
+import com.agribank.qldv_api.gateway.EstablishmentDissolveClient;
 import com.agribank.qldv_api.gateway.EstablishmentDissolveDraftClient;
+import com.agribank.qldv_api.gateway.OrganizationClient;
+import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.DraftRequest;
 import com.agribank.qldv_api.request.establishmentDissolve.EstablishmentDissolveRequest;
 import com.agribank.qldv_api.request.establishmentDissolveDraft.EDDraftSearchRequest;
 import com.agribank.qldv_api.response.DraftResponse;
 import com.agribank.qldv_api.response.establishmentDissolveDraft.EDDraftResponse;
-import com.agribank.qldvutils.entity.EstablishmentDissolve;
-import com.agribank.qldvutils.entity.EstablishmentDissolveDraft;
-import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldv_api.service.handler.EntityHandler;
+import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,15 +25,20 @@ import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
 
 @Service
 @RequiredArgsConstructor
-public class EstablishmentDissolveDraftService {
+public class EstablishmentDissolveDraftService implements EntityHandler {
     private final ModelMapper modelMapper;
     private final EstablishmentDissolveDraftClient client;
+    private final EstablishmentDissolveClient dissolveClient;
+    private final RequestClient requestClient;
+    private final OrganizationClient organizationClient;
     private final OrganizationService organizationService;
     private final EstablishmentDissolveService establishmentDissolveService;
     private final UserService userService;
     private final CheckAuthorityService checkAuthorityService;
+    private final RequestService requestService;
 
     private final EForm form = EForm.BIEU_02_ESTA;
+    private final Set<String> ignoredProperties = Set.of("id", "createdBy", "approvedBy", "created_at", "updated_at");
 
     public EstablishmentDissolveDraft createOrUpdate(EstablishmentDissolveRequest request) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getCode());
@@ -44,17 +49,16 @@ public class EstablishmentDissolveDraftService {
 
         if (Objects.isNull(establishmentDissolve)){
             establishmentDissolve = new EstablishmentDissolveDraft();
-            establishmentDissolve.setId(UUID.randomUUID().toString());
-        }
-
-        if (EReport01Type.getValue(request.getType()) != EReport01Type.ESTABLISH.getId()
-                && EReport01Type.getValue(request.getType()) != EReport01Type.DISSOLVE.getId()){
-            throw new CommonException("Kiểm tra lại type");
         }
 
         Organization organization = organizationService.findByCode(request.getCode());
-        if (Objects.isNull(organization)){
-            throw new CommonException("Không tồn tại TCD có mã: " + request.getCode());
+
+        if (Objects.equals(request.getType(), EReport01Type.ESTABLISH.getId()) && Objects.nonNull(organization)) {
+            throw new CommonException("Tổ chức đảng đã tồn tại");
+        }
+
+        if (Objects.equals(request.getType(), EReport01Type.DISSOLVE.getId()) && Objects.isNull(organization)) {
+            throw new CommonException("Tổ chức đảng không tồn tại");
         }
 
         UserDetailsImpl userRequested = userService.getUserRequested();
@@ -69,11 +73,20 @@ public class EstablishmentDissolveDraftService {
         establishmentDissolve.setDecisionDate(request.getDecisionDate());
         establishmentDissolve.setEffectiveDate(request.getEffectiveDate());
         establishmentDissolve.setStatus(EApprovalStatus.PENDING.getId());
-        establishmentDissolve.setUserBrcdCreated(userRequested.getBrcd());
-        establishmentDissolve.setUsernameCreated(userRequested.getUsername());
+        establishmentDissolve.setCreatedBy(userRequested.getId());
 
-        return client.save(establishmentDissolve).getData();
-//        return "Tạo yêu cầu thành công!";
+        establishmentDissolve = client.save(establishmentDissolve).getData();
+
+        Request transformRequest = requestService.initializeRequest(establishmentDissolve, null, TransformationHistoryDraft.class, ignoredProperties);
+        transformRequest.setType(ERequestType.TO_CHUC_DANG.getId());
+        transformRequest.setOrganizationCode(establishmentDissolve.getCode());
+        transformRequest.setFormCode(form.getCode());
+        transformRequest.setFormName(form.getName());
+        transformRequest.setReferenceId(establishmentDissolve.getId());
+        transformRequest.setCreatedBy(userRequested.getId());
+        requestClient.save(transformRequest);
+
+        return establishmentDissolve;
     }
 
     public PageResponse<EDDraftResponse> search(EDDraftSearchRequest request){
@@ -164,8 +177,7 @@ public class EstablishmentDissolveDraftService {
                 continue;
             }
 
-            establishmentDissolveDraft.setUsernameAccepted(userRequested.getUsername());
-            establishmentDissolveDraft.setUserBrcdAccepted(userRequested.getBrcd());
+            establishmentDissolveDraft.setApprovedBy(userRequested.getId());
             //trường hợp đông ý
             if (draftRequest.getStatus().equals(EApprovalStatus.APPROVED.getId())) {
                 establishmentDissolveDraft.setStatus(EApprovalStatus.APPROVED.getId());
@@ -218,5 +230,60 @@ public class EstablishmentDissolveDraftService {
 
         client.delete(id);
         return "Xóa yêu cầu thành công!";
+    }
+
+    @Override
+    public boolean applyCreate(String draftId, UserDetailsImpl userDetails) {
+        EstablishmentDissolveDraft draft = client.findById(draftId).getData();
+
+        if (Objects.isNull(draft)) return false;
+
+        if (!Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE) || !draft.getCode().contains(userDetails.getOrganizationCode())) {
+            return false;
+        }
+
+        EstablishmentDissolve establishmentDissolve = modelMapper.map(draft, EstablishmentDissolve.class);
+        Organization organization = organizationClient.findByCode(establishmentDissolve.getCode()).getData();
+
+        if (Objects.equals(draft.getType(), EReport01Type.ESTABLISH.getId())) {
+            if (Objects.nonNull(organization)) return false;
+
+            organization = modelMapper.map(draft, Organization.class);
+            organization.setResolutionNumber(draft.getConclusionNumber());
+            organization.setResolutionDate(draft.getConclusionDate());
+            organization.setEstablishmentDecisionNumber(draft.getDecisionNumber());
+            organization.setDecisionDate(draft.getDecisionDate());
+            organization.setStatus(EOrganizationStatus.YES.getStatus());
+        } else {
+            if (Objects.isNull(organization)) return false;
+            organization.setStatus(EOrganizationStatus.NO.getStatus());
+        }
+
+        draft.setStatus(EApprovalStatus.APPROVED.getId());
+        draft.setApprovedBy(userDetails.getId());
+
+        organizationClient.save(organization);
+        dissolveClient.save(establishmentDissolve);
+        client.save(draft);
+
+        return true;
+    }
+
+    @Override
+    public boolean applyUpdate(String referenceId) {
+        return false;
+    }
+
+    @Override
+    public boolean applyDelete(String referenceId) {
+        return false;
+    }
+
+    @Override
+    public void setDenied(String draftId) {
+        EstablishmentDissolveDraft draft = client.findById(draftId).getData();
+
+        if (Objects.isNull(draft)) return;
+        draft.setStatus(EApprovalStatus.DENIED.getId());
     }
 }
