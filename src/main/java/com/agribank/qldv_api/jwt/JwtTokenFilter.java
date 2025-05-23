@@ -79,6 +79,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             userDetails.setEmail(userIamResponse.getEmail());
             userDetails.setBrcd(user.getBrcd());
             userDetails.setOrganizationCode(user.getOrganizationCode());
+            userDetails.setFormOrganization(user.getFormOrganization());
             userDetails.setIdIam(userIamResponse.getId());
             userDetails.setDepId(user.getDepId());
             userDetails.setFullName(user.getFullName());
