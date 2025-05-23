@@ -161,8 +161,8 @@ public class TransformationHistoryService implements EntityHandler {
             draft.setStatus(EApprovalStatus.APPROVED.getId());
             draft.setApprovedBy(userDetails.getId());
 
-            historyClient.save(history);
             organizationClient.save(organization);
+            historyClient.save(history);
             historyDraftClient.save(draft);
         }
 
@@ -184,10 +184,5 @@ public class TransformationHistoryService implements EntityHandler {
         TransformationHistoryDraft draft = historyDraftClient.findById(draftId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
         draft.setStatus(EApprovalStatus.DENIED.getId());
-    }
-
-    @Override
-    public Object getRequestDetail(String draftId) {
-        return historyDraftClient.findById(draftId);
     }
 }

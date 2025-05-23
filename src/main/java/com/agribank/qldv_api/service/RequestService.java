@@ -13,10 +13,10 @@ import com.agribank.qldv_api.response.request.RequestResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.handler.EntityHandlerRegistry;
 import com.agribank.qldvutils.dto.RequestDto;
-import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.FilterRequest;
+import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -83,33 +83,13 @@ public class RequestService {
         return request;
     }
 
-    public List<RequestResponse> getList(FilterRequest filterRequest) {
+    public PageResponse<RequestResponse> getList(FilterRequest filterRequest) {
         try {
             filterRequest = Objects.nonNull(filterRequest) ? filterRequest : new FilterRequest();
-            List<RequestDto> requestDtos = requestClient.getRequestList(filterRequest).getData().getData();
+            PageResponse<RequestDto> requestDtoPageResponse = requestClient.getRequestList(filterRequest).getData();
+            List<RequestDto> requestDtos = requestDtoPageResponse.getData();
 
-            List<String> organizationCodes = new ArrayList<>();
-
-            for (RequestDto dto : requestDtos) {
-                String code = null;
-                if (Objects.nonNull(dto.getOldData())) {
-                    code = getOrganizationCode(dto.getOldData());
-                } else if (Objects.nonNull(dto.getNewData())) {
-                    code = getOrganizationCode(dto.getNewData());
-                }
-
-                dto.setOrganizationCode(code);
-                organizationCodes.add(code);
-            }
-
-            List<Organization> organizationList = organizationClient.findAllByCode(organizationCodes).getData();
-            Map<String, String> organizationMap = new HashMap<>();
-
-            for (Organization organization: organizationList) {
-                organizationMap.put(organization.getCode(), organization.getName());
-            }
-
-            List<RequestResponse> responses = new ArrayList<>();
+            List<RequestResponse> responseList = new ArrayList<>();
             for (RequestDto dto : requestDtos) {
                 Map<String, Object> oldDataMap = getDataObjectFromJson(dto.getOldData());
                 Map<String, Object> newDataMap = getDataObjectFromJson(dto.getNewData());
@@ -118,10 +98,16 @@ public class RequestService {
                 response.setOldData(oldDataMap);
                 response.setNewData(newDataMap);
 
-                responses.add(response);
+                responseList.add(response);
             }
 
-            return responses;
+            PageResponse<RequestResponse> response = new PageResponse<>();
+            response.setTotalPages(requestDtoPageResponse.getTotalPages());
+            response.setCurrentPage(requestDtoPageResponse.getCurrentPage());
+            response.setTotalItems(requestDtoPageResponse.getTotalItems());
+            response.setData(responseList);
+
+            return response;
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }
@@ -138,7 +124,11 @@ public class RequestService {
 
     public RequestDetailResponse getById(String id) {
         try {
-            Request request = requestClient.findById(id).getData().orElse(null);
+            RequestDto request = requestClient.getDetail(id).getData();
+
+            if (Objects.isNull(request)) {
+                throw new CommonException("Không tìm thấy nội dung yêu cầu");
+            }
 
             RequestDetailResponse response = modelMapper.map(request, RequestDetailResponse.class);
 

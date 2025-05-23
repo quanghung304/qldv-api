@@ -10,14 +10,14 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public enum EStatus {
+public enum EOrganizationStatus {
     YES("Y"),
     NO("N");
 
     String status;
 
     public static String getValue(String value) {
-        for (EStatus e : EStatus.values()) {
+        for (EOrganizationStatus e : EOrganizationStatus.values()) {
             if (e.getStatus().equals(value)) {
                 return e.getStatus();
             }

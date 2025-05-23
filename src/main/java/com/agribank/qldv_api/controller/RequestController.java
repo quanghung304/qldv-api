@@ -4,9 +4,11 @@ import com.agribank.qldv_api.request.ApproveRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.request.FormResponse;
+import com.agribank.qldv_api.response.request.RequestDetailResponse;
 import com.agribank.qldv_api.response.request.RequestResponse;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldvutils.request.FilterRequest;
+import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,14 +29,14 @@ public class RequestController {
     }
 
     @PostMapping("list")
-    public ResponseEntity<DefaultListResponse<RequestResponse>> getList(
+    public ResponseEntity<DefaultResponse<PageResponse<RequestResponse>>> getList(
             @RequestBody @Valid FilterRequest filterRequest
     ) {
-        return DefaultListResponse.success(requestService.getList(filterRequest));
+        return DefaultResponse.success(requestService.getList(filterRequest));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultResponse<Object>> getById(@PathVariable String id) {
+    public ResponseEntity<DefaultResponse<RequestDetailResponse>> getById(@PathVariable String id) {
         return DefaultResponse.success(requestService.getById(id));
     }
 

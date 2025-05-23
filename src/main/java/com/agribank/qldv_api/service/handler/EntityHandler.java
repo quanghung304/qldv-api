@@ -7,5 +7,4 @@ public interface EntityHandler {
     boolean applyUpdate(String referenceId);
     boolean applyDelete(String referenceId);
     void setDenied(String referenceId);
-    Object getRequestDetail(String referenceId);
 }

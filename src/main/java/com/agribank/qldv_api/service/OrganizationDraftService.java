@@ -2,7 +2,7 @@ package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EOrganizationReference;
-import com.agribank.qldv_api.enums.EStatus;
+import com.agribank.qldv_api.enums.EOrganizationStatus;
 import com.agribank.qldv_api.gateway.OrganizationDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
@@ -70,7 +70,7 @@ public class OrganizationDraftService {
         OrganizationDraft organizationDraft = modelMapper.map(organizationRequest, OrganizationDraft.class);
         organizationDraft.setApprove(EApprovalStatus.PENDING.getId());
         organizationDraft.setId(UUID.randomUUID().toString());
-        organizationDraft.setStatus(EStatus.YES.getStatus());
+        organizationDraft.setStatus(EOrganizationStatus.YES.getStatus());
         organizationDraft.setOrganizationCode(userRequested.getOrganizationCode());
         organizationDraft.setUserBrcdCreated(userRequested.getBrcd());
         organizationDraft.setUsernameCreated(userRequested.getUsername());
