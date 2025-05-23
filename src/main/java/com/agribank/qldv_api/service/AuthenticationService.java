@@ -108,7 +108,7 @@ public class AuthenticationService {
 
             userNew.setFullName(request.getFullName());
             userNew.setActive(0);
-            userNew.setDeleted(0);
+            userNew.setDeleted(1);
             userNew.setBrcd(request.getBrcd());
             userNew.setDepId(request.getDepId());
 
@@ -122,7 +122,7 @@ public class AuthenticationService {
                 throw new CommonException(savedUserResponse.getMessage());
             }
 
-            assignRole(userNew.getId(), request.getRoleIds());
+            assignRole(savedUserResponse.getData().getId(), request.getRoleIds());
             //ghi log
             DefaultResponse<UserIamResponse> response = iamClient.register(authorHeader, registerRequest);
 
@@ -132,7 +132,7 @@ public class AuthenticationService {
             userNew.setPhone(userIamResponse.getPhone());
             userNew.setVneid(userIamResponse.getVneid());
             userNew.setIdIam(userIamResponse.getId());
-
+            userNew.setDeleted(0);
             savedUserResponse = userClient.save(userNew);
             createDV(request, userIamResponse, employeeInfoDto);
 
