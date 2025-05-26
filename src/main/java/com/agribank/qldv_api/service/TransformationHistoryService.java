@@ -12,10 +12,7 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.ApproveRequest;
 import com.agribank.qldv_api.request.organizationTransform.OrganizationTransformRequest;
 import com.agribank.qldv_api.service.handler.EntityHandler;
-import com.agribank.qldvutils.entity.Organization;
-import com.agribank.qldvutils.entity.Request;
-import com.agribank.qldvutils.entity.TransformationHistory;
-import com.agribank.qldvutils.entity.TransformationHistoryDraft;
+import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -37,7 +34,14 @@ public class TransformationHistoryService implements EntityHandler {
     private final ModelMapper modelMapper;
 
     private final EForm form = EForm.BIEU_02_HIST;
-    private final Set<String> ignoredProperties = Set.of("id", "createdBy", "approvedBy", "created_at", "updated_at");
+
+    public Map<String, String> getCombinedFieldMap() {
+        Map<String, String> combinedFieldMap = new HashMap<>();
+        combinedFieldMap.putAll(BaseFormEntity.BASE_FIELD_MAP);
+        combinedFieldMap.putAll(TransformationHistoryDraft.FIELD_MAP);
+
+        return combinedFieldMap;
+    }
 
     public TransformationHistoryDraft createTransformRequest(OrganizationTransformRequest request) {
         Organization organization = organizationService.findByCode(request.getOrganizationCode());
@@ -47,6 +51,12 @@ public class TransformationHistoryService implements EntityHandler {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+
+        List<TransformationHistoryDraft> draftList = historyDraftClient.findPendingDraftByCode(request.getOrganizationCode()).getData();
+
+        if (!draftList.isEmpty()) {
+            throw new CommonException("Đã tồn tại yêu cầu nâng/hạ cấp cho tổ chức đảng này");
+        }
 
         TransformationHistoryDraft draft = new TransformationHistoryDraft();
 
@@ -65,10 +75,7 @@ public class TransformationHistoryService implements EntityHandler {
         draft.setStatus(EApprovalStatus.PENDING.getId());
         TransformationHistoryDraft transformationHistoryDraft = historyDraftClient.save(draft).getData();
 
-        Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, TransformationHistoryDraft.class, ignoredProperties);
-        transformRequest.setType(ERequestType.TO_CHUC_DANG.getId());
-        transformRequest.setFormCode(form.getCode());
-        transformRequest.setFormName(form.getName());
+        Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, form, getCombinedFieldMap());
         transformRequest.setReferenceId(transformationHistoryDraft.getId());
         transformRequest.setCreatedBy(userDetails.getId());
         requestClient.save(transformRequest);

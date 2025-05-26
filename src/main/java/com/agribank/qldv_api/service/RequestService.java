@@ -21,11 +21,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,26 +49,23 @@ public class RequestService {
     @Lazy
     EntityHandlerRegistry handlerRegistry;
 
-    public Request initializeRequest(Object newObject, Object oldObject, Class<?> objectClass, Set<String> propertyIgnore) {
+    public Request initializeRequest(Object newObject, Object oldObject, EForm form, Map<String, String> fieldMap) {
         Request request = new Request();
-
-        // Configure Jackson to ignore specified properties
-        SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAllExcept(propertyIgnore);
-        SimpleFilterProvider filters = new SimpleFilterProvider().addFilter("dynamicFilter", filter);
-        ObjectMapper mapper = objectMapper.copy().setFilterProvider(filters);
         Integer action = EAction.UPDATE.getId();
 
         try {
             // Serialize newObject to newData (null for DELETE)
             if (newObject != null) {
-                request.setNewData(mapper.writeValueAsString(newObject));
+                Map<String, Object> newDataMap = createFilteredDataMap(newObject, fieldMap);
+                request.setNewData(objectMapper.writeValueAsString(newDataMap));
             } else {
                 action = EAction.DELETE.getId();
             }
 
             // Serialize oldObject to oldData (null for CREATE)
             if (oldObject != null) {
-                request.setOldData(mapper.writeValueAsString(oldObject));
+                Map<String, Object> oldDataMap = createFilteredDataMap(oldObject, fieldMap);
+                request.setOldData(objectMapper.writeValueAsString(oldDataMap));
             } else {
                 action = EAction.INSERT.getId();
             }
@@ -77,10 +74,29 @@ public class RequestService {
         }
 
         // Set default fields
+        request.setFormCode(form.getCode());
+        request.setFormName(form.getName());
+        request.setType(form.getType());
         request.setAction(action);
         request.setStatus(EApprovalStatus.PENDING.getId());
 
         return request;
+    }
+
+    private Map<String, Object> createFilteredDataMap(Object object, Map<String, String> fieldMap) {
+        Map<String, Object> dataMap = new HashMap<>();
+        BeanWrapper wrapper = new BeanWrapperImpl(object);
+
+        // Iterate over fieldMap keys (entity fields)
+        for (String fieldName : fieldMap.keySet()) {
+            if (wrapper.isReadableProperty(fieldName)) {
+                Object value = wrapper.getPropertyValue(fieldName);
+                // Use user-friendly name from fieldMap as key
+                dataMap.put(fieldMap.get(fieldName), value);
+            }
+        }
+
+        return dataMap;
     }
 
     public PageResponse<RequestResponse> getList(FilterRequest filterRequest) {
