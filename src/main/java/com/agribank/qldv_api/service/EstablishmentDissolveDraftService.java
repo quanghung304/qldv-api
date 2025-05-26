@@ -38,9 +38,22 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
     private final RequestService requestService;
 
     private final EForm form = EForm.BIEU_02_ESTA;
-    private final Set<String> ignoredProperties = Set.of("id", "createdBy", "approvedBy", "created_at", "updated_at");
+
+    public Map<String, String> getCombinedFieldMap() {
+        Map<String, String> combinedFieldMap = new HashMap<>();
+        combinedFieldMap.putAll(BaseFormEntity.BASE_FIELD_MAP);
+        combinedFieldMap.putAll(EstablishmentDissolveDraft.FIELD_MAP);
+
+        return combinedFieldMap;
+    }
 
     public EstablishmentDissolveDraft createOrUpdate(EstablishmentDissolveRequest request) {
+        List<EstablishmentDissolveDraft> draftList = client.findPendingDraftByCode(request.getCode()).getData();
+
+        if (!draftList.isEmpty()) {
+            throw new CommonException("Đã tồn tại yêu cầu với tổ chức đảng này");
+        }
+
         checkAuthorityService.hasAuthorityOverOrganization(request.getCode());
         EstablishmentDissolveDraft establishmentDissolve = null;
         if (Objects.nonNull(request.getId())) {
@@ -77,11 +90,8 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
         establishmentDissolve = client.save(establishmentDissolve).getData();
 
-        Request transformRequest = requestService.initializeRequest(establishmentDissolve, null, TransformationHistoryDraft.class, ignoredProperties);
-        transformRequest.setType(ERequestType.TO_CHUC_DANG.getId());
+        Request transformRequest = requestService.initializeRequest(establishmentDissolve, null, form, getCombinedFieldMap());
         transformRequest.setOrganizationCode(establishmentDissolve.getCode());
-        transformRequest.setFormCode(form.getCode());
-        transformRequest.setFormName(form.getName());
         transformRequest.setReferenceId(establishmentDissolve.getId());
         transformRequest.setCreatedBy(userRequested.getId());
         requestClient.save(transformRequest);

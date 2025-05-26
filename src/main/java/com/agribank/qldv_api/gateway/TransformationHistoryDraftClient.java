@@ -35,4 +35,9 @@ public interface TransformationHistoryDraftClient extends BaseClient<Transformat
 //
 //    @PutMapping("api/v1/history-draft/save-all")
 //    List<TransformationHistoryDraft> saveAll(List<TransformationHistoryDraft> updatedDrafts);
+
+    @GetMapping("/find-pending/{code}")
+    DefaultListResponse<TransformationHistoryDraft> findPendingDraftByCode(
+            @PathVariable String code
+    );
 }
