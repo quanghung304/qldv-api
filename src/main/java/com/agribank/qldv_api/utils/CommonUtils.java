@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.utils;
 
+import com.agribank.qldvutils.exception.CommonException;
 import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import org.mis.encrypt.interfaces.ICreateService;
@@ -15,6 +16,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -138,4 +141,13 @@ public class CommonUtils {
         }
     }
 
+    public static boolean validateDatesAfter(Date fromDate, Date toDate){
+        LocalDate fromLocalDate = fromDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate toLocalDate = toDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        if (toLocalDate.isBefore(fromLocalDate)) {
+            return false;
+        }
+        return true;
+    }
 }

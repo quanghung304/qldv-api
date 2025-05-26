@@ -58,7 +58,14 @@ public class OrganizationService {
 
         request.setOrderBy("code");
 
-        PageResponse<Organization> organizationPageResponse = client.search(request).getData();
+        PageResponse<Organization> organizationPageResponse = null;
+
+        if (Objects.nonNull(request.getCode()) && request.getCode().length() > 4){
+            organizationPageResponse = client.searchChild(request).getData();
+        }else {
+            organizationPageResponse = client.search(request).getData();
+        }
+
         if (Objects.isNull(organizationPageResponse)) {
             return response;
         }

@@ -38,6 +38,11 @@ public interface OrganizationClient {
             @RequestBody OrganizationSearchRequest request
     );
 
+    @PostMapping("api/v1/organization/search-child")
+    DefaultResponse<PageResponse<Organization>> searchChild(
+            @RequestBody OrganizationSearchRequest request
+    );
+
     @GetMapping("api/v1/organization/find-by-parent")
     DefaultResponse<List<Organization>> findByParent(
             @RequestParam(name = "code") String code
