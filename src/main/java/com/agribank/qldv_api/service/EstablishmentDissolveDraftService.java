@@ -48,13 +48,13 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
     }
 
     public EstablishmentDissolveDraft createOrUpdate(EstablishmentDissolveRequest request) {
-        List<EstablishmentDissolveDraft> draftList = client.findPendingDraftByCode(request.getCode()).getData();
+        List<EstablishmentDissolveDraft> draftList = client.findPendingDraftByCode(request.getOrganizationCode()).getData();
 
         if (!draftList.isEmpty()) {
             throw new CommonException("Đã tồn tại yêu cầu với tổ chức đảng này");
         }
 
-        checkAuthorityService.hasAuthorityOverOrganization(request.getCode());
+        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
         EstablishmentDissolveDraft establishmentDissolve = null;
         if (Objects.nonNull(request.getId())) {
             establishmentDissolve = client.findById(request.getId()).getData();
@@ -64,7 +64,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
             establishmentDissolve = new EstablishmentDissolveDraft();
         }
 
-        Organization organization = organizationService.findByCode(request.getCode());
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
 
         if (Objects.equals(request.getType(), EReport01Type.ESTABLISH.getId()) && Objects.nonNull(organization)) {
             throw new CommonException("Tổ chức đảng đã tồn tại");
@@ -76,7 +76,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
         UserDetailsImpl userRequested = userService.getUserRequested();
 
-        establishmentDissolve.setCode(request.getCode());
+        establishmentDissolve.setOrganizationCode(request.getOrganizationCode());
         establishmentDissolve.setName(request.getName());
         establishmentDissolve.setForm(request.getForm());
         establishmentDissolve.setType(request.getType());
@@ -91,7 +91,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         establishmentDissolve = client.save(establishmentDissolve).getData();
 
         Request transformRequest = requestService.initializeRequest(establishmentDissolve, null, form, getCombinedFieldMap());
-        transformRequest.setOrganizationCode(establishmentDissolve.getCode());
+        transformRequest.setOrganizationCode(establishmentDissolve.getOrganizationCode());
         transformRequest.setReferenceId(establishmentDissolve.getId());
         transformRequest.setCreatedBy(userRequested.getId());
         requestClient.save(transformRequest);
@@ -248,12 +248,12 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
         if (Objects.isNull(draft)) return false;
 
-        if (!Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE) || !draft.getCode().contains(userDetails.getOrganizationCode())) {
+        if (!Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE) || !draft.getOrganizationCode().contains(userDetails.getOrganizationCode())) {
             return false;
         }
 
         EstablishmentDissolve establishmentDissolve = modelMapper.map(draft, EstablishmentDissolve.class);
-        Organization organization = organizationClient.findByCode(establishmentDissolve.getCode()).getData();
+        Organization organization = organizationClient.findByCode(establishmentDissolve.getOrganizationCode()).getData();
 
         if (Objects.equals(draft.getType(), EReport01Type.ESTABLISH.getId())) {
             if (Objects.nonNull(organization)) return false;

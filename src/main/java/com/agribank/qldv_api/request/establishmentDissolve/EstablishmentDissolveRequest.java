@@ -15,14 +15,14 @@ import java.util.Objects;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EstablishmentDissolveRequest extends BaseFormDto {
     String id;
-    String code;
+    String organizationCode;
     String name;
     @ValidOrganizationForm(message = "Sai hình thức tổ chức đảng")
     String form;
     Integer type;
 
     public void validate(){
-        if (Objects.isNull(code)) {
+        if (Objects.isNull(organizationCode)) {
             throw new CommonException("Code is required");
         }
 
