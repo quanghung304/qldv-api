@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.organization;
 
+import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -50,6 +51,10 @@ public class OrganizationRequest {
 
         if (Objects.isNull(establishmentDecisionNumber)){
             throw new CommonException("establishmentDecisionNumber is null");
+        }
+
+        if (!CommonUtils.validateDatesAfter(decisionDate, effectiveDate)){
+            throw new CommonException("Ngày hiệu lực phải sau ngày quyết đinh");
         }
     }
 }
