@@ -50,6 +50,7 @@ public class RequestService {
         Request request = new Request();
         Integer action = EAction.UPDATE.getId();
 
+        UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try {
             // Serialize newObject to newData (null for DELETE)
             if (newObject != null) {
@@ -75,6 +76,7 @@ public class RequestService {
         request.setFormName(form.getName());
         request.setType(form.getType());
         request.setAction(action);
+        request.setOrganizationCode(user.getOrganizationCode());
         request.setStatus(EApprovalStatus.PENDING.getId());
 
         return request;
@@ -99,6 +101,12 @@ public class RequestService {
     public PageResponse<RequestResponse> getList(FilterRequest filterRequest) {
         try {
             filterRequest = Objects.nonNull(filterRequest) ? filterRequest : new FilterRequest();
+            if (Objects.isNull(filterRequest.getOrderBy())){
+                filterRequest.setOrderBy("created_at");
+            }
+            if (Objects.isNull(filterRequest.getSort())){
+                filterRequest.setSort("DESC");
+            }
             PageResponse<RequestDto> requestDtoPageResponse = requestClient.getRequestList(filterRequest).getData();
             List<RequestDto> requestDtos = requestDtoPageResponse.getData();
 
