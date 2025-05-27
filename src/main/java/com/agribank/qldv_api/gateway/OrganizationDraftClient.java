@@ -3,41 +3,13 @@ package com.agribank.qldv_api.gateway;
 import com.agribank.qldv_api.request.organizationDraft.OrganizationDraftSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.OrganizationDraft;
+import com.agribank.qldvutils.entity.TransformationHistoryDraft;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "organizationDraftClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
-public interface OrganizationDraftClient {
-    @PostMapping("api/v1/organization-draft/save")
-    DefaultResponse<OrganizationDraft> save(
-            @RequestBody OrganizationDraft request
-    );
-
-    @PostMapping("api/v1/organization-draft/find-all-by-id")
-    DefaultResponse<List<OrganizationDraft>> findAllById(
-            @RequestBody List<String> ids
-    );
-
-    @PostMapping("api/v1/organization-draft/save/all")
-    DefaultResponse<List<OrganizationDraft>> saveAll(
-            @RequestBody List<OrganizationDraft> requests
-    );
-
-    @PostMapping("api/v1/organization-draft/search")
-    DefaultResponse<PageResponse<OrganizationDraft>> search(
-            @RequestBody OrganizationDraftSearchRequest requests
-    );
-
-    @DeleteMapping("api/v1/organization-draft/delete-by-id/{id}")
-    DefaultResponse<OrganizationDraft> delete(
-            @PathVariable(name = "id") String id
-    );
-
-    @GetMapping("api/v1/organization-draft/find-by-id/{id}")
-    DefaultResponse<OrganizationDraft> findById(
-            @PathVariable(name = "id") String id
-    );
+@FeignClient(name = "organizationDraftClient", url = "${qldv.database.url}" + "/api/v1/organization-draft", configuration = DatabaseFeignConfiguration.class)
+public interface OrganizationDraftClient extends BaseClient<OrganizationDraft, String>{
 }
