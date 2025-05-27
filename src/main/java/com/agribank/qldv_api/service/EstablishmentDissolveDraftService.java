@@ -94,6 +94,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         transformRequest.setOrganizationCode(establishmentDissolve.getOrganizationCode());
         transformRequest.setReferenceId(establishmentDissolve.getId());
         transformRequest.setCreatedBy(userRequested.getId());
+        transformRequest.setOrganizationCode(request.getOrganizationCode());
         requestClient.save(transformRequest);
 
         return establishmentDissolve;

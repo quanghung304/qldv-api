@@ -78,6 +78,7 @@ public class TransformationHistoryService implements EntityHandler {
         Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, form, getCombinedFieldMap());
         transformRequest.setReferenceId(transformationHistoryDraft.getId());
         transformRequest.setCreatedBy(userDetails.getId());
+        transformRequest.setOrganizationCode(request.getOrganizationCode());
         requestClient.save(transformRequest);
 
         return transformationHistoryDraft;

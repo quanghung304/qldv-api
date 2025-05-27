@@ -50,7 +50,6 @@ public class RequestService {
         Request request = new Request();
         Integer action = EAction.UPDATE.getId();
 
-        UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try {
             // Serialize newObject to newData (null for DELETE)
             if (newObject != null) {
@@ -76,7 +75,6 @@ public class RequestService {
         request.setFormName(form.getName());
         request.setType(form.getType());
         request.setAction(action);
-        request.setOrganizationCode(user.getOrganizationCode());
         request.setStatus(EApprovalStatus.PENDING.getId());
 
         return request;
