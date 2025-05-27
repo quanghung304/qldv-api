@@ -2,6 +2,7 @@ package com.agribank.qldv_api.service.handler;
 
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
+import com.agribank.qldv_api.service.OrganizationService;
 import com.agribank.qldv_api.service.TransformationHistoryService;
 import org.springframework.stereotype.Component;
 
@@ -14,11 +15,13 @@ public class EntityHandlerRegistry {
 
     public EntityHandlerRegistry(
             TransformationHistoryService historyService,
-            EstablishmentDissolveDraftService establishmentDissolveDraftService
+            EstablishmentDissolveDraftService establishmentDissolveDraftService,
+            OrganizationService organizationService
     ) {
         this.handlers = Map.of(
                 EForm.BIEU_02_HIST.getCode(), historyService,
-                EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService
+                EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService,
+                EForm.BIEU_01.getCode(), organizationService
         );
     }
 

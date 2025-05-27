@@ -3,7 +3,6 @@ package com.agribank.qldv_api.service;
 import com.agribank.qldv_api.enums.EAction;
 import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
-import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.ApproveRequest;
@@ -43,8 +42,6 @@ public class RequestService {
     ModelMapper modelMapper;
     @Autowired
      RequestClient requestClient;
-    @Autowired
-    OrganizationClient organizationClient;
     @Autowired
     @Lazy
     EntityHandlerRegistry handlerRegistry;

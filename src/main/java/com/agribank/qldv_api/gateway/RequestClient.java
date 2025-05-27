@@ -10,6 +10,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 
+
 @FeignClient(
         name = "requestClient",
         url = "${qldv.database.url}" + "/api/v1/request",
