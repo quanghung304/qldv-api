@@ -59,6 +59,7 @@ public class TransformationHistoryService implements EntityHandler {
         TransformationHistoryDraft draft = new TransformationHistoryDraft();
 
         draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setType(request.getType());
         draft.setOldName(request.getOldName());
         draft.setOldForm(request.getOldForm());
         draft.setNewName(request.getNewName());
@@ -76,6 +77,7 @@ public class TransformationHistoryService implements EntityHandler {
         EForm form = Objects.equals(request.getType(), EReport01Type.UPGRADE.getId()) ? upForm : downForm;
 
         Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, form, getCombinedFieldMap());
+        transformRequest.setOrganizationCode(request.getOrganizationCode());
         transformRequest.setReferenceId(transformationHistoryDraft.getId());
         transformRequest.setCreatedBy(userDetails.getId());
         requestClient.save(transformRequest);

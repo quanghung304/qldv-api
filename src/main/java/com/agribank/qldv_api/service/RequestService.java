@@ -70,6 +70,8 @@ public class RequestService {
             throw new RuntimeException("Failed to serialize request data", e);
         }
 
+        UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        request.setParentOrganizationCode(user.getOrganizationCode());
         // Set default fields
         request.setFormCode(form.getCode());
         request.setFormName(form.getName());
