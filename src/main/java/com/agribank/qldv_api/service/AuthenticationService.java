@@ -87,7 +87,6 @@ public class AuthenticationService {
 
             if (Objects.isNull(userNew)) {
                 userNew = new User();
-                userNew.setId(UUID.randomUUID().toString());
                 action = EApiLogType.INSERT.getValue();
                 userNew.setEmail(request.getEmail());
                 userNew.setUsername(registerRequest.getUsername());
