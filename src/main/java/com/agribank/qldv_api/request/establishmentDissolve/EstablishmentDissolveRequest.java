@@ -8,7 +8,6 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
 import java.util.Objects;
 
 @Data
@@ -22,29 +21,13 @@ public class EstablishmentDissolveRequest extends BaseFormDto {
     Integer type;
 
     public void validate(){
+        super.validate();
         if (Objects.isNull(organizationCode)) {
             throw new CommonException("Code is required");
         }
 
-        if (Objects.isNull(type) || EReport01Type.getValue(type) != EReport01Type.ESTABLISH.getId()
-                && EReport01Type.getValue(type) != EReport01Type.DISSOLVE.getId()) {
+        if (EReport01Type.getValue(type) != EReport01Type.DISSOLVE.getId()) {
             throw new CommonException("Type is invalid");
-        }
-
-        if (Objects.isNull(getConclusionNumber())) {
-            throw new CommonException("Resolution number is required");
-        }
-
-        if (Objects.isNull(getConclusionDate())) {
-            throw new CommonException("Resolution date is required");
-        }
-
-        if (Objects.isNull(getDecisionNumber())) {
-            throw new CommonException("establishmentDecisionNumber date is required");
-        }
-
-        if (Objects.isNull(getEffectiveDate())) {
-            throw new CommonException("effectiveDate is required");
         }
     }
 }

@@ -1,9 +1,6 @@
 package com.agribank.qldv_api.service;
 
-import com.agribank.qldv_api.enums.Constants;
-import com.agribank.qldv_api.enums.EApprovalStatus;
-import com.agribank.qldv_api.enums.EForm;
-import com.agribank.qldv_api.enums.ERequestType;
+import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.TransformationHistoryClient;
@@ -33,7 +30,8 @@ public class TransformationHistoryService implements EntityHandler {
     private final RequestService requestService;
     private final ModelMapper modelMapper;
 
-    private final EForm form = EForm.BIEU_02_HIST;
+    private final EForm upForm = EForm.BIEU_02_UP;
+    private final EForm downForm = EForm.BIEU_02_DOWN;
 
     public Map<String, String> getCombinedFieldMap() {
         Map<String, String> combinedFieldMap = new HashMap<>();
@@ -74,6 +72,8 @@ public class TransformationHistoryService implements EntityHandler {
         draft.setCreatedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.PENDING.getId());
         TransformationHistoryDraft transformationHistoryDraft = historyDraftClient.save(draft).getData();
+
+        EForm form = Objects.equals(request.getType(), EReport01Type.UPGRADE.getId()) ? upForm : downForm;
 
         Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, form, getCombinedFieldMap());
         transformRequest.setReferenceId(transformationHistoryDraft.getId());

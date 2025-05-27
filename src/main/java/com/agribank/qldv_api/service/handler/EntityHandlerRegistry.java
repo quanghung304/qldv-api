@@ -19,7 +19,8 @@ public class EntityHandlerRegistry {
             OrganizationService organizationService
     ) {
         this.handlers = Map.of(
-                EForm.BIEU_02_HIST.getCode(), historyService,
+                EForm.BIEU_02_UP.getCode(), historyService,
+                EForm.BIEU_02_DOWN.getCode(), historyService,
                 EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService,
                 EForm.BIEU_01.getCode(), organizationService
         );

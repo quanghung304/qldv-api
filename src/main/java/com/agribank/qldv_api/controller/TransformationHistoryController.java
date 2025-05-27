@@ -23,6 +23,7 @@ public class TransformationHistoryController {
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PostMapping("create")
     public ResponseEntity<DefaultResponse<TransformationHistoryDraft>> createTransformRequest(@RequestBody @Valid OrganizationTransformRequest request) {
+        request.validate();
         return DefaultResponse.success(historyService.createTransformRequest(request));
     }
 
