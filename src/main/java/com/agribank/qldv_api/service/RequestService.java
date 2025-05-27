@@ -101,6 +101,12 @@ public class RequestService {
     public PageResponse<RequestResponse> getList(FilterRequest filterRequest) {
         try {
             filterRequest = Objects.nonNull(filterRequest) ? filterRequest : new FilterRequest();
+            if (Objects.isNull(filterRequest.getOrderBy())){
+                filterRequest.setOrderBy("created_at");
+            }
+            if (Objects.isNull(filterRequest.getSort())){
+                filterRequest.setSort("DESC");
+            }
             PageResponse<RequestDto> requestDtoPageResponse = requestClient.getRequestList(filterRequest).getData();
             List<RequestDto> requestDtos = requestDtoPageResponse.getData();
 

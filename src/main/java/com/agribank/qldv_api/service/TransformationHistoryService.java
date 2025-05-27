@@ -80,6 +80,7 @@ public class TransformationHistoryService implements EntityHandler {
         transformRequest.setOrganizationCode(request.getOrganizationCode());
         transformRequest.setReferenceId(transformationHistoryDraft.getId());
         transformRequest.setCreatedBy(userDetails.getId());
+        transformRequest.setOrganizationCode(request.getOrganizationCode());
         requestClient.save(transformRequest);
 
         return transformationHistoryDraft;

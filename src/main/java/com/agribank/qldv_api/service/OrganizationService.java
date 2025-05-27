@@ -141,6 +141,7 @@ public class OrganizationService implements EntityHandler {
         request.setCreatedBy(userId);
         organizationDraft = organizationDraftService.save(organizationDraft);
 
+        request.setOrganizationCode(organizationDraft.getCode());
         request.setReferenceId(organizationDraft.getId());
         requestClient.save(request);
     }
@@ -252,6 +253,7 @@ public class OrganizationService implements EntityHandler {
         partActivityRequest.setFormName(form.getName());
         partActivityRequest.setCreatedBy(userRequested.getId());
         partActivityRequest.setReferenceId(organization.getCode());
+        partActivityRequest.setOrganizationCode(organization.getCode());
         requestClient.save(partActivityRequest);
 
         return "Tạo yêu cầu thành công";
