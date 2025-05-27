@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.establishmentDissolve;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EReport01Type;
 import com.agribank.qldv_api.request.validator.ValidOrganizationForm;
 import com.agribank.qldv_api.response.BaseFormDto;
@@ -24,6 +25,10 @@ public class EstablishmentDissolveRequest extends BaseFormDto {
         super.validate();
         if (Objects.isNull(organizationCode)) {
             throw new CommonException("Code is required");
+        }
+
+        if (organizationCode.equals(Constants.BTCDU_CODE)) {
+            throw new CommonException("Khong duoc giai the to chuc dang cap A");
         }
 
         if (EReport01Type.getValue(type) != EReport01Type.DISSOLVE.getId()) {
