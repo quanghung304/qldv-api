@@ -44,4 +44,10 @@ public interface UserClient {
     DefaultResponse<UserDto> getUserInfo(
             @RequestParam(name = "email") String email
     );
+
+    @GetMapping("api/v1/user/staff-code-and-organization-code")
+    DefaultResponse<UserDto> userOrganization(
+            @RequestParam(name = "staffCode") String staffCode,
+            @RequestParam(name = "organizationCode") String organizationCode
+    );
 }

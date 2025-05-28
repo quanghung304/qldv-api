@@ -9,6 +9,8 @@ import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 
 @FeignClient(
@@ -20,6 +22,16 @@ public interface RequestClient extends BaseClient<Request, String> {
     @PostMapping("/list")
     DefaultResponse<PageResponse<RequestDto>> getRequestList(
             @RequestBody FilterRequest request
+    );
+
+    @GetMapping("/find-by-form-code")
+    DefaultResponse<List<Request>> findByFormCode(
+            @RequestParam(name = "formCode") String formCode
+    );
+
+    @GetMapping("/find-by-ref-id")
+    DefaultResponse<Request> findByReferenceId(
+            @RequestParam(name = "refId") String refId
     );
 
     @GetMapping("/{id}")
