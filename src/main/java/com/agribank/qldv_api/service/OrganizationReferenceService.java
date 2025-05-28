@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service;
 
+import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.gateway.OrganizationReferenceClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.response.organizationReference.OrganizationReferenceResponse;
@@ -18,8 +19,7 @@ public class OrganizationReferenceService {
     private final UserService userService;
 
     public List<OrganizationReferenceResponse> getAll(){
-        UserDetailsImpl userRequested = userService.getUserRequested();
-        List<OrganizationReference> organizationReferences = client.getListChild(userRequested.getFormOrganization()).getData();
+        List<OrganizationReference> organizationReferences = client.getListChild(EOrganizationReference.GROUP_A.getCode()).getData();
         if(organizationReferences.isEmpty()){
             return null;
         }
