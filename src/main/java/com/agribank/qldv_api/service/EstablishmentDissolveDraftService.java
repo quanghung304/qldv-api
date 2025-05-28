@@ -54,7 +54,14 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
             throw new CommonException("Đã tồn tại yêu cầu với tổ chức đảng này");
         }
 
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+
+        if (Objects.equals(request.getType(), EReport01Type.DISSOLVE.getId()) && Objects.isNull(organization)) {
+            throw new CommonException("Tổ chức đảng không tồn tại");
+        }
+
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+
         EstablishmentDissolveDraft establishmentDissolve = null;
         if (Objects.nonNull(request.getId())) {
             establishmentDissolve = client.findById(request.getId()).getData();
@@ -64,21 +71,11 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
             establishmentDissolve = new EstablishmentDissolveDraft();
         }
 
-        Organization organization = organizationService.findByCode(request.getOrganizationCode());
-
-        if (Objects.equals(request.getType(), EReport01Type.ESTABLISH.getId()) && Objects.nonNull(organization)) {
-            throw new CommonException("Tổ chức đảng đã tồn tại");
-        }
-
-        if (Objects.equals(request.getType(), EReport01Type.DISSOLVE.getId()) && Objects.isNull(organization)) {
-            throw new CommonException("Tổ chức đảng không tồn tại");
-        }
-
         UserDetailsImpl userRequested = userService.getUserRequested();
 
         establishmentDissolve.setOrganizationCode(request.getOrganizationCode());
-        establishmentDissolve.setName(request.getName());
-        establishmentDissolve.setForm(request.getForm());
+        establishmentDissolve.setName(organization.getName());
+        establishmentDissolve.setForm(organization.getForm());
         establishmentDissolve.setType(request.getType());
         establishmentDissolve.setConclusionNumber(request.getConclusionNumber());
         establishmentDissolve.setConclusionDate(request.getConclusionDate());
@@ -94,7 +91,6 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         transformRequest.setOrganizationCode(establishmentDissolve.getOrganizationCode());
         transformRequest.setReferenceId(establishmentDissolve.getId());
         transformRequest.setCreatedBy(userRequested.getId());
-        transformRequest.setOrganizationCode(request.getOrganizationCode());
         requestClient.save(transformRequest);
 
         return establishmentDissolve;
