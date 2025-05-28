@@ -14,6 +14,7 @@ import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
@@ -369,5 +370,9 @@ public class UserService {
         userClient.save(user);
 
         return "Cập nhật thông tin thành công";
+    }
+
+    public UserDto findByStaffCodeAndOrganizationCode(String staffCode, String organizationCode){
+        return userClient.userOrganization(staffCode, organizationCode).getData();
     }
 }

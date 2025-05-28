@@ -45,4 +45,10 @@ public class RequestController {
     public ResponseEntity<DefaultResponse<String>> approveRequest(@RequestBody List<ApproveRequest> request) {
         return DefaultResponse.success(requestService.approveRequest(request));
     }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<String>> delete(@PathVariable(name = "id") String id) {
+        return DefaultResponse.success(requestService.delete(id));
+    }
 }
