@@ -251,20 +251,9 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
         EstablishmentDissolve establishmentDissolve = modelMapper.map(draft, EstablishmentDissolve.class);
         Organization organization = organizationClient.findByCode(establishmentDissolve.getOrganizationCode()).getData();
+        if (Objects.isNull(organization)) return false;
 
-        if (Objects.equals(draft.getType(), EReport01Type.ESTABLISH.getId())) {
-            if (Objects.nonNull(organization)) return false;
-
-            organization = modelMapper.map(draft, Organization.class);
-            organization.setResolutionNumber(draft.getConclusionNumber());
-            organization.setResolutionDate(draft.getConclusionDate());
-            organization.setEstablishmentDecisionNumber(draft.getDecisionNumber());
-            organization.setDecisionDate(draft.getDecisionDate());
-            organization.setStatus(EOrganizationStatus.YES.getStatus());
-        } else {
-            if (Objects.isNull(organization)) return false;
-            organization.setStatus(EOrganizationStatus.NO.getStatus());
-        }
+        organization.setStatus(EOrganizationStatus.NO.getStatus());
 
         draft.setStatus(EApprovalStatus.APPROVED.getId());
         draft.setApprovedBy(userDetails.getId());

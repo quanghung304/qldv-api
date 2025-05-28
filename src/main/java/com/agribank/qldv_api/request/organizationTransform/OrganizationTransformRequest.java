@@ -4,6 +4,7 @@ import com.agribank.qldv_api.enums.EReport01Type;
 import com.agribank.qldv_api.request.validator.ValidOrganizationForm;
 import com.agribank.qldv_api.response.BaseFormDto;
 import com.agribank.qldvutils.exception.CommonException;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,6 +18,7 @@ import java.util.Objects;
 public class OrganizationTransformRequest extends BaseFormDto {
     Integer type;
     String organizationCode;
+    @NotNull
     String oldName;
     @ValidOrganizationForm(message = "Sai hình thức tổ chức đảng")
     String oldForm;

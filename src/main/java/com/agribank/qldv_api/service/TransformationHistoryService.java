@@ -50,6 +50,18 @@ public class TransformationHistoryService implements EntityHandler {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
 
+        if (
+                Objects.equals(request.getType(), EReport01Type.UPGRADE.getId())
+                && organization.getForm().compareToIgnoreCase(request.getNewForm()) == -1
+        ) {
+            throw new CommonException("Yêu cầu nâng cấp không hợp lệ");
+        } else if (
+                Objects.equals(request.getType(), EReport01Type.DOWNGRADE.getId())
+                && organization.getForm().compareToIgnoreCase(request.getNewForm()) == 1
+        ) {
+            throw new CommonException("Yêu cầu hạ cấp không hợp lệ");
+        }
+
         List<TransformationHistoryDraft> draftList = historyDraftClient.findPendingDraftByCode(request.getOrganizationCode()).getData();
 
         if (!draftList.isEmpty()) {
@@ -62,7 +74,7 @@ public class TransformationHistoryService implements EntityHandler {
         draft.setType(request.getType());
         draft.setOldName(request.getOldName());
         draft.setOldForm(request.getOldForm());
-        draft.setNewName(request.getNewName());
+        draft.setNewName(Objects.nonNull(request.getNewName()) ? request.getNewName() : organization.getName());
         draft.setNewForm(request.getNewForm());
         draft.setDecisionCommittee(request.getDecisionCommittee());
         draft.setConclusionNumber(request.getConclusionNumber());
