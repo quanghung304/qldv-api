@@ -31,6 +31,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -45,6 +46,8 @@ public class RequestService {
     @Autowired
     @Lazy
     EntityHandlerRegistry handlerRegistry;
+
+    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd/MM/yyyy");
 
     public Request initializeRequest(Object newObject, Object oldObject, EForm form, Map<String, String> fieldMap) {
         Request request = new Request();
@@ -91,7 +94,11 @@ public class RequestService {
             if (wrapper.isReadableProperty(fieldName)) {
                 Object value = wrapper.getPropertyValue(fieldName);
                 // Use user-friendly name from fieldMap as key
-                dataMap.put(fieldMap.get(fieldName), value);
+                if (value instanceof Date) {
+                    dataMap.put(fieldMap.get(fieldName), DATE_FORMATTER.format((Date) value));
+                } else {
+                    dataMap.put(fieldMap.get(fieldName), value);
+                }
             }
         }
 
@@ -102,7 +109,7 @@ public class RequestService {
         try {
             filterRequest = Objects.nonNull(filterRequest) ? filterRequest : new FilterRequest();
             if (Objects.isNull(filterRequest.getOrderBy())){
-                filterRequest.setOrderBy("created_at");
+                filterRequest.setOrderBy("createdAt");
             }
             if (Objects.isNull(filterRequest.getSort())){
                 filterRequest.setSort("DESC");
@@ -132,15 +139,6 @@ public class RequestService {
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }
-    }
-
-    private String getOrganizationCode(String jsonData) throws Exception {
-        Map<String, Object> oldDataMap = objectMapper.readValue(
-                jsonData,
-                new TypeReference<Map<String, Object>>() {}
-        );
-
-        return (String) oldDataMap.get("organizationCode");
     }
 
     public RequestDetailResponse getById(String id) {
@@ -245,11 +243,13 @@ public class RequestService {
                 continue;
             }
 
+            ApproveRequest approveRequest = requestStatusMap.get(request.getId());
+
             UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             request.setApprovedBy(user.getId());
             request.setApprovedAt(new Date(System.currentTimeMillis()));
 
-            ApproveRequest approveRequest = requestStatusMap.get(request.getId());
+
             if (Objects.equals(approveRequest.getStatus(), EApprovalStatus.DENIED.getId())) {
                 request.setStatus(approveRequest.getStatus());
                 request.setDeniedReason(approveRequest.getDeniedReason());

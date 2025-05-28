@@ -136,8 +136,6 @@ public class OrganizationService implements EntityHandler {
 
     private void saveRequest(OrganizationDraft organizationDraft, String userId, Organization organizationDraftOld){
         Request request = requestService.initializeRequest(organizationDraft, organizationDraftOld, form, getCombinedFieldMap());
-        request.setFormCode(form.getCode());
-        request.setFormName(form.getName());
         request.setCreatedBy(userId);
         organizationDraft = organizationDraftService.save(organizationDraft);
 
