@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.service.handler;
 
 import com.agribank.qldv_api.enums.EForm;
+import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
 import com.agribank.qldv_api.service.OrganizationService;
 import com.agribank.qldv_api.service.TransformationHistoryService;
@@ -24,13 +25,15 @@ public class EntityHandlerRegistry {
             PartyActivityExemptionService partyActivityExemptionService,
             LeavePartyService leavePartyService,
             RemoveNamePartyService removeNamePartyService,
-            DeceasedService deceasedService
+            DeceasedService deceasedService,
+            DVService dvService
     ) {
         this.handlers = Map.of(
+                EForm.BIEU_01.getCode(), organizationService,
                 EForm.BIEU_02_UP.getCode(), historyService,
                 EForm.BIEU_02_DOWN.getCode(), historyService,
                 EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService,
-                EForm.BIEU_01.getCode(), organizationService,
+                EForm.BIEU_15.getCode(), dvService,
                 EForm.BIEU_26_PARTY_ACTIVITY_EXEMPTION.getCode(), partyActivityExemptionService,
                 EForm.BIEU_26_LEAVE_PARTY.getCode(), leavePartyService,
                 EForm.BIEU_26_REMOVE_NAME_PARTY.getCode(), removeNamePartyService,
