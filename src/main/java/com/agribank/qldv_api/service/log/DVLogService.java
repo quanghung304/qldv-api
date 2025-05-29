@@ -31,7 +31,7 @@ public class DVLogService extends ApiLogBaseService{
             try {
                 List<String> descriptions = new ArrayList<>();
                 for (DV dv : dvs) {
-                    descriptions.add(String.format("DV: staffCode: <%s>, fullName: <%s>", dv.getCode(), dv.getFullName()));
+                    descriptions.add(String.format("DV: staffCode: <%s>, fullName: <%s>", dv.getStaffCode(), dv.getFullName()));
                 }
 
                 apiLog.setDescription(String.join("\n", descriptions));
