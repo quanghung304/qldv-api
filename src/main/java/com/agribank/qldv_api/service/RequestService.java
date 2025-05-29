@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EAction;
 import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
@@ -246,9 +247,13 @@ public class RequestService {
             ApproveRequest approveRequest = requestStatusMap.get(request.getId());
 
             UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+            if (!Objects.equals(user.getOrganizationCode(), Constants.BTCDU_CODE) || !request.getOrganizationCode().contains(user.getOrganizationCode())) {
+                continue;
+            }
+
             request.setApprovedBy(user.getId());
             request.setApprovedAt(new Date(System.currentTimeMillis()));
-
 
             if (Objects.equals(approveRequest.getStatus(), EApprovalStatus.DENIED.getId())) {
                 request.setStatus(approveRequest.getStatus());

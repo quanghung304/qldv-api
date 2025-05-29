@@ -24,6 +24,7 @@ public class RegisterRequest {
     String jobPosition;
     Integer depId;
     String userKind;
+    String organizationCode;
     @Builder.Default
     String password = "Agribank@123";
     List<String> roleIds;
