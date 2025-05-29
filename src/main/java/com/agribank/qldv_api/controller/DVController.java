@@ -8,10 +8,9 @@ import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,5 +21,10 @@ public class DVController {
     @PostMapping("/search")
     public ResponseEntity<DefaultResponse<PageResponse<DVResponse>>> search(@RequestBody SearchDVRequest request) {
         return DefaultResponse.success(service.search(request));
+    }
+
+    @GetMapping("/organization")
+    public ResponseEntity<DefaultResponse<List<DVResponse>>> getDVByOrganization(@RequestParam(name = "organization", required = false) String organization) {
+        return DefaultResponse.success(service.getDVByOrganization(organization));
     }
 }

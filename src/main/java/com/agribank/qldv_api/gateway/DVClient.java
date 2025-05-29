@@ -5,10 +5,7 @@ import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -33,5 +30,10 @@ public interface DVClient {
     @PostMapping("api/v1/dv/save/all")
     DefaultResponse<List<DV>> saveAll(
             @RequestBody List<DV> dvs
+    );
+
+    @GetMapping("api/v1/dv/find-by-organization")
+    DefaultResponse<List<DV>> findByOrganizationCode(
+            @RequestParam(name = "organization") String organization
     );
 }
