@@ -4,6 +4,7 @@ import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DVClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.gateway.DVDraftClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
@@ -25,6 +26,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -73,6 +75,19 @@ public class DVService implements EntityHandler {
 
     public DV findById(String id) {
         return dvClient.findById(id).getData();
+    }
+
+    public List<DVResponse> getDVByOrganization(String organization) {
+        if (Objects.isNull(organization)) {
+            UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            organization = userRequested.getOrganizationCode();
+        }
+        List<DV> dvs = dvClient.findByOrganizationCode(organization).getData();
+        if (Objects.isNull(dvs) || dvs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return dvs.stream().map(dv -> modelMapper.map(dv, DVResponse.class)).toList();
     }
 
     public DvDraft create(DVRequest dvRequest) {

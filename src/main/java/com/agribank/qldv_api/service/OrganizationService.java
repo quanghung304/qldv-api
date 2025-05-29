@@ -178,7 +178,7 @@ public class OrganizationService implements EntityHandler {
 
         request.setOrderBy("code");
 
-        PageResponse<Organization> organizationPageResponse = null;
+        PageResponse<Organization> organizationPageResponse;
 
         if (Objects.nonNull(request.getCode()) && request.getCode().length() > 4){
             organizationPageResponse = client.searchChild(request).getData();
@@ -238,6 +238,7 @@ public class OrganizationService implements EntityHandler {
         }
         return modelMapper.map(organization, OrganizationResponse.class);
     }
+
 
     public String createRequestDelete(String code){
         checkAuthorityService.hasAuthorityOverOrganization(code);

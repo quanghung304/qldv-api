@@ -289,4 +289,14 @@ public class RequestService {
 
         return "Duyệt thành công " + success + " yêu cầu";
     }
+
+    public String delete(String id){
+        Request request = requestClient.findById(id).getData().orElse(null);
+        if (EApprovalStatus.PENDING.getId() != request.getStatus()) {
+            throw new CommonException("Yêu cầu đã được duyệt, bạn không thể xóa yêu cầu");
+        }
+
+        requestClient.deleteById(id);
+        return "Xóa yêu cầu thành công";
+    }
 }
