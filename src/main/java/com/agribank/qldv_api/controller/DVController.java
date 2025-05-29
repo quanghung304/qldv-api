@@ -34,7 +34,7 @@ public class DVController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
-    public ResponseEntity<DefaultResponse<DvDraft>> createDVRequest(@RequestBody DVRequest request) {
+    public ResponseEntity<DefaultResponse<DvDraft>> createDVRequest(@RequestBody DVRequest request)  {
         return DefaultResponse.success("Tạo yêu cầu thêm mới đảng viên thành công", service.create(request));
     }
 
