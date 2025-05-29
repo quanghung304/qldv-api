@@ -21,4 +21,9 @@ public class OrganizationReferenceController {
     public ResponseEntity<BaseResponse<List<OrganizationReferenceResponse>>> getAll() {
         return BaseResponse.success(service.getAll());
     }
+
+    @GetMapping("/get-child")
+    public ResponseEntity<BaseResponse<List<OrganizationReferenceResponse>>> getChild() {
+        return BaseResponse.success(service.getChild());
+    }
 }
