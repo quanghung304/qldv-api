@@ -245,10 +245,6 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
         if (Objects.isNull(draft)) return false;
 
-        if (!Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE) || !draft.getOrganizationCode().contains(userDetails.getOrganizationCode())) {
-            return false;
-        }
-
         EstablishmentDissolve establishmentDissolve = modelMapper.map(draft, EstablishmentDissolve.class);
         Organization organization = organizationClient.findByCode(establishmentDissolve.getOrganizationCode()).getData();
         if (Objects.isNull(organization)) return false;

@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.request.dv;
 
 import com.agribank.qldv_api.exception.ValidationException;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,10 @@ import java.util.Objects;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DVRequest {
-    String code;
+    String id;
+    //staff code
+    String staffCode;
+    @NotNull
     String organizationCode;
     //Số lý lịch
     String resumeNumber;
@@ -53,7 +57,6 @@ public class DVRequest {
     Date admissionDate;
     //nguồn kết nạp
     Integer sourceRecruitment;
-    String externalParty;
     //Kết nạp tại chi bộ
     String branchPartyCode;
     //công đoàn giới thiệu
@@ -92,10 +95,18 @@ public class DVRequest {
     Integer formerWorker;
     //Kết hôn với người nước ngoài
     Integer foreignMarriage;
+    //Trình độ
+    String degree;
+    //Học vấn phổ thông: 10/10, 12/12, khác
+    String education;
+    //Tình trạng sức khỏe bản thân: Tốt/ bình thường/ khác
+    String healthCondition;
+    //Ngày, tháng, năm từ trần
+    String dateOfDeath;
     Integer status;
 
     public void validate(){
-        if (Objects.isNull(code)){
+        if (Objects.isNull(staffCode)){
             throw new ValidationException("Code is required");
         }
 

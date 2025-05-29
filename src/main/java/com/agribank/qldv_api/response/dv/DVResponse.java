@@ -10,7 +10,8 @@ import java.util.Date;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DVResponse {
-    String code;
+    String id;
+    String staffCode;
     String organizationCode;
     //Số lý lịch
     String resumeNumber;
@@ -88,5 +89,4 @@ public class DVResponse {
     Integer formerWorker;
     //Kết hôn với người nước ngoài
     Integer foreignMarriage;
-    Integer status;
 }

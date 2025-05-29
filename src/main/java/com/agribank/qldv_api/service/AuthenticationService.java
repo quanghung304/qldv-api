@@ -144,7 +144,8 @@ public class AuthenticationService {
 
     private void createDV(RegisterRequest request, UserIamResponse userIamResponse, EmployeeInfoDto employeeInfoDto){
         DVRequest dvRequest = DVRequest.builder()
-                .code(String.valueOf(request.getStaffCode()))
+                .staffCode(String.valueOf(request.getStaffCode()))
+                .organizationCode(request.getOrganizationCode())
                 .fullName(userIamResponse.getFullName())
                 .usingName(employeeInfoDto.getEmpUsualName())
                 .gender(userIamResponse.getGender())
