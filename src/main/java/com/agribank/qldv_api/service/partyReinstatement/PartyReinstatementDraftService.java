@@ -1,8 +1,7 @@
-package com.agribank.qldv_api.service;
+package com.agribank.qldv_api.service.partyReinstatement;
 
-import com.agribank.qldv_api.gateway.PartyReinstatementDraftClient;
-import com.agribank.qldvutils.entity.PartyReinstatementDraft;
-import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldv_api.gateway.partyReinstatement.PartyReinstatementDraftClient;
+import com.agribank.qldvutils.entity.partyReinstatement.PartyReinstatementDraft;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +15,6 @@ public class PartyReinstatementDraftService {
     }
 
     public PartyReinstatementDraft findById(String id) {
-        return client.findById(id).getData().orElseThrow(()->new CommonException("PartyReinstatementDraft not found"));
+        return client.findById(id).getData().orElse(null);
     }
 }
