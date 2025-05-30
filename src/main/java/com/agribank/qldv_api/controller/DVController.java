@@ -9,6 +9,8 @@ import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldvutils.entity.DvDraft;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.response.PageResponse;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +36,7 @@ public class DVController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
-    public ResponseEntity<DefaultResponse<DvDraft>> createDVRequest(@RequestBody DVRequest request)  {
+    public ResponseEntity<DefaultResponse<DvDraft>> createDVRequest(@RequestBody @Valid DVRequest request)  {
         return DefaultResponse.success("Tạo yêu cầu thêm mới đảng viên thành công", service.create(request));
     }
 

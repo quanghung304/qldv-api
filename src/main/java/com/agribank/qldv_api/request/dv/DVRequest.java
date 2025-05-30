@@ -2,6 +2,7 @@ package com.agribank.qldv_api.request.dv;
 
 import com.agribank.qldv_api.exception.ValidationException;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -29,7 +30,8 @@ public class DVRequest {
     //cccd
     String vneid;
     String fullName;
-    Integer gender;
+    @Pattern(regexp = "^[MF]$", message = "Giá trị gender phải là M hoặc F")
+    String gender;
     //họ tên đang sử dụng
     String usingName;
     Timestamp birthday;
@@ -46,9 +48,11 @@ public class DVRequest {
     //thành phần gia đình
     String familyComposition;
     //Gia đình liệt sĩ
-    Integer martyrsFamily;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String martyrsFamily;
     //Có công với cachs mạng
-    Integer revolution;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String revolution;
     //Thành phần xã hội khi vào Đảng
     String socialComposition;
     //công việc chính đang làm
@@ -60,9 +64,11 @@ public class DVRequest {
     //Kết nạp tại chi bộ
     String branchPartyCode;
     //công đoàn giới thiệu
-    Integer suggestionUnion;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String suggestionUnion;
     //Đoàn thanh niên giới thiệu
-    Integer suggestionYouthUnion;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String suggestionYouthUnion;
     //Người giới thiệu 1
     String referrer1;
     //Chức vụ đơn vị của người giới thiệu;
@@ -88,13 +94,19 @@ public class DVRequest {
     //Loại thương binh
     Integer disabledType;
     //Có vấn đề chính trị
-    Integer politicalIssue;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String politicalIssue;
     //Chế độ cũ
-    Integer oldRegime;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String oldRegime;
     //Xuất thân là công nhân
-    Integer formerWorker;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String formerWorker;
     //Kết hôn với người nước ngoài
-    Integer foreignMarriage;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String foreignMarriage;
+    @Pattern(regexp = "^[YN]$", message = "Giá trị phải là Y hoặc N")
+    String foreignRelated;
     //Trình độ
     String degree;
     //Học vấn phổ thông: 10/10, 12/12, khác

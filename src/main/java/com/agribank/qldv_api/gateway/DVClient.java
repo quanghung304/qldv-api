@@ -3,6 +3,7 @@ package com.agribank.qldv_api.gateway;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -35,5 +36,10 @@ public interface DVClient {
     @GetMapping("api/v1/dv/find-by-organization")
     DefaultResponse<List<DV>> findByOrganizationCode(
             @RequestParam(name = "organization") String organization
+    );
+
+    @GetMapping("api/v1/dv/find-by-staff-code/{code}")
+    BaseResponse<DV> findByStaffCode(
+            @PathVariable String code
     );
 }

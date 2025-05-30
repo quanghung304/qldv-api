@@ -143,12 +143,14 @@ public class AuthenticationService {
     }
 
     private void createDV(RegisterRequest request, UserIamResponse userIamResponse, EmployeeInfoDto employeeInfoDto){
+        String gender = userIamResponse.getGender() == 1 ? "M" : "F";
+
         DVRequest dvRequest = DVRequest.builder()
                 .staffCode(String.valueOf(request.getStaffCode()))
                 .organizationCode(request.getOrganizationCode())
                 .fullName(userIamResponse.getFullName())
                 .usingName(employeeInfoDto.getEmpUsualName())
-                .gender(userIamResponse.getGender())
+                .gender(gender)
                 .vneid(String.valueOf(userIamResponse.getVneid()))
                 .birthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthdt()))
                 .birthPlace(employeeInfoDto.getBirthAddress())

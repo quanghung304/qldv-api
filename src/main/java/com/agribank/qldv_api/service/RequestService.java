@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
@@ -212,6 +213,7 @@ public class RequestService {
     return responses;
     }
 
+    @Transactional
     public String approveRequest(List<ApproveRequest> approvalRequests) {
         List<String> requestIdList = new ArrayList<>();
         Map<String, ApproveRequest> requestStatusMap = new HashMap<>();

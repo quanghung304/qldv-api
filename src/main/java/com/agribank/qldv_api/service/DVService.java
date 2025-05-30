@@ -107,6 +107,7 @@ public class DVService implements EntityHandler {
 
         Request request = requestService.initializeRequest(dvDraft, null, form, DV.FIELD_MAP);
         request.setOrganizationCode(dvRequest.getOrganizationCode());
+        System.out.println("Calling getId(): " + dvDraft.getId());
         request.setReferenceId(dvDraft.getId());
         request.setCreatedBy(userDetails.getId());
         requestClient.save(request);
@@ -142,12 +143,36 @@ public class DVService implements EntityHandler {
         requestClient.save(request);
 
         return newDV;
-
     }
 
     @Override
-    public boolean applyCreate(String dvId, UserDetailsImpl userDetails) {
-        DvDraft dvDraft = dvDraftClient.findById(dvId).getData()
+    public boolean applyCreate(String draftId, UserDetailsImpl userDetails) {
+        DvDraft dvDraft = dvDraftClient.findById(draftId).getData()
+                .orElse(null);
+
+        if (Objects.isNull(dvDraft) || !Objects.equals(dvDraft.getStatus(), EApprovalStatus.PENDING.getId())) {
+            return false;
+        }
+
+        dvDraft.setStatus(EApprovalStatus.APPROVED.getId());
+        dvDraft.setApprovedBy(userDetails.getId());
+
+        DV dv = new DV();
+        mapDVDraftToDV(dv, dvDraft);
+        dv.setCreatedBy(dvDraft.getCreatedBy());
+        dv.setApprovedBy(userDetails.getId());
+
+        dvClient.save(dv);
+        dvDraftClient.save(dvDraft);
+
+        return true;
+    }
+
+    @Override
+    public boolean applyUpdate(String draftId) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        DvDraft dvDraft = dvDraftClient.findById(draftId).getData()
                 .orElse(null);
 
         if (Objects.isNull(dvDraft) || Objects.equals(dvDraft.getStatus(), EApprovalStatus.PENDING.getId())) {
@@ -157,12 +182,13 @@ public class DVService implements EntityHandler {
         dvDraft.setStatus(EApprovalStatus.APPROVED.getId());
         dvDraft.setApprovedBy(userDetails.getId());
 
-        return false;
-    }
+        DV dv = dvClient.findByStaffCode(dvDraft.getStaffCode()).getData();
+        mapDVDraftToDV(dv, dvDraft);
 
-    @Override
-    public boolean applyUpdate(String referenceId) {
-        return false;
+        dvClient.save(dv);
+        dvDraftClient.save(dvDraft);
+
+        return true;
     }
 
     @Override
@@ -171,7 +197,62 @@ public class DVService implements EntityHandler {
     }
 
     @Override
-    public void setDenied(String referenceId) {
+    public void setDenied(String draftId) {
+        DvDraft dvDraft = dvDraftClient.findById(draftId).getData()
+                .orElse(null);
 
+        dvDraft.setStatus(EApprovalStatus.DENIED.getId());
+        dvDraftClient.save(dvDraft);
+    }
+
+    public void mapDVDraftToDV(DV dv, DvDraft dvDraft) {
+        dv.setStaffCode(dvDraft.getStaffCode());
+        dv.setOrganizationCode(dvDraft.getOrganizationCode());
+        dv.setResumeNumber(dvDraft.getResumeNumber());
+        dv.setPartyCardNumber(dvDraft.getPartyCardNumber());
+        dv.setIssueDate(dvDraft.getIssueDate());
+        dv.setVneid(dvDraft.getVneid());
+        dv.setFullName(dvDraft.getFullName());
+        dv.setGender(dvDraft.getGender());
+        dv.setUsingName(dvDraft.getUsingName());
+        dv.setBirthday(dvDraft.getBirthday());
+        dv.setBirthPlace(dvDraft.getBirthPlace());
+        dv.setHometown(dvDraft.getHometown());
+        dv.setPermanentResidence(dvDraft.getPermanentResidence());
+        dv.setTemporaryResidence(dvDraft.getTemporaryResidence());
+        dv.setEthnic(dvDraft.getEthnic());
+        dv.setReligion(dvDraft.getReligion());
+        dv.setFamilyComposition(dvDraft.getFamilyComposition());
+        dv.setMartyrsFamily(dvDraft.getMartyrsFamily());
+        dv.setRevolution(dvDraft.getRevolution());
+        dv.setSocialComposition(dvDraft.getSocialComposition());
+        dv.setMainJob(dvDraft.getMainJob());
+        dv.setAdmissionDate(dvDraft.getAdmissionDate());
+        dv.setSourceRecruitment(dvDraft.getSourceRecruitment());
+        dv.setBranchPartyCode(dvDraft.getBranchPartyCode());
+        dv.setSuggestionUnion(dvDraft.getSuggestionUnion());
+        dv.setSuggestionYouthUnion(dvDraft.getSuggestionYouthUnion());
+        dv.setReferrer1(dvDraft.getReferrer1());
+        dv.setJobPosition1(dvDraft.getJobPosition1());
+        dv.setReferrer2(dvDraft.getReferrer2());
+        dv.setJobPosition2(dvDraft.getJobPosition2());
+        dv.setOfficialRecognitionDay(dvDraft.getOfficialRecognitionDay());
+        dv.setRecruitAnotherOrganization(dvDraft.getRecruitAnotherOrganization());
+        dv.setAgriRecruitDate(dvDraft.getAgriRecruitDate());
+        dv.setRecruitBrcd(dvDraft.getRecruitBrcd());
+        dv.setYouthUnionJoinDate(dvDraft.getYouthUnionJoinDate());
+        dv.setOtherSocialOrganization(dvDraft.getOtherSocialOrganization());
+        dv.setEnlistmentDate(dvDraft.getEnlistmentDate());
+        dv.setDischargeDate(dvDraft.getDischargeDate());
+        dv.setDisabledType(dvDraft.getDisabledType());
+        dv.setPoliticalIssue(dvDraft.getPoliticalIssue());
+        dv.setOldRegime(dvDraft.getOldRegime());
+        dv.setFormerWorker(dvDraft.getFormerWorker());
+        dv.setForeignMarriage(dvDraft.getForeignMarriage());
+        dv.setForeignRelated(dvDraft.getForeignRelated());
+        dv.setDegree(dvDraft.getDegree());
+        dv.setEducation(dvDraft.getEducation());
+        dv.setHealthCondition(dvDraft.getHealthCondition());
+        dv.setDateOfDeath(dvDraft.getDateOfDeath());
     }
 }
