@@ -5,7 +5,6 @@ import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.RegisterRequest;
-import com.agribank.qldv_api.request.dv.DVRequest;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.ADResponse;
@@ -16,6 +15,7 @@ import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
+import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -143,25 +142,24 @@ public class AuthenticationService {
     }
 
     private void createDV(RegisterRequest request, UserIamResponse userIamResponse, EmployeeInfoDto employeeInfoDto){
-        String gender = userIamResponse.getGender() == 1 ? "M" : "F";
+        DV dv = dvService.findByStaffCode(String.valueOf(request.getStaffCode()));
+        if (Objects.isNull(dv)){
+            dv = new DV();
+            dv.setStaffCode(String.valueOf(request.getStaffCode()));
+        }
 
-        DVRequest dvRequest = DVRequest.builder()
-                .staffCode(String.valueOf(request.getStaffCode()))
-                .organizationCode(request.getOrganizationCode())
-                .fullName(userIamResponse.getFullName())
-                .usingName(employeeInfoDto.getEmpUsualName())
-                .gender(gender)
-                .vneid(String.valueOf(userIamResponse.getVneid()))
-                .birthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthdt()))
-                .birthPlace(employeeInfoDto.getBirthAddress())
-                .hometown(employeeInfoDto.getNativeAddress())
-                .permanentResidence(employeeInfoDto.getPermanentResidenceAddress())
-                .temporaryResidence(employeeInfoDto.getTempResidenceAddress())
-                .build();
-        List<DVRequest> dvRequests = new ArrayList<>();
-        dvRequests.add(dvRequest);
+        dv.setOrganizationCode(request.getOrganizationCode());
+        dv.setFullName(userIamResponse.getFullName());
+        dv.setUsingName(employeeInfoDto.getEmpUsualName());
+        dv.setVneid(String.valueOf(userIamResponse.getVneid()));
+        dv.setBirthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthdt()));
+        dv.setBirthPlace(employeeInfoDto.getBirthAddress());
+        dv.setHometown(employeeInfoDto.getNativeAddress());
+        dv.setPermanentResidence(employeeInfoDto.getPermanentResidenceAddress());
+        dv.setTemporaryResidence(employeeInfoDto.getTempResidenceAddress());
+
         try {
-            dvService.create(dvRequests);
+            dvService.save(dv);
         }catch (Exception e){
             System.out.println(e.getMessage());
         }

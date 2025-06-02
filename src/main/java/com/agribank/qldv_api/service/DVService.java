@@ -8,7 +8,6 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.gateway.DVDraftClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
-import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.dv.DVRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.dv.DVResponse;
@@ -254,5 +253,13 @@ public class DVService implements EntityHandler {
         dv.setEducation(dvDraft.getEducation());
         dv.setHealthCondition(dvDraft.getHealthCondition());
         dv.setDateOfDeath(dvDraft.getDateOfDeath());
+    }
+
+    public DV findByStaffCode(String staffCode) {
+        return dvClient.findByStaffCode(staffCode).getData();
+    }
+
+    public DV save(DV dv){
+        return dvClient.save(dv).getData();
     }
 }
