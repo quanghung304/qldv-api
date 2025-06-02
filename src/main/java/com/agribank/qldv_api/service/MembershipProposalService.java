@@ -1,31 +1,209 @@
 package com.agribank.qldv_api.service;
 
+import com.agribank.qldv_api.enums.EApprovalStatus;
+import com.agribank.qldv_api.enums.EForm;
+import com.agribank.qldv_api.enums.ERecordStatus;
 import com.agribank.qldv_api.gateway.MembershipProposalClient;
-import com.agribank.qldv_api.request.membershipProposalDraft.MPSearchDraftRequest;
-import com.agribank.qldv_api.response.membershipProposal.MembershipProposalDtoResponse;
-import com.agribank.qldvutils.entity.MembershipProposal;
+import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.request.membershipProposalDraft.MembershipProposalRequest;
+import com.agribank.qldv_api.service.handler.EntityHandler;
+import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.dto.EmployeeInfoDto;
+import com.agribank.qldvutils.entity.*;
+import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.membershipProposal.MPSearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.membershipProposal.MembershipProposalResponse;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class MembershipProposalService {
+public class MembershipProposalService implements EntityHandler {
     private final MembershipProposalClient client;
+    private final RequestClient requestClient;
     private final CheckAuthorityService checkAuthorityService;
+    private final DVService dvService;
+    private final ModelMapper modelMapper;
+    private final UserService userService;
+    private final MembershipProposalDraftService membershipProposalDraftService;
+    private final RequestService requestService;
+    private final OrganizationService organizationService;
+    private final EmployeeInfoService employeeInfoService;
 
-    public void saveAll(List<MembershipProposal> proposals) {
-        client.saveAll(proposals);
+
+    private final EForm form = EForm.BIEU_20;
+
+
+    public Map<String, String> getCombinedFieldMap() {
+        return new HashMap<>(MembershipProposalDraft.FIELD_MAP);
     }
 
-    public MembershipProposal findById(String id) {
-        return client.findById(id).getData();
+    public String create(MembershipProposalRequest request){
+        EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode());
+        if (Objects.isNull(employeeInfoDto)) {
+            throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
+        }
+
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+        if (Objects.isNull(organization)) {
+            throw new CommonException("Không tìm thấy tổ chức Đảng vui lòng kiểm tra lại");
+        }
+        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+
+        MembershipProposal membershipProposal = null;
+        if (Objects.nonNull(request.getId())){
+            membershipProposal = client.findById(request.getId()).getData().orElse(null);
+        }
+
+        if (Objects.nonNull(request.getId()) && Objects.isNull(membershipProposal)){
+            throw new CommonException("Không tìm thấy biểu, vui lòng kiểm tra lại id");
+        }
+
+        MembershipProposalDraft membershipProposalDraft = modelMapper.map(request, MembershipProposalDraft.class);
+        membershipProposalDraft.setOrganizationCode(request.getOrganizationCode());
+        membershipProposalDraft.setStatus(EApprovalStatus.PENDING.getId());
+        if (Objects.nonNull(membershipProposal)){
+            membershipProposalDraft.setRefId(request.getId());
+        }
+
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        membershipProposalDraft.setCreatedBy(userRequested.getUsername());
+        membershipProposalDraft = membershipProposalDraftService.save(membershipProposalDraft);
+
+        Request membershipProposalRequest = requestService.initializeRequest(membershipProposalDraft, membershipProposal, form, getCombinedFieldMap());
+        membershipProposalRequest.setReferenceId(membershipProposalDraft.getId());
+        membershipProposalRequest.setCreatedBy(userRequested.getId());
+        membershipProposalRequest.setOrganizationCode(request.getOrganizationCode());
+        requestClient.save(membershipProposalRequest);
+
+        return "Tạo yêu cầu thành công";
+    }
+    public String createRequestDelete(String id){
+        MembershipProposal membershipProposal = client.findById(id).getData()
+                .orElseThrow(()->new CommonException("Sai id, vui lòng kiểm tra lại"));
+
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        Request request = requestService.initializeRequest(null, membershipProposal, form, getCombinedFieldMap());
+        request.setCreatedBy(userRequested.getId());
+        request.setReferenceId(id);
+        request.setOrganizationCode(membershipProposal.getOrganizationCode());
+        requestClient.save(request);
+
+        return "Tạo yêu cầu thành công";
     }
 
-    public PageResponse<MembershipProposalDtoResponse> search(MPSearchDraftRequest request){
+    public PageResponse<MembershipProposalResponse> search(MPSearchRequest request){
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
         return client.search(request).getData();
+    }
+
+    @Override
+    public boolean applyCreate(String referenceId, UserDetailsImpl userDetails) {
+        MembershipProposalDraft membershipProposalDraft = membershipProposalDraftService.findById(referenceId);
+        MembershipProposal membershipProposal = modelMapper.map(membershipProposalDraft, MembershipProposal.class);
+
+        membershipProposalDraft.setStatus(EApprovalStatus.APPROVED.getId());
+        membershipProposalDraft.setApprovedBy(userDetails.getUsername());
+
+        saveDv(membershipProposal.getStaffCode(),
+                membershipProposal.getStaffCode(),
+                membershipProposalDraft.getFullName(),
+                membershipProposalDraft.getOrganizationCode());
+        client.save(membershipProposal);
+        membershipProposalDraftService.save(membershipProposalDraft);
+        return true;
+    }
+
+    private void saveDv(String newStaffCode, String oldStaffCode, String fullName, String organizationCode){
+        try {
+            EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(newStaffCode);
+            DV dv = dvService.findByStaffCode(oldStaffCode);
+            if (Objects.isNull(dv) || Objects.isNull(employeeInfoDto)){
+                dv = new DV();
+            }
+
+            dv.setStaffCode(newStaffCode);
+            dv.setOrganizationCode(organizationCode);
+            dv.setFullName(fullName);
+            if (Objects.nonNull(employeeInfoDto)){
+                dv.setUsingName(employeeInfoDto.getEmpUsualName());
+                dv.setVneid(employeeInfoDto.getIdNo());
+                dv.setBirthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthdt()));
+                dv.setBirthPlace(employeeInfoDto.getBirthAddress());
+                dv.setHometown(employeeInfoDto.getNativeAddress());
+                dv.setPermanentResidence(employeeInfoDto.getPermanentResidenceAddress());
+                dv.setTemporaryResidence(employeeInfoDto.getTempResidenceAddress());
+            }
+
+            dvService.save(dv);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean applyUpdate(String referenceId) {
+        MembershipProposalDraft membershipProposalDraft = membershipProposalDraftService.findById(referenceId);
+        MembershipProposal membershipProposal = client.findById(membershipProposalDraft.getRefId()).getData()
+                .orElseThrow(() -> new CommonException("Không tìm thấy bản ghi"));
+
+        saveDv(membershipProposalDraft.getStaffCode(),
+                membershipProposal.getStaffCode(),
+                membershipProposalDraft.getFullName(),
+                membershipProposalDraft.getOrganizationCode());
+
+        membershipProposal.setOrganizationCode(membershipProposalDraft.getOrganizationCode());
+        membershipProposal.setReason(membershipProposalDraft.getReason());
+        membershipProposal.setStaffCode(membershipProposalDraft.getStaffCode());
+        membershipProposal.setResolutionNumber(membershipProposalDraft.getResolutionNumber());
+        membershipProposal.setResolutionDate(membershipProposalDraft.getResolutionDate());
+        membershipProposal.setDecisionNumber(membershipProposalDraft.getDecisionNumber());
+        membershipProposal.setDecisionDate(membershipProposalDraft.getDecisionDate());
+
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        membershipProposalDraft.setStatus(EApprovalStatus.APPROVED.getId());
+        membershipProposalDraft.setApprovedBy(userRequested.getUsername());
+
+        client.save(membershipProposal);
+        membershipProposalDraftService.save(membershipProposalDraft);
+        return true;
+    }
+
+    @Override
+    public boolean applyDelete(String referenceId) {
+        MembershipProposal membershipProposal = client.findById(referenceId).getData()
+                .orElseThrow(()->new CommonException("Lỗi"));
+        membershipProposal.setDeleted(ERecordStatus.DELETED.getStatus());
+
+        client.save(membershipProposal);
+        return true;
+    }
+
+    @Override
+    public void setDenied(String referenceId) {
+        MembershipProposalDraft membershipProposalDraft = membershipProposalDraftService.findById(referenceId);
+        membershipProposalDraft.setStatus(EApprovalStatus.DENIED.getId());
+
+        membershipProposalDraftService.save(membershipProposalDraft);
+    }
+
+    public MembershipProposalResponse getDetail(String id){
+        MembershipProposal membershipProposal = client.findById(id).getData().orElse(null);
+
+        if (Objects.isNull(membershipProposal)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        DV dv = dvService.findByStaffCode(membershipProposal.getStaffCode());
+        MembershipProposalResponse response = modelMapper.map(membershipProposal, MembershipProposalResponse.class);
+        if (Objects.nonNull(dv)){
+            response.setFullName(dv.getFullName());
+        }
+        return response;
     }
 }
