@@ -22,7 +22,7 @@ public class DVResponse {
     //cccd
     String vneid;
     String fullName;
-    Integer gender;
+    String gender;
     //họ tên đang sử dụng
     String usingName;
     Timestamp birthday;
@@ -39,9 +39,9 @@ public class DVResponse {
     //thành phần gia đình
     String familyComposition;
     //Gia đình liệt sĩ
-    Integer martyrsFamily;
+    String martyrsFamily;
     //Có công với cachs mạng
-    Integer revolution;
+    String revolution;
     //Thành phần xã hội khi vào Đảng
     String socialComposition;
     //công việc chính đang làm
@@ -54,9 +54,9 @@ public class DVResponse {
     //Kết nạp tại chi bộ
     String branchPartyCode;
     //công đoàn giới thiệu
-    Integer suggestionUnion;
+    String suggestionUnion;
     //Đoàn thanh niên giới thiệu
-    Integer suggestionYouthUnion;
+    String suggestionYouthUnion;
     //Người giới thiệu 1
     String referrer1;
     //Chức vụ đơn vị của người giới thiệu;
@@ -82,11 +82,11 @@ public class DVResponse {
     //Loại thương binh
     Integer disabledType;
     //Có vấn đề chính trị
-    Integer politicalIssue;
+    String politicalIssue;
     //Chế độ cũ
-    Integer oldRegime;
+    String oldRegime;
     //Xuất thân là công nhân
-    Integer formerWorker;
+    String formerWorker;
     //Kết hôn với người nước ngoài
-    Integer foreignMarriage;
+    String foreignMarriage;
 }
