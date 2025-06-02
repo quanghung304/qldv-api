@@ -3,9 +3,7 @@ package com.agribank.qldv_api.request.dv;
 import com.agribank.qldv_api.exception.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.sql.Timestamp;
@@ -14,8 +12,10 @@ import java.util.Objects;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DVRequest {
+public class DVDto {
     String id;
     //staff code
     String staffCode;

@@ -1,9 +1,8 @@
 package com.agribank.qldv_api.controller;
 
 
-import com.agribank.qldv_api.request.dv.DVRequest;
+import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldvutils.entity.DvDraft;
@@ -25,24 +24,24 @@ public class DVController {
     private final DVService service;
 
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<DVResponse>>> search(@RequestBody SearchDVRequest request) {
+    public ResponseEntity<DefaultResponse<PageResponse<DVDto>>> search(@RequestBody SearchDVRequest request) {
         return DefaultResponse.success(service.search(request));
     }
 
     @GetMapping("/organization")
-    public ResponseEntity<DefaultResponse<List<DVResponse>>> getDVByOrganization(@RequestParam(name = "organization", required = false) String organization) {
+    public ResponseEntity<DefaultResponse<List<DVDto>>> getDVByOrganization(@RequestParam(name = "organization", required = false) String organization) {
         return DefaultResponse.success(service.getDVByOrganization(organization));
     }
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
-    public ResponseEntity<DefaultResponse<DvDraft>> createDVRequest(@RequestBody @Valid DVRequest request)  {
+    public ResponseEntity<DefaultResponse<DvDraft>> createDVRequest(@RequestBody @Valid DVDto request)  {
         return DefaultResponse.success("Tạo yêu cầu thêm mới đảng viên thành công", service.create(request));
     }
 
     @PutMapping("/update")
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
-    public ResponseEntity<DefaultResponse<DvDraft>> updateDVRequest(@RequestBody DVRequest request) {
+    public ResponseEntity<DefaultResponse<DvDraft>> updateDVRequest(@RequestBody DVDto request) {
         return DefaultResponse.success("Tạo yêu cầu cập nhật đảng viên thành công", service.update(request));
     }
 

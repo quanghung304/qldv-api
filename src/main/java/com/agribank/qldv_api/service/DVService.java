@@ -8,9 +8,8 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.gateway.DVDraftClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
-import com.agribank.qldv_api.request.dv.DVRequest;
+import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.log.DVLogService;
 import com.agribank.qldvutils.entity.DV;
@@ -43,9 +42,9 @@ public class DVService implements EntityHandler {
 
     private static final EForm form = EForm.BIEU_15;
 
-    public PageResponse<DVResponse> search(SearchDVRequest request){
+    public PageResponse<DVDto> search(SearchDVRequest request){
         PageResponse<DV> dvPageResponse = dvClient.search(request).getData();
-        PageResponse<DVResponse> response = new PageResponse<>();
+        PageResponse<DVDto> response = new PageResponse<>();
         if (Objects.isNull(dvPageResponse)) {
             return response;
         }
@@ -56,7 +55,7 @@ public class DVService implements EntityHandler {
 
         if (Objects.nonNull(dvPageResponse.getData())) {
             response.setData(dvPageResponse.getData().stream()
-                    .map(dv -> modelMapper.map(dv, DVResponse.class)
+                    .map(dv -> modelMapper.map(dv, DVDto.class)
                     ).toList()
             );
         }
@@ -64,7 +63,7 @@ public class DVService implements EntityHandler {
         return response;
     }
 
-    public String create(List<DVRequest> requests) {
+    public String create(List<DVDto> requests) {
         List<DV> dvs = requests.stream().map(dv -> modelMapper.map(dv, DV.class)).toList();
         DefaultResponse<List<DV>> response = dvClient.saveAll(dvs);
 
@@ -76,7 +75,7 @@ public class DVService implements EntityHandler {
         return dvClient.findById(id).getData();
     }
 
-    public List<DVResponse> getDVByOrganization(String organization) {
+    public List<DVDto> getDVByOrganization(String organization) {
         if (Objects.isNull(organization)) {
             UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             organization = userRequested.getOrganizationCode();
@@ -86,26 +85,26 @@ public class DVService implements EntityHandler {
             return new ArrayList<>();
         }
 
-        return dvs.stream().map(dv -> modelMapper.map(dv, DVResponse.class)).toList();
+        return dvs.stream().map(dv -> modelMapper.map(dv, DVDto.class)).toList();
     }
 
-    public DvDraft create(DVRequest dvRequest) {
-        authorityService.hasAuthorityOverOrganization(dvRequest.getOrganizationCode());
+    public DvDraft create(DVDto dvDto) {
+        authorityService.hasAuthorityOverOrganization(dvDto.getOrganizationCode());
 
-        Organization organization = organizationClient.findByCode(dvRequest.getOrganizationCode()).getData();
+        Organization organization = organizationClient.findByCode(dvDto.getOrganizationCode()).getData();
         if (Objects.isNull(organization)) {
             throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
         }
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        DvDraft dvDraft = modelMapper.map(dvRequest, DvDraft.class);
+        DvDraft dvDraft = modelMapper.map(dvDto, DvDraft.class);
         dvDraft.setStatus(EApprovalStatus.PENDING.getId());
         dvDraft.setCreatedBy(userDetails.getId());
         dvDraft = dvDraftClient.save(dvDraft).getData();
 
         Request request = requestService.initializeRequest(dvDraft, null, form, DV.FIELD_MAP);
-        request.setOrganizationCode(dvRequest.getOrganizationCode());
+        request.setOrganizationCode(dvDto.getOrganizationCode());
         System.out.println("Calling getId(): " + dvDraft.getId());
         request.setReferenceId(dvDraft.getId());
         request.setCreatedBy(userDetails.getId());
@@ -114,29 +113,29 @@ public class DVService implements EntityHandler {
         return dvDraft;
     }
 
-    public DvDraft update(DVRequest dvRequest) {
-        authorityService.hasAuthorityOverOrganization(dvRequest.getOrganizationCode());
+    public DvDraft update(DVDto dvDto) {
+        authorityService.hasAuthorityOverOrganization(dvDto.getOrganizationCode());
 
-        Organization organization = organizationClient.findByCode(dvRequest.getOrganizationCode()).getData();
+        Organization organization = organizationClient.findByCode(dvDto.getOrganizationCode()).getData();
         if (Objects.isNull(organization)) {
             throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
         }
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        DV oldDv = dvClient.findById(dvRequest.getId()).getData();
+        DV oldDv = dvClient.findById(dvDto.getId()).getData();
 
         if (Objects.isNull(oldDv)) {
             throw new CommonException("KOong tim thay thong tin dang vien");
         }
 
-        DvDraft newDV = modelMapper.map(dvRequest, DvDraft.class);
+        DvDraft newDV = modelMapper.map(dvDto, DvDraft.class);
         newDV.setStatus(EApprovalStatus.PENDING.getId());
         newDV.setCreatedBy(userDetails.getId());
         newDV = dvDraftClient.save(newDV).getData();
 
         Request request = requestService.initializeRequest(newDV, oldDv, form, DV.FIELD_MAP);
-        request.setOrganizationCode(dvRequest.getOrganizationCode());
+        request.setOrganizationCode(dvDto.getOrganizationCode());
         request.setReferenceId(newDV.getId());
         request.setCreatedBy(userDetails.getId());
         requestClient.save(request);
