@@ -36,4 +36,9 @@ public interface DVClient {
     DefaultResponse<List<DV>> findByOrganizationCode(
             @RequestParam(name = "organization") String organization
     );
+
+    @GetMapping("api/v1/dv/find-by-staff-code")
+    DefaultResponse<DV> findByStaffCode(
+            @RequestParam(name = "staffCode") String staffCode
+    );
 }
