@@ -131,13 +131,13 @@ public class MembershipProposalService implements EntityHandler {
             dv.setOrganizationCode(organizationCode);
             dv.setFullName(fullName);
             if (Objects.nonNull(employeeInfoDto)){
-                dv.setUsingName(employeeInfoDto.getEmpUsualName());
-                dv.setVneid(employeeInfoDto.getIdNo());
-                dv.setBirthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthdt()));
-                dv.setBirthPlace(employeeInfoDto.getBirthAddress());
-                dv.setHometown(employeeInfoDto.getNativeAddress());
-                dv.setPermanentResidence(employeeInfoDto.getPermanentResidenceAddress());
-                dv.setTemporaryResidence(employeeInfoDto.getTempResidenceAddress());
+                dv.setUsingName(employeeInfoDto.getUsingName());
+                dv.setVneid(employeeInfoDto.getVneid());
+                dv.setBirthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthday()));
+                dv.setBirthPlace(employeeInfoDto.getBirthPlace());
+                dv.setHometown(employeeInfoDto.getHometown());
+                dv.setPermanentResidence(employeeInfoDto.getPermanentResidence());
+                dv.setTemporaryResidence(employeeInfoDto.getTemporaryResidence());
             }
 
             dvService.save(dv);
