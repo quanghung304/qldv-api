@@ -150,13 +150,13 @@ public class AuthenticationService {
 
         dv.setOrganizationCode(request.getOrganizationCode());
         dv.setFullName(userIamResponse.getFullName());
-        dv.setUsingName(employeeInfoDto.getEmpUsualName());
+        dv.setUsingName(employeeInfoDto.getUsingName());
         dv.setVneid(String.valueOf(userIamResponse.getVneid()));
-        dv.setBirthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthdt()));
-        dv.setBirthPlace(employeeInfoDto.getBirthAddress());
-        dv.setHometown(employeeInfoDto.getNativeAddress());
-        dv.setPermanentResidence(employeeInfoDto.getPermanentResidenceAddress());
-        dv.setTemporaryResidence(employeeInfoDto.getTempResidenceAddress());
+        dv.setBirthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthday()));
+        dv.setBirthPlace(employeeInfoDto.getBirthPlace());
+        dv.setHometown(employeeInfoDto.getHometown());
+        dv.setPermanentResidence(employeeInfoDto.getPermanentResidence());
+        dv.setTemporaryResidence(employeeInfoDto.getTemporaryResidence());
 
         try {
             dvService.save(dv);
