@@ -5,6 +5,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.mis.encrypt.interfaces.ICreateService;
 import org.mis.encrypt.interfaces.IMisEncrypt;
 import org.mis.encrypt.services.CreateService;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +25,7 @@ import java.sql.Timestamp;
 
 public class CommonUtils {
     public static final Integer PAGE_SIZE_DEFAULT = 10;
-
+    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd/MM/yyyy");
     private static Sort.Direction getSortDirection(String direction) {
         if (direction.equals("asc")) {
             return Sort.Direction.ASC;
@@ -146,5 +149,25 @@ public class CommonUtils {
             return false;
         }
         return true;
+    }
+
+    public static Map<String, Object> createFilteredDataMap(Object object, Map<String, String> fieldMap) {
+        Map<String, Object> dataMap = new HashMap<>();
+        BeanWrapper wrapper = new BeanWrapperImpl(object);
+
+        // Iterate over fieldMap keys (entity fields)
+        for (String fieldName : fieldMap.keySet()) {
+            if (wrapper.isReadableProperty(fieldName)) {
+                Object value = wrapper.getPropertyValue(fieldName);
+                // Use user-friendly name from fieldMap as key
+                if (value instanceof java.sql.Date) {
+                    dataMap.put(fieldMap.get(fieldName), DATE_FORMATTER.format((java.sql.Date) value));
+                } else {
+                    dataMap.put(fieldMap.get(fieldName), value);
+                }
+            }
+        }
+
+        return dataMap;
     }
 }

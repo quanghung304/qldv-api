@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.request.developPlan;
+package com.agribank.qldv_api.request.develop_plan;
 
 import com.agribank.qldv_api.exception.ValidationException;
 import lombok.*;

@@ -10,10 +10,13 @@ import com.agribank.qldv_api.service.report26.DeceasedService;
 import com.agribank.qldv_api.service.report26.LeavePartyService;
 import com.agribank.qldv_api.service.report26.PartyActivityExemptionService;
 import com.agribank.qldv_api.service.report26.RemoveNamePartyService;
+import com.agribank.qldv_api.service.development_plan.DevelopPlanDetailService;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
+
+import static java.util.Map.entry;
 
 @Component
 public class EntityHandlerRegistry {
@@ -28,19 +31,21 @@ public class EntityHandlerRegistry {
             PartyActivityExemptionService partyActivityExemptionService,
             LeavePartyService leavePartyService,
             RemoveNamePartyService removeNamePartyService,
-            DeceasedService deceasedService
+            DeceasedService deceasedService,
+            DevelopPlanDetailService developPlanDetailService
     ) {
-        this.handlers = Map.of(
-                EForm.BIEU_01.getCode(), organizationService,
-                EForm.BIEU_02_UP.getCode(), historyService,
-                EForm.BIEU_02_DOWN.getCode(), historyService,
-                EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService,
-                EForm.BIEU_15.getCode(), dvService,
-                EForm.BIEU_20.getCode(), membershipProposalService,
-                EForm.BIEU_26_PARTY_ACTIVITY_EXEMPTION.getCode(), partyActivityExemptionService,
-                EForm.BIEU_26_LEAVE_PARTY.getCode(), leavePartyService,
-                EForm.BIEU_26_REMOVE_NAME_PARTY.getCode(), removeNamePartyService,
-                EForm.BIEU_26_DECEASED.getCode(), deceasedService
+        this.handlers = Map.ofEntries(
+                entry(EForm.BIEU_01.getCode(), organizationService),
+                entry(EForm.BIEU_02_UP.getCode(), historyService),
+                entry(EForm.BIEU_02_DOWN.getCode(), historyService),
+                entry(EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService),
+                entry(EForm.BIEU_12.getCode(), developPlanDetailService),
+                entry(EForm.BIEU_15.getCode(), dvService),
+                entry(EForm.BIEU_20.getCode(), membershipProposalService),
+                entry(EForm.BIEU_26_PARTY_ACTIVITY_EXEMPTION.getCode(), partyActivityExemptionService),
+                entry(EForm.BIEU_26_LEAVE_PARTY.getCode(), leavePartyService),
+                entry(EForm.BIEU_26_REMOVE_NAME_PARTY.getCode(), removeNamePartyService),
+                entry(EForm.BIEU_26_DECEASED.getCode(), deceasedService)
         );
     }
 
