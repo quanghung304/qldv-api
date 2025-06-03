@@ -1,23 +1,22 @@
-package com.agribank.qldv_api.request.developPlan;
+package com.agribank.qldv_api.request.develop_plan;
 
 import com.agribank.qldv_api.exception.ValidationException;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.util.List;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DevelopPlanDetailUpdateRequest {
-    String refId;
+public class DevelopPlanRequest {
+    String id;
     String organizationCode;
     String name;
     Integer start;
     Integer end;
-    List<DevelopPlanDetailRequest> data;
+    Integer target;
+    Integer hasChild;
 
     public void validate(){
         if (start > end) {

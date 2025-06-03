@@ -1,10 +1,12 @@
-package com.agribank.qldv_api.request.developPlan;
+package com.agribank.qldv_api.request.develop_plan;
 
 import com.agribank.qldv_api.exception.ValidationException;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @Builder
@@ -24,6 +26,10 @@ public class DevelopPlanDataRequest {
         }
         if (start < 1945 || end > 2145) {
             throw new ValidationException("Not yet info!");
+        }
+
+        if (Objects.isNull(data)) {
+            this.data = new ArrayList<>();
         }
     }
 }

@@ -12,6 +12,7 @@ import com.agribank.qldv_api.response.request.RequestDetailResponse;
 import com.agribank.qldv_api.response.request.RequestResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.handler.EntityHandlerRegistry;
+import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.RequestDto;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.exception.CommonException;
@@ -58,7 +59,7 @@ public class RequestService {
         try {
             // Serialize newObject to newData (null for DELETE)
             if (newObject != null) {
-                Map<String, Object> newDataMap = createFilteredDataMap(newObject, fieldMap);
+                Map<String, Object> newDataMap = CommonUtils.createFilteredDataMap(newObject, fieldMap);
                 request.setNewData(objectMapper.writeValueAsString(newDataMap));
             } else {
                 action = EAction.DELETE.getId();
@@ -66,7 +67,7 @@ public class RequestService {
 
             // Serialize oldObject to oldData (null for CREATE)
             if (oldObject != null) {
-                Map<String, Object> oldDataMap = createFilteredDataMap(oldObject, fieldMap);
+                Map<String, Object> oldDataMap = CommonUtils.createFilteredDataMap(oldObject, fieldMap);
                 request.setOldData(objectMapper.writeValueAsString(oldDataMap));
             } else {
                 action = EAction.INSERT.getId();
@@ -85,26 +86,6 @@ public class RequestService {
         request.setStatus(EApprovalStatus.PENDING.getId());
 
         return request;
-    }
-
-    private Map<String, Object> createFilteredDataMap(Object object, Map<String, String> fieldMap) {
-        Map<String, Object> dataMap = new HashMap<>();
-        BeanWrapper wrapper = new BeanWrapperImpl(object);
-
-        // Iterate over fieldMap keys (entity fields)
-        for (String fieldName : fieldMap.keySet()) {
-            if (wrapper.isReadableProperty(fieldName)) {
-                Object value = wrapper.getPropertyValue(fieldName);
-                // Use user-friendly name from fieldMap as key
-                if (value instanceof Date) {
-                    dataMap.put(fieldMap.get(fieldName), DATE_FORMATTER.format((Date) value));
-                } else {
-                    dataMap.put(fieldMap.get(fieldName), value);
-                }
-            }
-        }
-
-        return dataMap;
     }
 
     public PageResponse<RequestResponse> getList(FilterRequest filterRequest) {

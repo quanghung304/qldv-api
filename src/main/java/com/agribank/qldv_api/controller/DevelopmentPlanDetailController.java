@@ -1,12 +1,12 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.request.developPlan.DevelopPlanDataRequest;
-import com.agribank.qldv_api.request.developPlan.DevelopPlanDetailUpdateRequest;
-import com.agribank.qldv_api.request.developPlan.GetDevelopmentPlanRequest;
+import com.agribank.qldv_api.request.develop_plan.DevelopPlanDataRequest;
+import com.agribank.qldv_api.request.develop_plan.DevelopPlanDetailUpdateRequest;
+import com.agribank.qldv_api.request.develop_plan.GetDevelopmentPlanRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.developPlan.DevelopPlanDetailResponse;
-import com.agribank.qldv_api.service.developPlan.DevelopPlanDetailService;
+import com.agribank.qldv_api.service.development_plan.DevelopPlanDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +34,11 @@ public class DevelopmentPlanDetailController {
     @PutMapping("/update")
     public ResponseEntity<DefaultResponse<String>> updateDevelopPlan(@RequestBody DevelopPlanDetailUpdateRequest request) {
         request.validate();
-        return success(developPlanDetailService.updateDevelopPlanDetail(request));
+        return success(developPlanDetailService.updateDevelopPlanDetail(request), null);
+    }
+
+    @DeleteMapping("/create-request-delete/{id}")
+    public ResponseEntity<DefaultResponse<String>> delete(@PathVariable(name = "id") String id) {
+        return success(developPlanDetailService.createRequestDelete(id), null);
     }
 }

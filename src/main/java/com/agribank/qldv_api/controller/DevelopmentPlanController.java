@@ -1,11 +1,10 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.request.developPlan.DevelopPlanRequest;
-import com.agribank.qldv_api.request.developPlan.GetDevelopmentPlanRequest;
+import com.agribank.qldv_api.request.develop_plan.GetDevelopmentPlanRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.developPlan.DevelopPlanResponse;
-import com.agribank.qldv_api.service.developPlan.DevelopPlanService;
+import com.agribank.qldv_api.service.development_plan.DevelopPlanService;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +33,9 @@ public class DevelopmentPlanController {
         return com.agribank.qldv_api.response.DefaultListResponse.success(developPlanService.getChildPlan(request));
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<DefaultResponse<String>> addDevelopPlan(@RequestBody DevelopPlanRequest request) {
-        request.validate();
-        return success(developPlanService.addDevelopPlan(request));
-    }
+//    @PostMapping("/add")
+//    public ResponseEntity<DefaultResponse<String>> addDevelopPlan(@RequestBody DevelopPlanRequest request) {
+//        request.validate();
+//        return success(developPlanService.addDevelopPlan(request, null));
+//    }
 }
