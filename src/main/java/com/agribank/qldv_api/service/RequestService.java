@@ -231,7 +231,7 @@ public class RequestService {
 
             UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-            if (!Objects.equals(user.getOrganizationCode(), Constants.BTCDU_CODE) || !request.getOrganizationCode().contains(user.getOrganizationCode())) {
+            if (!Objects.equals(user.getOrganizationCode(), Constants.BTCDU_CODE) && !request.getOrganizationCode().contains(user.getOrganizationCode())) {
                 continue;
             }
 
