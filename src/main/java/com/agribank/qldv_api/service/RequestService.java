@@ -166,18 +166,21 @@ public class RequestService {
 
             response.setChangedData(changedData);
             return response;
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private Map<String, Object>  getDataObjectFromJson(String json) throws JsonProcessingException {
-        return Objects.nonNull(json) ? objectMapper.readValue(
-                json,
-                new TypeReference<Map<String, Object>>() {}
-        ) : null;
+    private Map<String, Object>  getDataObjectFromJson(String json) {
+        try {
+            return Objects.nonNull(json) ? objectMapper.readValue(
+                    json,
+                    new TypeReference<Map<String, Object>>() {
+                    }
+            ) : null;
+        } catch (Exception e) {
+            return Map.of("Lỗi", "Lỗi đọc dữ liệu");
+        }
     }
 
     public List<FormResponse> getFormList() {
