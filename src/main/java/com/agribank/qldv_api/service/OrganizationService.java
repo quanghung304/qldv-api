@@ -166,17 +166,10 @@ public class OrganizationService implements EntityHandler {
         PageResponse<OrganizationResponse> response = new PageResponse<>();
         UserDetailsImpl userRequested = userService.getUserRequested();
 
-        List<String> codeChild = getChildCode(userRequested.getOrganizationCode());
-        if (Objects.nonNull(request.getCode()) && !codeChild.contains(request.getCode())
-                && BRANCH_CODE_HEAD_QUARTER <= Integer.parseInt(userRequested.getOrganizationCode())){
-            return response;
+        request.setCode(getOrganizationCode(request.getCode(), userRequested));
+        if (Objects.isNull(request.getOrderBy())){
+            request.setOrderBy("code");
         }
-
-        if (BRANCH_CODE_HEAD_QUARTER <= userRequested.getBrcd() && Objects.isNull(request.getCode())){
-            request.setCode(userRequested.getOrganizationCode());
-        }
-
-        request.setOrderBy("code");
 
         PageResponse<Organization> organizationPageResponse;
 
@@ -202,6 +195,22 @@ public class OrganizationService implements EntityHandler {
         }
 
         return response;
+    }
+
+    public String getOrganizationCode(String organizationCode, UserDetailsImpl userRequested) {
+        List<String> codeChild = getChildCode(userRequested.getOrganizationCode());
+        if (Objects.nonNull(organizationCode) && !codeChild.contains(organizationCode)
+                && !userRequested.getOrganizationCode().contains(String.valueOf(BRANCH_CODE_HEAD_QUARTER))
+                && !userRequested.getOrganizationCode().contains(organizationCode)
+        ){
+            throw new CommonException("Bạn không có quyền tìm kiếm TCD khác");
+        }
+
+        if (!userRequested.getOrganizationCode().contains(String.valueOf(BRANCH_CODE_HEAD_QUARTER)) && Objects.isNull(organizationCode)){
+            return userRequested.getOrganizationCode();
+        }
+
+        return organizationCode;
     }
 
     public OrganizationResponse get(String code){

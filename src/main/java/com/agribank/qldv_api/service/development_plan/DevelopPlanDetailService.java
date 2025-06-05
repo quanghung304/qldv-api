@@ -8,8 +8,8 @@ import com.agribank.qldv_api.gateway.development_plan.DevelopmentPlanDetailClien
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.develop_plan.*;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.developPlan.DevelopPlanDetailResponse;
-import com.agribank.qldv_api.response.developPlan.DevelopPlanResponse;
+import com.agribank.qldv_api.response.develop_plan.DevelopPlanDetailResponse;
+import com.agribank.qldv_api.response.develop_plan.DevelopPlanResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.OrganizationService;

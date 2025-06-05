@@ -1,7 +1,7 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.gateway.CommitteeDecisionClient;
-import com.agribank.qldv_api.response.committeeDecision.CommitteeDecisionResponse;
+import com.agribank.qldv_api.response.committee_decision.CommitteeDecisionResponse;
 import com.agribank.qldvutils.entity.CommitteeDecision;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

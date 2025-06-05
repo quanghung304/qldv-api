@@ -23,7 +23,7 @@ public class CheckAuthorityService {
             return;
         }
 
-        List<Organization> childOrganizations = organizationClient.findByParent(organizationCode).getData();
+        List<Organization> childOrganizations = organizationClient.findByParent(userDetails.getOrganizationCode()).getData();
         for (Organization child: childOrganizations) {
             if (child.getCode().contains(organizationCode)) {
                 return;

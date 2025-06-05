@@ -1,7 +1,7 @@
 package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.ApproveRequest;
-import com.agribank.qldv_api.request.organizationTransform.OrganizationTransformRequest;
+import com.agribank.qldv_api.request.organization_transform.OrganizationTransformRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.TransformationHistoryService;

@@ -4,11 +4,8 @@ import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.report26.PartyActivityExemptionClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.partyActivityExemption.PartyActivityExemptionRequest;
-import com.agribank.qldv_api.service.CheckAuthorityService;
-import com.agribank.qldv_api.service.CommitteeDecisionService;
-import com.agribank.qldv_api.service.RequestService;
-import com.agribank.qldv_api.service.UserService;
+import com.agribank.qldv_api.request.party_activity_exemption.PartyActivityExemptionRequest;
+import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.*;
@@ -38,6 +35,7 @@ public class PartyActivityExemptionService implements EntityHandler {
     private final Report26Service report26Service;
     private final UserService userService;
     private final PartyActivityExemptionDraftService partyActivityExemptionDraftService;
+    private final DvHistoryService dvHistoryService;
 
     private Map<String, String> getCombinedFieldMap() {
         return new HashMap<>(PartyActivityExemptionDraft.FIELD_MAP);
@@ -129,6 +127,9 @@ public class PartyActivityExemptionService implements EntityHandler {
         report26.setType(EReport26.PARTY_ACTIVITY_EXEMPTION.getId());
         report26.setDeleted(ERecordStatus.ACTIVE.getStatus());
 
+        dvHistoryService.saveDV(partyActivityExemptionDraft.getStaffCode(),
+                EDVStatus.PARTY_ACTIVITY_EXEMPTION.getStatus(),
+                EDVStatus.PARTY_ACTIVITY_EXEMPTION.getName());
         partyActivityExemptionDraftService.save(partyActivityExemptionDraft);
         report26Service.save(report26);
         return true;

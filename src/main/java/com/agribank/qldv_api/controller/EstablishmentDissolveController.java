@@ -1,7 +1,7 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.request.establishmentDissolve.EstablishmentDissolveSearchRequest;
-import com.agribank.qldv_api.response.establishmentDissolve.EstablishmentDissolveResponse;
+import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveSearchRequest;
+import com.agribank.qldv_api.response.establishment_dissolve.EstablishmentDissolveResponse;
 import com.agribank.qldv_api.service.EstablishmentDissolveService;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;

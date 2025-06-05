@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.request.apiLog.SearchApiLogRequest;
+import com.agribank.qldv_api.request.api_log.SearchApiLogRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.ApiLogResponse;
 import com.agribank.qldv_api.service.log.ApiLogService;

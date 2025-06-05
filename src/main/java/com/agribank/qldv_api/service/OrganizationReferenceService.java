@@ -3,7 +3,7 @@ package com.agribank.qldv_api.service;
 import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.gateway.OrganizationReferenceClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.response.organizationReference.OrganizationReferenceResponse;
+import com.agribank.qldv_api.response.organization_reference.OrganizationReferenceResponse;
 import com.agribank.qldvutils.entity.OrganizationReference;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

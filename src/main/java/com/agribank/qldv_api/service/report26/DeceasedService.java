@@ -5,9 +5,7 @@ import com.agribank.qldv_api.gateway.report26.DeceasedClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.deceased.DeceasedRequest;
-import com.agribank.qldv_api.service.CheckAuthorityService;
-import com.agribank.qldv_api.service.RequestService;
-import com.agribank.qldv_api.service.UserService;
+import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.*;
@@ -35,6 +33,7 @@ public class DeceasedService implements EntityHandler {
     private final UserService userService;
     private final EForm form = EForm.BIEU_26_DECEASED;
     private final DeceasedDraftService deceasedDraftService;
+    private final DvHistoryService dvHistoryService;
 
     private Map<String, String> getCombinedFieldMap() {
         return new HashMap<>(PartyActivityExemptionDraft.FIELD_MAP);
@@ -114,10 +113,15 @@ public class DeceasedService implements EntityHandler {
         report26.setType(EReport26.DECEASED.getId());
         report26.setDeleted(ERecordStatus.ACTIVE.getStatus());
 
+        dvHistoryService.saveDV(deceasedDraft.getStaffCode(),
+                EDVStatus.DECEASED.getStatus(),
+                EDVStatus.DECEASED.getName());
+
         deceasedDraftService.save(deceasedDraft);
         report26Service.save(report26);
         return true;
     }
+
 
     @Override
     public boolean applyUpdate(String referenceId) {

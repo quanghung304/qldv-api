@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.request.membershipProposalDraft.MembershipProposalRequest;
+import com.agribank.qldv_api.request.membership_proposal_draft.MembershipProposalRequest;
 import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldvutils.request.membershipProposal.MPSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;

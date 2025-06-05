@@ -2,7 +2,7 @@ package com.agribank.qldv_api.service.development_plan;
 
 import com.agribank.qldv_api.gateway.development_plan.DevelopmentPlanClient;
 import com.agribank.qldv_api.request.develop_plan.*;
-import com.agribank.qldv_api.response.developPlan.DevelopPlanResponse;
+import com.agribank.qldv_api.response.develop_plan.DevelopPlanResponse;
 import com.agribank.qldvutils.entity.development_plan.DevelopmentPlan;
 import com.agribank.qldvutils.entity.development_plan.DevelopmentPlanDraft;
 import com.agribank.qldvutils.exception.CommonException;

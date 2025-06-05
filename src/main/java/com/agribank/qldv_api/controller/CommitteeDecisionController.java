@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.response.committeeDecision.CommitteeDecisionResponse;
+import com.agribank.qldv_api.response.committee_decision.CommitteeDecisionResponse;
 import com.agribank.qldv_api.service.CommitteeDecisionService;
 import com.agribank.qldvutils.response.BaseResponse;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller.report26;
 
-import com.agribank.qldv_api.request.leaveParty.LeavePartyRequest;
+import com.agribank.qldv_api.request.leave_party.LeavePartyRequest;
 import com.agribank.qldv_api.service.report26.LeavePartyService;
 import com.agribank.qldvutils.entity.report26.LeavePartyDraft;
 import com.agribank.qldvutils.response.BaseResponse;

@@ -7,7 +7,7 @@ import com.agribank.qldv_api.gateway.TransformationHistoryClient;
 import com.agribank.qldv_api.gateway.TransformationHistoryDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.ApproveRequest;
-import com.agribank.qldv_api.request.organizationTransform.OrganizationTransformRequest;
+import com.agribank.qldv_api.request.organization_transform.OrganizationTransformRequest;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
