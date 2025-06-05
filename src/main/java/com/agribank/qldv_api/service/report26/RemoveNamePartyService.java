@@ -4,11 +4,8 @@ import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.report26.RemoveNamePartyClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.removeNameParty.RemoveNamePartyRequest;
-import com.agribank.qldv_api.service.CheckAuthorityService;
-import com.agribank.qldv_api.service.CommitteeDecisionService;
-import com.agribank.qldv_api.service.RequestService;
-import com.agribank.qldv_api.service.UserService;
+import com.agribank.qldv_api.request.remove_name_party.RemoveNamePartyRequest;
+import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.*;
@@ -36,6 +33,7 @@ public class RemoveNamePartyService implements EntityHandler {
     private final UserService userService;
     private final EForm form = EForm.BIEU_26_REMOVE_NAME_PARTY;
     private final RemoveNamePartyDraftService removeNamePartyDraftService;
+    private final DvHistoryService dvHistoryService;
 
     private Map<String, String> getCombinedFieldMap() {
         return new HashMap<>(RemoveNamePartyDraft.FIELD_MAP);
@@ -43,8 +41,8 @@ public class RemoveNamePartyService implements EntityHandler {
 
     public RemoveNamePartyDraft createDraft(RemoveNamePartyRequest request) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
-        UserDto userDto = userService.findByStaffCodeAndOrganizationCode(request.getStaffCode(), request.getOrganizationCode());
-        if (Objects.isNull(userDto)) {
+        UserDto dvInfo = userService.findByStaffCodeAndOrganizationCode(request.getStaffCode(), request.getOrganizationCode());
+        if (Objects.isNull(dvInfo)) {
             throw new CommonException("Người dùng có mã nhân viên: " +
                     request.getStaffCode() +
                     " và mã tổ chức Đảng: " +
@@ -121,6 +119,9 @@ public class RemoveNamePartyService implements EntityHandler {
         report26.setType(EReport26.REMOVE_NAME_PARTY.getId());
         report26.setDeleted(ERecordStatus.ACTIVE.getStatus());
 
+        dvHistoryService.saveDV(removeNamePartyDraft.getStaffCode(),
+                EDVStatus.REMOVE_NAME_PARTY.getStatus(),
+                EDVStatus.REMOVE_NAME_PARTY.getName());
         removeNamePartyDraftService.save(removeNamePartyDraft);
         report26Service.save(report26);
         return true;

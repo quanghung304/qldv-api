@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.gateway;
 
-import com.agribank.qldv_api.request.establishmentDissolveDraft.EDDraftSearchRequest;
+import com.agribank.qldv_api.request.establishment_dissolve_draft.EDDraftSearchRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.EstablishmentDissolveDraft;

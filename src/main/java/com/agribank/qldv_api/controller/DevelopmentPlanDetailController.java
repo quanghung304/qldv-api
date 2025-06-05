@@ -5,7 +5,7 @@ import com.agribank.qldv_api.request.develop_plan.DevelopPlanDetailUpdateRequest
 import com.agribank.qldv_api.request.develop_plan.GetDevelopmentPlanRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.developPlan.DevelopPlanDetailResponse;
+import com.agribank.qldv_api.response.develop_plan.DevelopPlanDetailResponse;
 import com.agribank.qldv_api.service.development_plan.DevelopPlanDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

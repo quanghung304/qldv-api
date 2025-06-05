@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller.report26;
 
-import com.agribank.qldv_api.request.partyActivityExemption.PartyActivityExemptionRequest;
+import com.agribank.qldv_api.request.party_activity_exemption.PartyActivityExemptionRequest;
 import com.agribank.qldv_api.service.report26.PartyActivityExemptionService;
 import com.agribank.qldvutils.entity.report26.PartyActivityExemptionDraft;
 import com.agribank.qldvutils.response.BaseResponse;

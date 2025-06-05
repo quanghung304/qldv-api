@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller.report26;
 
-import com.agribank.qldv_api.request.removeNameParty.RemoveNamePartyRequest;
+import com.agribank.qldv_api.request.remove_name_party.RemoveNamePartyRequest;
 import com.agribank.qldv_api.service.report26.RemoveNamePartyService;
 import com.agribank.qldvutils.entity.report26.RemoveNamePartyDraft;
 import com.agribank.qldvutils.response.BaseResponse;

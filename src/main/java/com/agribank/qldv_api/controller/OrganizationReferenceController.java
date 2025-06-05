@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.response.organizationReference.OrganizationReferenceResponse;
+import com.agribank.qldv_api.response.organization_reference.OrganizationReferenceResponse;
 import com.agribank.qldv_api.service.OrganizationReferenceService;
 import com.agribank.qldvutils.response.BaseResponse;
 import lombok.RequiredArgsConstructor;

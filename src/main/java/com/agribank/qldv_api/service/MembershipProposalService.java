@@ -6,7 +6,7 @@ import com.agribank.qldv_api.enums.ERecordStatus;
 import com.agribank.qldv_api.gateway.MembershipProposalClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.membershipProposalDraft.MembershipProposalRequest;
+import com.agribank.qldv_api.request.membership_proposal_draft.MembershipProposalRequest;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;

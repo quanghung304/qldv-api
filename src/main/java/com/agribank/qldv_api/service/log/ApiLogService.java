@@ -1,7 +1,7 @@
 package com.agribank.qldv_api.service.log;
 
 import com.agribank.qldv_api.gateway.ApiLogClient;
-import com.agribank.qldv_api.request.apiLog.SearchApiLogRequest;
+import com.agribank.qldv_api.request.api_log.SearchApiLogRequest;
 import com.agribank.qldv_api.response.apiLog.ApiLogResponse;
 import com.agribank.qldvutils.entity.ApiLog;
 import com.agribank.qldvutils.response.PageResponse;

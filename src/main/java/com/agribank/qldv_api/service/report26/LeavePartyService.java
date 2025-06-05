@@ -4,11 +4,8 @@ import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.report26.LeavePartyClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.leaveParty.LeavePartyRequest;
-import com.agribank.qldv_api.service.CheckAuthorityService;
-import com.agribank.qldv_api.service.CommitteeDecisionService;
-import com.agribank.qldv_api.service.RequestService;
-import com.agribank.qldv_api.service.UserService;
+import com.agribank.qldv_api.request.leave_party.LeavePartyRequest;
+import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.*;
@@ -36,6 +33,7 @@ public class LeavePartyService implements EntityHandler {
     private final UserService userService;
     private final EForm form = EForm.BIEU_26_LEAVE_PARTY;
     private final LeavePartyDraftService leavePartyDraftService;
+    private final DvHistoryService dvHistoryService;
 
 
     private Map<String, String> getCombinedFieldMap() {
@@ -121,6 +119,10 @@ public class LeavePartyService implements EntityHandler {
         report26.setRefId(leaveParty.getId());
         report26.setType(EReport26.LEAVE_PARTY.getId());
         report26.setDeleted(ERecordStatus.ACTIVE.getStatus());
+
+        dvHistoryService.saveDV(leavePartyDraft.getStaffCode(),
+                EDVStatus.LEAVE_PARTY.getStatus(),
+                EDVStatus.LEAVE_PARTY.getName());
 
         leavePartyDraftService.save(leavePartyDraft);
         report26Service.save(report26);

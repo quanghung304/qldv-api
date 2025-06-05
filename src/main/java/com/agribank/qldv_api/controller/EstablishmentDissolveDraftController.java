@@ -1,10 +1,10 @@
 package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.DraftRequest;
-import com.agribank.qldv_api.request.establishmentDissolve.EstablishmentDissolveRequest;
-import com.agribank.qldv_api.request.establishmentDissolveDraft.EDDraftSearchRequest;
+import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveRequest;
+import com.agribank.qldv_api.request.establishment_dissolve_draft.EDDraftSearchRequest;
 import com.agribank.qldv_api.response.DraftResponse;
-import com.agribank.qldv_api.response.establishmentDissolveDraft.EDDraftResponse;
+import com.agribank.qldv_api.response.establishment_dissolve_draft.EDDraftResponse;
 import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
 import com.agribank.qldvutils.entity.EstablishmentDissolveDraft;
 import com.agribank.qldvutils.response.BaseResponse;

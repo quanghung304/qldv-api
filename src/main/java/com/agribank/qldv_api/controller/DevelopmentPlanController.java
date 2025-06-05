@@ -3,7 +3,7 @@ package com.agribank.qldv_api.controller;
 import com.agribank.qldv_api.request.develop_plan.GetDevelopmentPlanRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.developPlan.DevelopPlanResponse;
+import com.agribank.qldv_api.response.develop_plan.DevelopPlanResponse;
 import com.agribank.qldv_api.service.development_plan.DevelopPlanService;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
