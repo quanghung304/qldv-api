@@ -7,6 +7,7 @@ import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.OrganizationService;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +22,7 @@ public class OrganizationController {
     private final OrganizationService service;
 
     @PostMapping("/search")
-    public ResponseEntity<BaseResponse<PageResponse<OrganizationResponse>>> search(@RequestBody OrganizationSearchRequest request) {
+    public ResponseEntity<BaseResponse<PageResponse<OrganizationResponse>>> search(@RequestBody @Valid OrganizationSearchRequest request) {
         request.validate();
         return BaseResponse.success(service.search(request));
     }
@@ -59,5 +60,15 @@ public class OrganizationController {
     @DeleteMapping("/delete/{code}")
     public ResponseEntity<BaseResponse<String>> delete(@PathVariable(name = "code") String code) {
         return BaseResponse.success(service.createRequestDelete(code), null);
+    }
+
+    @GetMapping("/advisory-agency")
+    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> advisoryAgency() {
+        return BaseResponse.success(service.getAdvisoryAgency());
+    }
+
+    @GetMapping("/party-branch")
+    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> partyBranch() {
+        return BaseResponse.success(service.partyBranch());
     }
 }

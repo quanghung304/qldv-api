@@ -17,6 +17,7 @@ public class UserUpdateRequest {
     Integer depId;
     String fullName;
     List<String> roleIds;
+    String organizationCode;
 
     public void validate(){
         if (Objects.isNull(id)) {
@@ -25,6 +26,10 @@ public class UserUpdateRequest {
 
         if (Objects.isNull(roleIds)) {
             this.roleIds = new ArrayList<>();
+        }
+
+        if (Objects.nonNull(organizationCode) && organizationCode.isBlank()){
+            organizationCode = null;
         }
     }
 }

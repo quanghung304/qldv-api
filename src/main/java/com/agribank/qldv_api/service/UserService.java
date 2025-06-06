@@ -15,6 +15,7 @@ import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.UserDto;
+import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
@@ -48,6 +49,7 @@ public class UserService {
     private final BranchService branchService;
     private final OrganizationClient organizationClient;
     private final UserRoleService userRoleService;
+    private final DVService dvService;
 
     @Value("${app.service.publicKeyPath}")
     private String publicKeyPath;
@@ -224,6 +226,14 @@ public class UserService {
             throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
+        Organization organization = null;
+        if (Objects.nonNull(userUpdateRequest.getOrganizationCode())){
+            organization = organizationClient.findByCode(userUpdateRequest.getOrganizationCode()).getData();
+        }
+
+        if(Objects.nonNull(userUpdateRequest.getOrganizationCode()) && Objects.isNull(organization)){
+            throw new CommonException("Kiểm tra lại mã TCD");
+        }
         User userOld = (User) CommonUtils.handleCloneObject(user);
 
         UserIAMUpdate userIAMUpdate = UserIAMUpdate.builder()
@@ -237,8 +247,22 @@ public class UserService {
         user.setBrcd(userIAMUpdate.getBrcd());
         user.setDepId(userIAMUpdate.getDepId());
         user.setFullName(userIAMUpdate.getFullName());
+
         try {
             DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
+
+            DV dv = null;
+            if (Objects.nonNull(organization)){
+                dv = dvService.findByStaffCode(userOld.getStaffCode());
+            }
+
+            if (Objects.nonNull(organization) && Objects.nonNull(dv)) {
+                dv.setFullName(user.getFullName());
+                dv.setOrganizationCode(userUpdateRequest.getOrganizationCode());
+
+                dvService.save(dv);
+            }
+
             userClient.save(user);
 
             if (!userUpdateRequest.getRoleIds().isEmpty()){
