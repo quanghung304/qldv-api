@@ -317,4 +317,23 @@ public class OrganizationService implements EntityHandler {
         organizationDraft.setApprove(EApprovalStatus.DENIED.getId());
         organizationDraftService.save(organizationDraft);
     }
+
+
+    public List<OrganizationResponse> getAdvisoryAgency(){
+        List<Organization> organizations = client.advisoryAgency().getData();
+        if (organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
+
+    public List<OrganizationResponse> partyBranch(){
+        List<Organization> organizations = client.partyBranch().getData();
+        if (organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
 }

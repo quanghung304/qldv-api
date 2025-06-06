@@ -16,6 +16,7 @@ import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.DV;
+import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +48,7 @@ public class AuthenticationService {
     private final UserLogService userLogService;
     private final AuthenticationLogService authenticationLogService;
     private final EmployeeInfoService employeeInfoService;
+    private final OrganizationService organizationService;
 
     public UserResponse register(RegisterRequest request) {
         IAMRegisterRequest registerRequest = IAMRegisterRequest.builder()
@@ -80,6 +82,11 @@ public class AuthenticationService {
                 throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
             }
 
+            Organization organization = organizationService.findByCode(request.getOrganizationCode());
+            if (Objects.isNull(organization)) {
+                throw new CommonException("Kiểm tra lại mã TCD");
+            }
+
             User userNew = userClient.getUserByEmail(request.getEmail()).getData();
             User userOld = new User();
             String action = EApiLogType.UPDATE.getValue();
@@ -110,9 +117,6 @@ public class AuthenticationService {
             userNew.setBrcd(request.getBrcd());
             userNew.setDepId(request.getDepId());
 
-            if (!String.valueOf(request.getBrcd()).equals(employeeInfoDto.getBrcd())){
-                throw new CommonException("Kiểm tra lại mã nhân viên và chi nhánh trực thuộc");
-            }
             userNew.setStaffCode(String.valueOf(request.getStaffCode()));
 
             DefaultResponse<User> savedUserResponse = userClient.save(userNew);

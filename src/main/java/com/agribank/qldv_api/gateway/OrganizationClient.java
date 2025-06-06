@@ -62,4 +62,11 @@ public interface OrganizationClient {
     DefaultResponse<Organization> findByUserId(
             @RequestParam(name = "userId") String userId
     );
+
+
+    @GetMapping("api/v1/organization/advisory-agency")
+    DefaultResponse<List<Organization>> advisoryAgency();
+
+    @GetMapping("api/v1/organization/party-branch")
+    DefaultResponse<List<Organization>> partyBranch();
 }
