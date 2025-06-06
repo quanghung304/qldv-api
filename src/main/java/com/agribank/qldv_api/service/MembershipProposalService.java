@@ -79,6 +79,7 @@ public class MembershipProposalService implements EntityHandler {
         membershipProposalRequest.setReferenceId(membershipProposalDraft.getId());
         membershipProposalRequest.setCreatedBy(userRequested.getId());
         membershipProposalRequest.setOrganizationCode(request.getOrganizationCode());
+        membershipProposalRequest.setStaffCode(membershipProposal.getStaffCode());
         requestClient.save(membershipProposalRequest);
 
         return "Tạo yêu cầu thành công";
@@ -92,6 +93,7 @@ public class MembershipProposalService implements EntityHandler {
         request.setCreatedBy(userRequested.getId());
         request.setReferenceId(id);
         request.setOrganizationCode(membershipProposal.getOrganizationCode());
+        request.setStaffCode(membershipProposal.getStaffCode());
         requestClient.save(request);
 
         return "Tạo yêu cầu thành công";

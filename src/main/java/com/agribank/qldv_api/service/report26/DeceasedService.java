@@ -72,6 +72,7 @@ public class DeceasedService implements EntityHandler {
         requestedDraft = deceasedDraftService.save(requestedDraft);
 
         partActivityRequest.setReferenceId(requestedDraft.getId());
+        partActivityRequest.setStaffCode(requestedDraft.getStaffCode());
         partActivityRequest.setOrganizationCode(request.getOrganizationCode());
         requestClient.save(partActivityRequest);
 
@@ -91,6 +92,7 @@ public class DeceasedService implements EntityHandler {
         Request partActivityRequest = requestService.initializeRequest(null, deceased, form, getCombinedFieldMap());
         partActivityRequest.setCreatedBy(userRequested.getId());
         partActivityRequest.setReferenceId(id);
+        partActivityRequest.setStaffCode(report26.getStaffCode());
         partActivityRequest.setOrganizationCode(report26.getOrganizationCode());
         requestClient.save(partActivityRequest);
 

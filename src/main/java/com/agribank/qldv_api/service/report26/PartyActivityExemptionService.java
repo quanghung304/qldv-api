@@ -74,6 +74,7 @@ public class PartyActivityExemptionService implements EntityHandler {
         Request partActivityRequest = requestService.initializeRequest(requestedDraft, partyActivityExemption, form, getCombinedFieldMap());
         partActivityRequest.setCreatedBy(userRequested.getId());
         partActivityRequest.setOrganizationCode(request.getOrganizationCode());
+        partActivityRequest.setStaffCode(requestedDraft.getStaffCode());
         if (Objects.nonNull(request.getId())){
             requestedDraft.setRefId(request.getId());
         }
@@ -101,6 +102,7 @@ public class PartyActivityExemptionService implements EntityHandler {
         partActivityRequest.setCreatedBy(userRequested.getId());
         partActivityRequest.setReferenceId(id);
         partActivityRequest.setOrganizationCode(report26.getOrganizationCode());
+        partActivityRequest.setStaffCode(report26.getStaffCode());
         requestClient.save(partActivityRequest);
 
         return "Tạo yêu cầu thành công";
