@@ -157,7 +157,12 @@ public class DVService implements EntityHandler {
         dvDraft.setStatus(EApprovalStatus.APPROVED.getId());
         dvDraft.setApprovedBy(userDetails.getId());
 
-        DV dv = new DV();
+        DV dv = dvClient.findByStaffCode(dvDraft.getStaffCode()).getData();
+        if (Objects.nonNull(dv)) {
+            throw new CommonException("Đã tồn tại đảng viên có mã cán bộ: " + dvDraft.getStaffCode());
+        }
+
+        dv = new DV();
         mapDVDraftToDV(dv, dvDraft);
         dv.setCreatedBy(dvDraft.getCreatedBy());
         dv.setApprovedBy(userDetails.getId());
