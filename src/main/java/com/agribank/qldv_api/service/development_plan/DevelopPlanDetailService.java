@@ -25,6 +25,7 @@ import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.development_plan.DevelopDetailRefIdRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopPrntBrcdRequest;
 import com.agribank.qldvutils.response.PageResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,17 +38,19 @@ import java.util.*;
 public class DevelopPlanDetailService implements EntityHandler {
     private final RequestClient requestClient;
     private final DevelopmentPlanDetailClient developmentPlanDetailClient;
+
     private final DevelopPlanService developPlanService;
     private final CheckAuthorityService checkAuthorityService;
-    private final ModelMapper modelMapper;
     private final DevelopmentPlanDetailDraftService developPlanDetailDraftService;
     private final DevelopPlanDraftService developPlanDraftService;
     private final RequestService requestService;
-    private final EForm form = EForm.BIEU_12;
     private final DevelopmentPlanDetailDraftService developmentPlanDetailDraftService;
     private final OrganizationService organizationService;
 
+    private final ModelMapper modelMapper;
+    private final ObjectMapper objectMapper;
 
+    private final EForm form = EForm.BIEU_12;
 
     private Map<String, String> getCombinedFieldMap() {
         return new HashMap<>(DevelopmentPlanDetailDraft.BASE_FIELD_MAP);
@@ -114,21 +117,32 @@ public class DevelopPlanDetailService implements EntityHandler {
         developPlanDraftService.save(developmentPlanDraft);
 
         Request developRequest = requestService.initializeRequest(developmentPlanDraft, null, form, developPlanService.getCombinedFieldMap());
-        Map<String, Object> developPlanDraftMap = CommonUtils.createFilteredDataMap(developmentPlanDraft, developPlanService.getCombinedFieldMap());
-        String newData = String.format("""
-                    {
-                        developPlan: %s,
-                        developPlanDetail: %s,
-                    }
-                    """, developPlanDraftMap, developDetailMap);
-        developRequest.setNewData(newData);
+        // Set the valid JSON string
         developRequest.setCreatedBy(userRequested.getId());
         developRequest.setOrganizationCode(developmentPlanDraft.getOrganizationCode());
-
         developRequest.setReferenceId(developmentPlanDraft.getId());
-        requestClient.save(developRequest);
+
+        try {
+            String newData = getJsonData(developmentPlanDraft, developDetailMap);
+            developRequest.setNewData(newData);
+            requestClient.save(developRequest);
+        } catch (Exception e) {
+            throw new CommonException(e.getMessage());
+        }
 
         return "Thêm kế hoạch phát triển thành công!";
+    }
+
+    private String getJsonData(BaseEntity<String> developmentPlanDraft, List<Map<String, Object>> developDetailMap) {
+        try {
+            Map<String, Object> newDataMap = new HashMap<>();
+            Map<String, Object> developPlanDraftMap = CommonUtils.createFilteredDataMap(developmentPlanDraft, developPlanService.getCombinedFieldMap());
+            newDataMap.put("developPlan", developPlanDraftMap);
+            newDataMap.put("developPlanDetail", developDetailMap);
+            return objectMapper.writeValueAsString(newDataMap);
+        } catch (Exception e) {
+            throw new CommonException("Xảy ra lỗi đọc dữ liệu");
+        }
     }
 
     private void buildDevelopmentPlanDetailDrafts(List<DevelopmentPlanDetailDraft> developPlanDetailDraftList,
@@ -206,21 +220,13 @@ public class DevelopPlanDetailService implements EntityHandler {
                                   DevelopmentPlanDraft developmentPlanDraft,
                                   UserDetailsImpl userRequested
                                   ){
-        Map<String, Object> oldDevelopPlanMap = CommonUtils.createFilteredDataMap(developmentPlan, developPlanService.getCombinedFieldMap());
         List<Map<String, Object>> oldDevelopPlanDetail = new ArrayList<>();
         for (DevelopmentPlanDetail developmentPlanDetail : developmentPlanDetails) {
             Map<String, Object> map = CommonUtils.createFilteredDataMap(developmentPlanDetail, getCombinedFieldMap());
             oldDevelopPlanDetail.add(map);
         }
+        String oldData = getJsonData(developmentPlan, oldDevelopPlanDetail);
 
-        String oldData = String.format("""
-                    {
-                        developPlan: %s,
-                        developPlanDetail: %s,
-                    }
-                    """, oldDevelopPlanMap, oldDevelopPlanDetail);
-
-        Map<String, Object> newDevelopPlanMap = CommonUtils.createFilteredDataMap(developmentPlanDraft, developPlanService.getCombinedFieldMap());
         List<Map<String, Object>> newDevelopPlanDetail = new ArrayList<>();
         List<DevelopmentPlanDetailDraft> developmentPlanDetailDraftList = new ArrayList<>();
         for (DevelopPlanDetailRequest developmentPlanDetail : dataRequest.getData()) {
@@ -232,13 +238,9 @@ public class DevelopPlanDetailService implements EntityHandler {
             developmentPlanDetailDraftList.add(developmentPlanDetailDraft);
         }
 
+        String newData = getJsonData(developmentPlanDraft, newDevelopPlanDetail);
         developPlanDetailDraftService.saveAll(developmentPlanDetailDraftList);
-        String newData = String.format("""
-                    {
-                        developPlan: %s,
-                        developPlanDetail: %s,
-                    }
-                    """, newDevelopPlanMap, newDevelopPlanDetail);
+
         Request developRequest = requestService.initializeRequest(developmentPlanDraft, developmentPlan, form, developPlanService.getCombinedFieldMap());
         developRequest.setNewData(newData);
         developRequest.setOldData(oldData);

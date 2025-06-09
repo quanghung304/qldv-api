@@ -79,6 +79,7 @@ public class LeavePartyService implements EntityHandler {
         requestedDraft = leavePartyDraftService.save(requestedDraft);
 
         partActivityRequest.setReferenceId(requestedDraft.getId());
+        partActivityRequest.setStaffCode(requestedDraft.getStaffCode());
         partActivityRequest.setOrganizationCode(request.getOrganizationCode());
         requestClient.save(partActivityRequest);
 
@@ -98,6 +99,7 @@ public class LeavePartyService implements EntityHandler {
         Request partActivityRequest = requestService.initializeRequest(null, leaveParty, form, getCombinedFieldMap());
         partActivityRequest.setCreatedBy(userRequested.getId());
         partActivityRequest.setReferenceId(id);
+        partActivityRequest.setStaffCode(report26.getStaffCode());
         partActivityRequest.setOrganizationCode(report26.getOrganizationCode());
         requestClient.save(partActivityRequest);
 

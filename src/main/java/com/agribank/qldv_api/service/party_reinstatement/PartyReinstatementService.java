@@ -100,6 +100,7 @@ public class PartyReinstatementService implements EntityHandler {
 
         initializedRequest.setReferenceId(partyReinstatementDraft.getId());
         initializedRequest.setOrganizationCode(request.getOrganizationCode());
+        initializedRequest.setStaffCode(partyReinstatement.getStaffCode());
         requestClient.save(initializedRequest);
 
         return "Tạo yêu cầu thành công!";
@@ -116,6 +117,7 @@ public class PartyReinstatementService implements EntityHandler {
         request.setCreatedBy(userRequested.getId());
         request.setReferenceId(id);
         request.setOrganizationCode(partyReinstatement.getOrganizationCode());
+        request.setStaffCode(partyReinstatement.getStaffCode());
         requestClient.save(request);
 
         return "Tạo yêu cầu thành công";

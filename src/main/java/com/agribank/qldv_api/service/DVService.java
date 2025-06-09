@@ -106,6 +106,7 @@ public class DVService implements EntityHandler {
         Request request = requestService.initializeRequest(dvDraft, null, form, DV.FIELD_MAP);
         request.setOrganizationCode(dvDto.getOrganizationCode());
         System.out.println("Calling getId(): " + dvDraft.getId());
+        request.setStaffCode(dvDraft.getStaffCode());
         request.setReferenceId(dvDraft.getId());
         request.setCreatedBy(userDetails.getId());
         requestClient.save(request);
@@ -136,6 +137,7 @@ public class DVService implements EntityHandler {
 
         Request request = requestService.initializeRequest(newDV, oldDv, form, DV.FIELD_MAP);
         request.setOrganizationCode(dvDto.getOrganizationCode());
+        request.setStaffCode(oldDv.getStaffCode());
         request.setReferenceId(newDV.getId());
         request.setCreatedBy(userDetails.getId());
         requestClient.save(request);

@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.mis.encrypt.interfaces.ICreateService;
 import org.mis.encrypt.interfaces.IMisEncrypt;
 import org.mis.encrypt.services.CreateService;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.io.ClassPathResource;
@@ -160,7 +159,9 @@ public class CommonUtils {
             if (wrapper.isReadableProperty(fieldName)) {
                 Object value = wrapper.getPropertyValue(fieldName);
                 // Use user-friendly name from fieldMap as key
-                if (value instanceof java.sql.Date) {
+                if (value instanceof Date) {
+                    dataMap.put(fieldMap.get(fieldName), DATE_FORMATTER.format((Date) value));
+                } else if (value instanceof java.sql.Date) {
                     dataMap.put(fieldMap.get(fieldName), DATE_FORMATTER.format((java.sql.Date) value));
                 } else {
                     dataMap.put(fieldMap.get(fieldName), value);
