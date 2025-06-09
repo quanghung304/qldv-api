@@ -60,7 +60,7 @@ public class DVDto {
     //Ngày kết nạp Đảng
     Date admissionDate;
     //nguồn kết nạp
-    Integer sourceRecruitment;
+    String sourceRecruitment;
     //Kết nạp tại chi bộ
     String branchPartyCode;
     //công đoàn giới thiệu
