@@ -11,6 +11,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.PageResponse;
@@ -19,6 +20,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
 
@@ -335,5 +337,17 @@ public class OrganizationService implements EntityHandler {
         }
 
         return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
+
+    public List<OrganizationDto> getListOrganizationCodeName(){
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        List<Organization> organizations = client.findByParent(userRequested.getOrganizationCode()).getData();
+        List<OrganizationDto> organizationDTOs = organizations.stream()
+                .map(organization -> new OrganizationDto(organization.getCode(), organization.getName()))
+                .collect(Collectors.toList());
+        if (Objects.isNull(organizations) || organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+        return organizationDTOs;
     }
 }
