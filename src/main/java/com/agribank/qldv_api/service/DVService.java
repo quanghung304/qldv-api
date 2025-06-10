@@ -12,6 +12,7 @@ import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.log.DVLogService;
+import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvDraft;
 import com.agribank.qldvutils.entity.Organization;
@@ -23,10 +24,10 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -267,5 +268,10 @@ public class DVService implements EntityHandler {
 
     public DV save(DV dv){
         return dvClient.save(dv).getData();
+    }
+
+    public List<DVCodeNameDto> getListProbationaryMemberCodeName(){
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return dvClient.findUnOfficialDV(userDetails.getOrganizationCode()).getData();
     }
 }

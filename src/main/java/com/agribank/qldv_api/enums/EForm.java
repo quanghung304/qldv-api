@@ -18,11 +18,13 @@ public enum EForm {
     BIEU_12("B12", "KẾ HOẠCH PHÁT TRIỂN ĐẢNG VIÊN", ERequestType.DANG_VIEN.getId()),
     BIEU_15("B15", "THÔNG TIN CHUNG VỀ QUẦN CHÚNG/ĐẢNG VIÊN", ERequestType.DANG_VIEN.getId()),
     BIEU_20("B20", "Đề nghị kết nạp Đảng", ERequestType.DANG_VIEN.getId()),
+    BIEU_21("B21", "CÔNG NHẬN ĐẢNG VIÊN CHÍNH THỨC", ERequestType.DANG_VIEN.getId()),
     BIEU_22("B22", "KHÔI PHỤC ĐẢNG TỊCH", ERequestType.DANG_VIEN.getId()),
     BIEU_26_PARTY_ACTIVITY_EXEMPTION("BIEU_26_EXEM", "MIỄN SINH HOẠT ĐẢNG", ERequestType.DANG_VIEN.getId()),
     BIEU_26_LEAVE_PARTY("BIEU_26_LEAV", "RA KHỎI ĐẢNG", ERequestType.DANG_VIEN.getId()),
     BIEU_26_REMOVE_NAME_PARTY("BIEU_26_RMV", "XÓA TÊN", ERequestType.DANG_VIEN.getId()),
     BIEU_26_DECEASED("BIEU_26_DECE", "TỪ TRẦN", ERequestType.DANG_VIEN.getId());
+
     String code;
     String name;
     Integer type;

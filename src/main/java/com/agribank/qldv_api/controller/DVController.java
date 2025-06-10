@@ -3,10 +3,12 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldv_api.service.DVService;
+import com.agribank.qldvutils.dto.DVCodeNameDto;
+import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvDraft;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 
 import jakarta.validation.Valid;
@@ -48,5 +50,10 @@ public class DVController {
     @GetMapping("/{id}")
     public ResponseEntity<DefaultResponse<DV>> getDVDetail(@PathVariable String id) {
         return DefaultResponse.success(service.findById(id));
+    }
+
+    @GetMapping("/find-un-official-dv")
+    public ResponseEntity<BaseResponse<List<DVCodeNameDto>>> getListProbationaryMemberCodeName() {
+        return BaseResponse.success(service.getListProbationaryMemberCodeName());
     }
 }

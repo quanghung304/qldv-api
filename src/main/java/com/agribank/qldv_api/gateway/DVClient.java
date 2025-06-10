@@ -1,9 +1,9 @@
 package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.request.SearchDVRequest;
-import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +31,11 @@ public interface DVClient {
     @PostMapping("api/v1/dv/save/all")
     DefaultResponse<List<DV>> saveAll(
             @RequestBody List<DV> dvs
+    );
+
+    @GetMapping("api/v1/dv/find-un-official-dv")
+    DefaultResponse<List<DVCodeNameDto>> findUnOfficialDV(
+            @RequestParam(name = "code") String code
     );
 
     @GetMapping("api/v1/dv/find-by-organization")

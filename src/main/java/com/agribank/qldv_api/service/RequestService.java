@@ -41,11 +41,11 @@ import java.util.*;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RequestService {
     @Autowired
-     ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
     @Autowired
     ModelMapper modelMapper;
     @Autowired
-     RequestClient requestClient;
+    RequestClient requestClient;
     @Autowired
     @Lazy
     EntityHandlerRegistry handlerRegistry;
@@ -184,17 +184,17 @@ public class RequestService {
     }
 
     public List<FormResponse> getFormList() {
-    List<FormResponse> responses = new ArrayList<>();
+        List<FormResponse> responses = new ArrayList<>();
 
-    for (EForm form: EForm.values()) {
-        FormResponse formResponse = FormResponse.builder()
-                .code(form.getCode())
-                .name(form.getName())
-                .build();
-        responses.add(formResponse);
-    }
+        for (EForm form: EForm.values()) {
+            FormResponse formResponse = FormResponse.builder()
+                    .code(form.getCode())
+                    .name(form.getName())
+                    .build();
+            responses.add(formResponse);
+        }
 
-    return responses;
+        return responses;
     }
 
     @Transactional
@@ -286,3 +286,4 @@ public class RequestService {
         return "Xóa yêu cầu thành công";
     }
 }
+
