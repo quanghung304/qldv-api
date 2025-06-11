@@ -14,7 +14,6 @@ public class PartyReinstatementRequest {
     String id;
     String organizationCode;
     String staffCode;
-    String decisionCommittee;
     String conclusionNumber;
     Date conclusionDate;
     String decisionNumber;
@@ -27,10 +26,6 @@ public class PartyReinstatementRequest {
 
         if (Objects.isNull(staffCode)){
             throw new CommonException("Staff code is required");
-        }
-
-        if (Objects.isNull(decisionCommittee)){
-            throw new CommonException("Decision committee is required");
         }
 
         if (Objects.isNull(conclusionNumber)){

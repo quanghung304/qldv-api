@@ -74,8 +74,7 @@ public class OrganizationService implements EntityHandler {
         organizationDraft.setId(UUID.randomUUID().toString());
         organizationDraft.setStatus(EOrganizationStatus.YES.getStatus());
         organizationDraft.setOrganizationCode(userRequested.getOrganizationCode());
-        organizationDraft.setUserBrcdCreated(userRequested.getBrcd());
-        organizationDraft.setUsernameCreated(userRequested.getUsername());
+        organizationDraft.setCreatedBy(userRequested.getId());
 
         saveRequest(organizationDraft, userRequested.getId(), null);
         return modelMapper.map(organizationDraft, OrganizationResponse.class);
@@ -125,8 +124,7 @@ public class OrganizationService implements EntityHandler {
         organizationDraft.setStatus(organizationRequest.getStatus());
         organizationDraft.setApprove(EApprovalStatus.PENDING.getId());
         organizationDraft.setOrganizationCode(userRequested.getOrganizationCode());
-        organizationDraft.setUserBrcdCreated(userRequested.getBrcd());
-        organizationDraft.setUsernameCreated(userRequested.getUsername());
+        organizationDraft.setCreatedBy(userRequested.getId());
 
         saveRequest(organizationDraft, userRequested.getId(), organizationOld);
         return modelMapper.map(organizationDraft, OrganizationResponse.class);
@@ -349,5 +347,16 @@ public class OrganizationService implements EntityHandler {
             return new ArrayList<>();
         }
         return organizationDTOs;
+    }
+
+    public List<OrganizationResponse> getAll(){
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        String code = getOrganizationCode(null, userRequested);
+        List<Organization> organizations = client.getOrganizationAllParent(code).getData();
+        if (Objects.isNull(organizations) || organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
     }
 }

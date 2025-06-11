@@ -12,7 +12,6 @@ public class PartyReinstatementResponse {
     String id;
     String organizationCode;
     String staffCode;
-    String decisionCommittee;
     String conclusionNumber;
     Date conclusionDate;
     String decisionNumber;

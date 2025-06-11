@@ -6,7 +6,6 @@ import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.OrganizationService;
 import com.agribank.qldvutils.dto.OrganizationDto;
-import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -77,5 +76,10 @@ public class OrganizationController {
     @GetMapping("/get-list-organization-code-name")
     public ResponseEntity<BaseResponse<List<OrganizationDto>>> getListOrganizationCodeName() {
         return BaseResponse.success(service.getListOrganizationCodeName());
+    }
+
+    @GetMapping("/get/all")
+    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getAll() {
+        return BaseResponse.success(service.getAll());
     }
 }
