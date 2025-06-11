@@ -1,9 +1,11 @@
-package com.agribank.qldv_api.service;
+package com.agribank.qldv_api.service.organization;
 
 import com.agribank.qldv_api.gateway.OrganizationDraftClient;
 import com.agribank.qldvutils.entity.OrganizationDraft;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -17,5 +19,9 @@ public class OrganizationDraftService {
 
     public OrganizationDraft findById(String id) {
         return client.findById(id).getData().orElse(null);
+    }
+
+    public List<OrganizationDraft> saveAll(List<OrganizationDraft> organizationDrafts) {
+        return client.saveAll(organizationDrafts).getData();
     }
 }

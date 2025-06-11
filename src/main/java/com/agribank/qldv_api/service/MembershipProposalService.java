@@ -8,6 +8,7 @@ import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.membership_proposal_draft.MembershipProposalRequest;
 import com.agribank.qldv_api.service.handler.EntityHandler;
+import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.*;
@@ -35,9 +36,7 @@ public class MembershipProposalService implements EntityHandler {
     private final OrganizationService organizationService;
     private final EmployeeInfoService employeeInfoService;
 
-
     private final EForm form = EForm.BIEU_20;
-
 
     public Map<String, String> getCombinedFieldMap() {
         return new HashMap<>(MembershipProposalDraft.FIELD_MAP);

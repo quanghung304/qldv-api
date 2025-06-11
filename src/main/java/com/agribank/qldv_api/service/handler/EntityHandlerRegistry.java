@@ -4,7 +4,7 @@ import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
-import com.agribank.qldv_api.service.OrganizationService;
+import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldv_api.service.TransformationHistoryService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
