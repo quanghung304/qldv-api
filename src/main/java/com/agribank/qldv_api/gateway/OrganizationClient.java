@@ -71,4 +71,7 @@ public interface OrganizationClient {
 
     @GetMapping("api/v1/organization/all-parent")
     DefaultResponse<List<Organization>> getOrganizationAllParent(@RequestParam(name = "code") String code);
+
+    @GetMapping("api/v1/organization/find-all")
+    DefaultResponse<List<Organization>> findAll();
 }

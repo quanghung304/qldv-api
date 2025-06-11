@@ -285,5 +285,9 @@ public class RequestService {
         requestClient.deleteById(id);
         return "Xóa yêu cầu thành công";
     }
+
+    public void saveAll(List<Request> requests) {
+        requestClient.saveAll(requests);
+    }
 }
 

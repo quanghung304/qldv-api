@@ -17,8 +17,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.sql.Timestamp;
 
@@ -170,5 +172,23 @@ public class CommonUtils {
         }
 
         return dataMap;
+    }
+
+    public static LocalDate convertDateIntoLocalDate(Date date){
+        Instant instant = date.toInstant();
+        return instant.atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    public static Date convertStringToDate(String dateStr){
+        if (Objects.isNull(dateStr)){
+            return null;
+        }
+
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        try {
+            return formatter.parse(dateStr);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

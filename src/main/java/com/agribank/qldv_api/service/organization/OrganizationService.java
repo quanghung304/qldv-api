@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.service;
+package com.agribank.qldv_api.service.organization;
 
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.OrganizationClient;
@@ -9,15 +9,22 @@ import com.agribank.qldv_api.request.organization.OrganizationRequest;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
+import com.agribank.qldv_api.service.CheckAuthorityService;
+import com.agribank.qldv_api.service.RequestService;
+import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,6 +42,8 @@ public class OrganizationService implements EntityHandler {
     private final RequestService requestService;
     private final CheckAuthorityService checkAuthorityService;
     private final OrganizationDraftService organizationDraftService;
+    @Qualifier("importOrganization")
+    private final ImportOrganizationService importOrganizationService;
     private final EForm form = EForm.BIEU_01;
 
     //mã đang bộ sẽ được nhập khi nó là Đảng bộ cơ sở
@@ -277,6 +286,7 @@ public class OrganizationService implements EntityHandler {
         Organization organization = modelMapper.map(organizationDraft, Organization.class);
 
         organizationDraft.setApprove(EApprovalStatus.APPROVED.getId());
+        organizationDraft.setApprovedBy(userDetails.getId());
         organizationDraftService.save(organizationDraft);
         client.save(organization);
         return true;
@@ -290,7 +300,9 @@ public class OrganizationService implements EntityHandler {
         }
         Organization organization = modelMapper.map(organizationDraft, Organization.class);
 
+        UserDetailsImpl userRequested = userService.getUserRequested();
         organizationDraft.setApprove(EApprovalStatus.APPROVED.getId());
+        organizationDraft.setApprovedBy(userRequested.getId());
         organizationDraftService.save(organizationDraft);
         client.save(organization);
         return true;
@@ -314,6 +326,8 @@ public class OrganizationService implements EntityHandler {
             throw new CommonException("Không tìm thấy bản ghi có id: " + referenceId);
         }
 
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        organizationDraft.setApprovedBy(userRequested.getId());
         organizationDraft.setApprove(EApprovalStatus.DENIED.getId());
         organizationDraftService.save(organizationDraft);
     }
@@ -358,5 +372,14 @@ public class OrganizationService implements EntityHandler {
         }
 
         return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
+
+    public List<Organization> findAll(){
+        return client.findAll().getData();
+    }
+
+    @SneakyThrows
+    public BaseResponse importExcel(MultipartFile file) {
+        return importOrganizationService.handleReadFileUpload(file, EExcelImport.BIEU_1.name());
     }
 }

@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.service.development_plan;
 
 import com.agribank.qldv_api.enums.EApprovalStatus;
+import com.agribank.qldv_api.enums.EExcelImport;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.enums.ERecordStatus;
 import com.agribank.qldv_api.gateway.RequestClient;
@@ -12,7 +13,7 @@ import com.agribank.qldv_api.response.develop_plan.DevelopPlanDetailResponse;
 import com.agribank.qldv_api.response.develop_plan.DevelopPlanResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
-import com.agribank.qldv_api.service.OrganizationService;
+import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.utils.CommonUtils;
@@ -24,12 +25,16 @@ import com.agribank.qldvutils.entity.development_plan.DevelopmentPlanDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.development_plan.DevelopDetailRefIdRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopPrntBrcdRequest;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -46,6 +51,8 @@ public class DevelopPlanDetailService implements EntityHandler {
     private final RequestService requestService;
     private final DevelopmentPlanDetailDraftService developmentPlanDetailDraftService;
     private final OrganizationService organizationService;
+    @Qualifier("importDevelopPlan")
+    private final ImportDevelopPlanService importDevelopPlanService;
 
     private final ModelMapper modelMapper;
     private final ObjectMapper objectMapper;
@@ -418,5 +425,63 @@ public class DevelopPlanDetailService implements EntityHandler {
         developmentPlanDraft.setStatus(EApprovalStatus.DENIED.getId());
         developmentPlanDraft.setApprovedBy(getUserRequested().getId());
         developPlanDraftService.save(developmentPlanDraft);
+    }
+
+    @SneakyThrows
+    public String importExcel(MultipartFile file,
+                              String organizationCode,
+                              String name,
+                              Integer start,
+                              Integer end) {
+        DevelopPlanDataRequest request = new DevelopPlanDataRequest();
+        request.setOrganizationCode(organizationCode);
+        request.setName(name);
+        request.setStart(start);
+        request.setEnd(end);
+
+        BaseResponse response = importDevelopPlanService.handleReadFileUpload(file, EExcelImport.BIEU_12.name());
+        List<Map<String, Object>> dataImport = (List<Map<String, Object>>) response.getData();
+        List<DevelopPlanDetailRequest> planDetailRequests = new ArrayList<>();
+        for(Map<String, Object> dataItem : dataImport){
+            DevelopPlanDetailRequest department = new DevelopPlanDetailRequest();
+            department.setMin(Integer.valueOf(dataItem.get("year").toString()));
+            department.setYear(Integer.valueOf(dataItem.get("target").toString()));
+            department.setTarget(Integer.valueOf(dataItem.get("min").toString()));
+            planDetailRequests.add(department);
+        }
+
+        request.setData(planDetailRequests);
+
+        return addDevelopPlanDetail(request);
+    }
+
+    @SneakyThrows
+    public String importExcelUpdate(MultipartFile file,
+                              String refId,
+                              String organizationCode,
+                              String name,
+                              Integer start,
+                              Integer end) {
+        DevelopPlanDetailUpdateRequest request = new DevelopPlanDetailUpdateRequest();
+        request.setRefId(refId);
+        request.setOrganizationCode(organizationCode);
+        request.setName(name);
+        request.setStart(start);
+        request.setEnd(end);
+
+        BaseResponse response = importDevelopPlanService.handleReadFileUpload(file, EExcelImport.BIEU_12.name());
+        List<Map<String, Object>> dataImport = (List<Map<String, Object>>) response.getData();
+        List<DevelopPlanDetailRequest> planDetailRequests = new ArrayList<>();
+        for(Map<String, Object> dataItem : dataImport){
+            DevelopPlanDetailRequest department = new DevelopPlanDetailRequest();
+            department.setMin(Integer.valueOf(dataItem.get("min").toString()));
+            department.setYear(Integer.valueOf(dataItem.get("year").toString()));
+            department.setTarget(Integer.valueOf(dataItem.get("target").toString()));
+            planDetailRequests.add(department);
+        }
+
+        request.setData(planDetailRequests);
+
+        return updateDevelopPlanDetail(request);
     }
 }

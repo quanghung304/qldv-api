@@ -4,6 +4,8 @@ import com.agribank.qldv_api.gateway.EstablishmentDissolveClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveSearchRequest;
 import com.agribank.qldv_api.response.establishment_dissolve.EstablishmentDissolveResponse;
+import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.EstablishmentDissolve;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;

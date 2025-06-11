@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.service;
+package com.agribank.qldv_api.service.organization;
 
 import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.gateway.OrganizationReferenceClient;
@@ -43,5 +43,9 @@ public class OrganizationReferenceService {
 
     public OrganizationReference findById(String code){
         return client.findById(code).getData();
+    }
+
+    public List<OrganizationReference> findAll(){
+        return client.findAll().getData();
     }
 }

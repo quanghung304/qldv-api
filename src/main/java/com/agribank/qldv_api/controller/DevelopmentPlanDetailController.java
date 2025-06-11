@@ -10,6 +10,7 @@ import com.agribank.qldv_api.service.development_plan.DevelopPlanDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import static com.agribank.qldv_api.response.DefaultResponse.success;
 
@@ -40,5 +41,28 @@ public class DevelopmentPlanDetailController {
     @DeleteMapping("/create-request-delete/{id}")
     public ResponseEntity<DefaultResponse<String>> delete(@PathVariable(name = "id") String id) {
         return success(developPlanDetailService.createRequestDelete(id), null);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<DefaultResponse<String>> importExcel
+            (@RequestParam(name = "file") MultipartFile file,
+             @RequestParam(name = "organizationCode") String organizationCode,
+             @RequestParam(name = "name") String name,
+             @RequestParam(name = "start") Integer start,
+             @RequestParam(name = "end") Integer end
+             ) {
+        return success(developPlanDetailService.importExcel(file, organizationCode, name, start, end), null);
+    }
+
+    @PostMapping("/update/import")
+    public ResponseEntity<DefaultResponse<String>> importExcel
+            (@RequestParam(name = "file") MultipartFile file,
+             @RequestParam(name = "refId") String refId,
+             @RequestParam(name = "organizationCode") String organizationCode,
+             @RequestParam(name = "name") String name,
+             @RequestParam(name = "start") Integer start,
+             @RequestParam(name = "end") Integer end
+            ) {
+        return success(developPlanDetailService.importExcelUpdate(file, refId, organizationCode, name, start, end), null);
     }
 }
