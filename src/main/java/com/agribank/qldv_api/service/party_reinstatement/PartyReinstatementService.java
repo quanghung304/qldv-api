@@ -14,6 +14,7 @@ import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.CommitteeDecision;
 import com.agribank.qldvutils.entity.DV;
+import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatementDraft;
@@ -70,6 +71,11 @@ public class PartyReinstatementService implements EntityHandler {
         ){
             throw new CommonException("Đảng viên này không cần khôi phục Đảng tịch");
         }
+
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+        if (Objects.isNull(organization)) {
+            throw new CommonException("Không tồn tại TCD: " + request.getOrganizationCode());
+        }
         PartyReinstatement partyReinstatement = null;
         if (Objects.nonNull(request.getId())){
             partyReinstatement = findById(request.getId());
@@ -77,11 +83,6 @@ public class PartyReinstatementService implements EntityHandler {
 
         if (Objects.nonNull(request.getId()) && Objects.isNull(partyReinstatement)){
             throw new CommonException("Không tìm thấy bản ghi cần sửa. Vui lòng kiểm tra lại dữ liệu!");
-        }
-
-        CommitteeDecision committeeDecision = committeeDecisionService.findByCode(request.getDecisionCommittee());
-        if (Objects.isNull(committeeDecision)){
-            throw new CommonException("Kiểm tra lại cấp quyết định");
         }
 
         PartyReinstatementDraft partyReinstatementDraft = modelMapper.map(request, PartyReinstatementDraft.class);
@@ -186,7 +187,6 @@ public class PartyReinstatementService implements EntityHandler {
 
         partyReinstatement.setOrganizationCode(partyReinstatementDraft.getOrganizationCode());
         partyReinstatement.setStaffCode(partyReinstatementDraft.getStaffCode());
-        partyReinstatement.setDecisionCommittee(partyReinstatementDraft.getDecisionCommittee());
         partyReinstatement.setConclusionNumber(partyReinstatementDraft.getConclusionNumber());
         partyReinstatement.setConclusionDate(partyReinstatementDraft.getConclusionDate());
         partyReinstatement.setDecisionNumber(partyReinstatementDraft.getDecisionNumber());
