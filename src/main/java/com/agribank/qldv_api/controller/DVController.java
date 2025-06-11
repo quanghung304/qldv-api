@@ -3,6 +3,7 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
@@ -55,5 +56,10 @@ public class DVController {
     @GetMapping("/find-un-official-dv")
     public ResponseEntity<BaseResponse<List<DVCodeNameDto>>> getListProbationaryMemberCodeName() {
         return BaseResponse.success(service.getListProbationaryMemberCodeName());
+    }
+
+    @GetMapping("/party-reinstatement")
+    public ResponseEntity<BaseResponse<List<DVResponse>>> getPartyReinstatement() {
+        return BaseResponse.success(service.getDVByPartyReinstatement());
     }
 }
