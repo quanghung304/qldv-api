@@ -10,6 +10,7 @@ import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.log.DVLogService;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
@@ -273,5 +274,14 @@ public class DVService implements EntityHandler {
     public List<DVCodeNameDto> getListProbationaryMemberCodeName(){
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return dvClient.findUnOfficialDV(userDetails.getOrganizationCode()).getData();
+    }
+
+    public List<DVResponse> getDVByPartyReinstatement(){
+        List<DV> dvs = dvClient.getDVByPartyReinstatement().getData();
+        if(dvs.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return dvs.stream().map(dv -> modelMapper.map(dv, DVResponse.class)).collect(Collectors.toList());
     }
 }
