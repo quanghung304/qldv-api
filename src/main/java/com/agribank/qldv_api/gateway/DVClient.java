@@ -47,4 +47,7 @@ public interface DVClient {
     DefaultResponse<DV> findByStaffCode(
             @RequestParam(name = "staffCode") String staffCode
     );
+
+    @GetMapping("api/v1/dv/party-reinstatement")
+    DefaultResponse<List<DV>> getDVByPartyReinstatement();
 }

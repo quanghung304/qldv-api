@@ -11,10 +11,8 @@ import com.agribank.qldv_api.request.party_reinstatement.PartyReinstatementReque
 import com.agribank.qldv_api.response.party_reinstatement.PartyReinstatementResponse;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
-import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.CommitteeDecision;
 import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.DvHistory;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatementDraft;
@@ -54,7 +52,7 @@ public class PartyReinstatementService implements EntityHandler {
 
     public String create(PartyReinstatementRequest request) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
-        UserDto dvInfo = userService.findByStaffCodeAndOrganizationCode(request.getStaffCode(), request.getOrganizationCode());
+        DV dvInfo = dvService.findByStaffCode(request.getStaffCode());
         if (Objects.isNull(dvInfo)) {
             throw new CommonException("Người dùng có mã nhân viên: " +
                     request.getStaffCode() +
@@ -100,7 +98,7 @@ public class PartyReinstatementService implements EntityHandler {
 
         initializedRequest.setReferenceId(partyReinstatementDraft.getId());
         initializedRequest.setOrganizationCode(request.getOrganizationCode());
-        initializedRequest.setStaffCode(partyReinstatement.getStaffCode());
+        initializedRequest.setStaffCode(partyReinstatementDraft.getStaffCode());
         requestClient.save(initializedRequest);
 
         return "Tạo yêu cầu thành công!";
