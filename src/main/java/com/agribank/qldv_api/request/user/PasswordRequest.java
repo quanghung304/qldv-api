@@ -15,11 +15,11 @@ public class PasswordRequest {
 
     public void validate(){
         if (Objects.isNull(oldPassword)){
-            throw new ValidationException("appId is required");
+            throw new ValidationException("oldPassword is required");
         }
 
         if (Objects.isNull(newPassword)){
-            throw new ValidationException("username is required");
+            throw new ValidationException("newPassword is required");
         }
     }
 }

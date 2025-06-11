@@ -16,4 +16,7 @@ public interface OrganizationReferenceClient {
 
     @GetMapping("api/v1/organization-reference/find-by-id/{id}")
     DefaultResponse<OrganizationReference> findById(@PathVariable("id") String id);
+
+    @GetMapping("api/v1/organization-reference/find-all")
+    DefaultResponse<List<OrganizationReference>> findAll();
 }

@@ -4,9 +4,8 @@ import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
-import com.agribank.qldv_api.service.OrganizationService;
 import com.agribank.qldvutils.dto.OrganizationDto;
-import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -72,6 +72,12 @@ public class OrganizationController {
     @GetMapping("/party-branch")
     public ResponseEntity<BaseResponse<List<OrganizationResponse>>> partyBranch() {
         return BaseResponse.success(service.partyBranch());
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<BaseResponse<String>> importExcel(@RequestParam(name = "file") MultipartFile file) {
+        BaseResponse response = service.importExcel(file);
+        return BaseResponse.success(response.getMessage(), null);
     }
 
     @GetMapping("/get-list-organization-code-name")

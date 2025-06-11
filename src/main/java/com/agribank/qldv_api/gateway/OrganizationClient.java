@@ -69,4 +69,7 @@ public interface OrganizationClient {
 
     @GetMapping("api/v1/organization/party-branch")
     DefaultResponse<List<Organization>> partyBranch();
+
+    @GetMapping("api/v1/organization/find-all")
+    DefaultResponse<List<Organization>> findAll();
 }
