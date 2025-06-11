@@ -63,12 +63,14 @@ public interface OrganizationClient {
             @RequestParam(name = "userId") String userId
     );
 
-
     @GetMapping("api/v1/organization/advisory-agency")
     DefaultResponse<List<Organization>> advisoryAgency();
 
     @GetMapping("api/v1/organization/party-branch")
     DefaultResponse<List<Organization>> partyBranch();
+
+    @GetMapping("api/v1/organization/all-parent")
+    DefaultResponse<List<Organization>> getOrganizationAllParent(@RequestParam(name = "code") String code);
 
     @GetMapping("api/v1/organization/find-all")
     DefaultResponse<List<Organization>> findAll();

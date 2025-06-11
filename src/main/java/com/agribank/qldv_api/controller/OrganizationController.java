@@ -84,4 +84,9 @@ public class OrganizationController {
     public ResponseEntity<BaseResponse<List<OrganizationDto>>> getListOrganizationCodeName() {
         return BaseResponse.success(service.getListOrganizationCodeName());
     }
+
+    @GetMapping("/get/all")
+    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getAll() {
+        return BaseResponse.success(service.getAll());
+    }
 }

@@ -363,6 +363,17 @@ public class OrganizationService implements EntityHandler {
         return organizationDTOs;
     }
 
+    public List<OrganizationResponse> getAll(){
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        String code = getOrganizationCode(null, userRequested);
+        List<Organization> organizations = client.getOrganizationAllParent(code).getData();
+        if (Objects.isNull(organizations) || organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
+
     public List<Organization> findAll(){
         return client.findAll().getData();
     }
