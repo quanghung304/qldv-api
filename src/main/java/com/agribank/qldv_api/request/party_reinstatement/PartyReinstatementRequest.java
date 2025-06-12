@@ -20,28 +20,28 @@ public class PartyReinstatementRequest {
     Date decisionDate;
 
     public void validate() {
-        if (Objects.isNull(organizationCode)){
-            throw new CommonException("Organization code is required");
+        if (Objects.isNull(organizationCode) || organizationCode.isBlank()) {
+            throw new CommonException("Cấp ủy quyết định không được bỏ trống");
         }
 
-        if (Objects.isNull(staffCode)){
-            throw new CommonException("Staff code is required");
+        if (Objects.isNull(staffCode) || staffCode.isBlank()){
+            throw new CommonException("Họ và tên không được bỏ trống");
         }
 
-        if (Objects.isNull(conclusionNumber)){
-            throw new CommonException("Conclusion number is required");
+        if (Objects.isNull(conclusionNumber) || conclusionNumber.isBlank()){
+            throw new CommonException("Số KL/Nghị quyết không được bỏ trống");
         }
 
         if (Objects.isNull(conclusionDate)){
-            throw new CommonException("Conclusion date is required");
+            throw new CommonException("Ngày KL/Nghị quyết không được bỏ trống");
         }
 
-        if (Objects.isNull(decisionNumber)){
-            throw new CommonException("Decision number is required");
+        if (Objects.isNull(decisionNumber) || decisionNumber.isBlank()){
+            throw new CommonException("Số QĐ không được bỏ trống");
         }
 
         if (Objects.isNull(decisionDate)){
-            throw new CommonException("Decision date is required");
+            throw new CommonException("Ngày QĐ không được bỏ trống");
         }
     }
 }
