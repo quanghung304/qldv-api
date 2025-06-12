@@ -290,14 +290,14 @@ public class ImportFileService {
 
 
 
-    public Resource getFileTemplate(String fileStruct) throws IOException {
+    public Resource getFileTemplate(String type) throws IOException {
         String fileName;
-        if(fileStruct.equals(EExcelImport.USERS.getValue())){
+        if(type.equals(EExcelImport.USERS.name())){
             fileName = "Template_Upload_User";
-        }else if(fileStruct.equals(EExcelImport.BIEU_1.getValue())){
+        }else if(type.equals(EExcelImport.BIEU_1.name())){
             fileName = "Template_Upload_Organization";
         }
-        else if(fileStruct.equals(EExcelImport.BIEU_12.getValue())){
+        else if(type.equals(EExcelImport.BIEU_12.name())){
             fileName = "Template_Upload_Develop_Plan";
         }
 
