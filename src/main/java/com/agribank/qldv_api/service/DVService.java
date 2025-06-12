@@ -129,7 +129,7 @@ public class DVService implements EntityHandler {
         DV oldDv = dvClient.findById(dvDto.getId()).getData();
 
         if (Objects.isNull(oldDv)) {
-            throw new CommonException("KOong tim thay thong tin dang vien");
+            throw new CommonException("Không tìm thấy thông tin đảng viên");
         }
 
         DvDraft newDV = modelMapper.map(dvDto, DvDraft.class);

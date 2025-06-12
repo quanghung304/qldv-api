@@ -7,6 +7,7 @@ import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldv_api.service.TransformationHistoryService;
+import com.agribank.qldv_api.service.form02.SplitOrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.report26.DeceasedService;
 import com.agribank.qldv_api.service.report26.LeavePartyService;
@@ -36,14 +37,15 @@ public class EntityHandlerRegistry {
             DeceasedService deceasedService,
             DevelopPlanDetailService developPlanDetailService,
             PartyReinstatementService partyReinstatementService,
-            DVRecognitionService dvRecognitionService
-
+            DVRecognitionService dvRecognitionService,
+            SplitOrganizationService splitOrganizationService
     ) {
         this.handlers = Map.ofEntries(
                 entry(EForm.BIEU_01.getCode(), organizationService),
                 entry(EForm.BIEU_02_UP.getCode(), historyService),
                 entry(EForm.BIEU_02_DOWN.getCode(), historyService),
                 entry(EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService),
+                entry(EForm.BIEU_02_SPLIT.getCode(), splitOrganizationService),
                 entry(EForm.BIEU_12.getCode(), developPlanDetailService),
                 entry(EForm.BIEU_15.getCode(), dvService),
                 entry(EForm.BIEU_20.getCode(), membershipProposalService),

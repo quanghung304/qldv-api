@@ -44,7 +44,7 @@ public class DVController {
 
     @PutMapping("/update")
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
-    public ResponseEntity<DefaultResponse<DvDraft>> updateDVRequest(@RequestBody DVDto request) {
+    public ResponseEntity<DefaultResponse<DvDraft>> updateDVRequest(@RequestBody @Valid DVDto request) {
         return DefaultResponse.success("Tạo yêu cầu cập nhật đảng viên thành công", service.update(request));
     }
 
