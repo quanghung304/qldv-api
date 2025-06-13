@@ -153,7 +153,7 @@ public class CommonUtils {
     }
 
     public static Map<String, Object> createFilteredDataMap(Object object, Map<String, String> fieldMap) {
-        Map<String, Object> dataMap = new HashMap<>();
+        Map<String, Object> dataMap = new LinkedHashMap<>();
         BeanWrapper wrapper = new BeanWrapperImpl(object);
 
         // Iterate over fieldMap keys (entity fields)
