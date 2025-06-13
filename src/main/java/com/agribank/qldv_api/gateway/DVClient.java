@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.gateway;
 
+import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
@@ -50,4 +51,9 @@ public interface DVClient {
 
     @GetMapping("api/v1/dv/party-reinstatement")
     DefaultResponse<List<DV>> getDVByPartyReinstatement();
+
+    @GetMapping("api/v1/dv/find-by-codes")
+    DefaultListResponse<DV> findByOrganizationCodes(
+            @RequestParam List<String> codes
+    );
 }
