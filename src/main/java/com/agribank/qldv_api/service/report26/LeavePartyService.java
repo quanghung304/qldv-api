@@ -37,7 +37,7 @@ public class LeavePartyService implements EntityHandler {
 
 
     private Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(LeavePartyDraft.FIELD_MAP);
+        return new LinkedHashMap<>(LeavePartyDraft.FIELD_MAP);
     }
 
     public LeavePartyDraft createDraft(LeavePartyRequest request) {

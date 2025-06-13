@@ -39,7 +39,7 @@ public class TransformationHistoryService implements EntityHandler {
     private final TransformationHistoryClient transformationHistoryClient;
 
     public Map<String, String> getCombinedFieldMap() {
-        Map<String, String> combinedFieldMap = new HashMap<>();
+        Map<String, String> combinedFieldMap = new LinkedHashMap<>();
         combinedFieldMap.putAll(BaseFormEntity.BASE_FIELD_MAP);
         combinedFieldMap.putAll(TransformationHistoryDraft.FIELD_MAP);
 

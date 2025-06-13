@@ -60,7 +60,7 @@ public class DevelopPlanDetailService implements EntityHandler {
     private final EForm form = EForm.BIEU_12;
 
     private Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(DevelopmentPlanDetailDraft.BASE_FIELD_MAP);
+        return new LinkedHashMap<>(DevelopmentPlanDetailDraft.BASE_FIELD_MAP);
     }
 
     public List<DevelopPlanDetailResponse> getPlanDetail(GetDevelopmentPlanRequest request) {

@@ -43,7 +43,7 @@ public class DVRecognitionService implements EntityHandler {
     private final DVRecognitionDraftService dvRecognitionDraftService;
 
     private Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(DVRecognitionDraft.FIELD_MAP);
+        return new LinkedHashMap<>(DVRecognitionDraft.FIELD_MAP);
     }
 
     public PageResponse<DVRecognitionResponse> search(SearchDVRecognitionRequest request){

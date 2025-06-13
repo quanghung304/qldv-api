@@ -39,7 +39,7 @@ public class MembershipProposalService implements EntityHandler {
     private final EForm form = EForm.BIEU_20;
 
     public Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(MembershipProposalDraft.FIELD_MAP);
+        return new LinkedHashMap<>(MembershipProposalDraft.FIELD_MAP);
     }
 
     public String create(MembershipProposalRequest request){

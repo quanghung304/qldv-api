@@ -141,7 +141,7 @@ public class OrganizationService implements EntityHandler {
     }
 
     private Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(OrganizationDraft.FIELD_MAP);
+        return new LinkedHashMap<>(OrganizationDraft.FIELD_MAP);
     }
 
     private void saveRequest(OrganizationDraft organizationDraft, String userId, Organization organizationDraftOld){

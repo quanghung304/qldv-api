@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.party_reinstatement;
 
+import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class PartyReinstatementRequest {
     Date conclusionDate;
     String decisionNumber;
     Date decisionDate;
+    Date effectiveDate;
 
     public void validate() {
         if (Objects.isNull(organizationCode) || organizationCode.isBlank()) {
@@ -42,6 +44,14 @@ public class PartyReinstatementRequest {
 
         if (Objects.isNull(decisionDate)){
             throw new CommonException("Ngày QĐ không được bỏ trống");
+        }
+
+        if (Objects.isNull(effectiveDate)){
+            throw new CommonException("Ngày hiệu lực không được bỏ trống");
+        }
+
+        if (!CommonUtils.validateDatesAfter(decisionDate, effectiveDate)){
+            throw new CommonException("Ngày hiệu lực phải sau ngày quyết đinh");
         }
     }
 }
