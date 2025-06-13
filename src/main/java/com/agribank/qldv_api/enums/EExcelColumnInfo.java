@@ -1,0 +1,19 @@
+package com.agribank.qldv_api.enums;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
+@Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public enum EExcelColumnInfo {
+    DS_CHI_DANG_BO("Danh sách chi, Đảng bộ", "DANH SÁCH CHI ĐẢNG BỘ",ERequestType.TO_CHUC_DANG.getId());
+
+    String name;
+    String nameUpperCase;
+    Integer type;
+}

@@ -18,12 +18,17 @@ public class OrganizationReferenceController {
     private final OrganizationReferenceService service;
 
     @GetMapping("")
-    public ResponseEntity<BaseResponse<List<OrganizationReferenceResponse>>> getAll() {
-        return BaseResponse.success(service.getAll());
+    public ResponseEntity<BaseResponse<List<OrganizationReferenceResponse>>> getAllChild() {
+        return BaseResponse.success(service.getAllChild());
     }
 
     @GetMapping("/get-child")
     public ResponseEntity<BaseResponse<List<OrganizationReferenceResponse>>> getChild() {
         return BaseResponse.success(service.getChild());
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<BaseResponse<List<OrganizationReferenceResponse>>> getAll() {
+        return BaseResponse.success(service.getAll());
     }
 }

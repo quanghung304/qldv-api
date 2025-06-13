@@ -12,12 +12,14 @@ import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.transformation_history.TransformationHistoryRpRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,8 @@ public class TransformationHistoryService implements EntityHandler {
 
     private final EForm upForm = EForm.BIEU_02_UP;
     private final EForm downForm = EForm.BIEU_02_DOWN;
+    private final TransformationHistoryDraftClient transformationHistoryDraftClient;
+    private final TransformationHistoryClient transformationHistoryClient;
 
     public Map<String, String> getCombinedFieldMap() {
         Map<String, String> combinedFieldMap = new HashMap<>();
@@ -206,5 +210,9 @@ public class TransformationHistoryService implements EntityHandler {
         TransformationHistoryDraft draft = historyDraftClient.findById(draftId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
         draft.setStatus(EApprovalStatus.DENIED.getId());
+    }
+
+    public List<TransformationHistory> findByOrganizationCodeAndDate(TransformationHistoryRpRequest request){
+        return transformationHistoryClient.findByOrganizationCodeAndDate(request).getData();
     }
 }

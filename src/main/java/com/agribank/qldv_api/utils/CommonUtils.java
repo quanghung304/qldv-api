@@ -2,56 +2,34 @@ package com.agribank.qldv_api.utils;
 
 import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.mis.encrypt.interfaces.ICreateService;
 import org.mis.encrypt.interfaces.IMisEncrypt;
 import org.mis.encrypt.services.CreateService;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.sql.Timestamp;
+import java.util.regex.Pattern;
 
 public class CommonUtils {
-    public static final Integer PAGE_SIZE_DEFAULT = 10;
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd/MM/yyyy");
     private static Sort.Direction getSortDirection(String direction) {
         if (direction.equals("asc")) {
             return Sort.Direction.ASC;
         }
         return Sort.Direction.DESC;
-    }
-
-    public static Pageable getPageable(Integer page, Integer size, String sort){
-        Pageable pagingSort;
-
-        List<Sort.Order> orders = new ArrayList<>();
-
-        int sizePage = CommonUtils.PAGE_SIZE_DEFAULT;
-        if (Objects.nonNull(size)){
-            sizePage = size;
-        }
-
-        if (Objects.isNull(sort)){
-            orders.add(new Sort.Order(getSortDirection("desc"), "id"));
-        }else {
-            String[] _sort = sort.split(",");
-            orders.add(new Sort.Order(getSortDirection(_sort[1].toLowerCase()), _sort[0]));
-        }
-        pagingSort = PageRequest.of(page, sizePage, Sort.by(orders));
-        return pagingSort;
     }
 
     public static String splitUsername(String email){
@@ -89,27 +67,6 @@ public class CommonUtils {
             return null;
         }
     }
-
-//    public String handleValidPassword(String passwordEncrypt){
-//        String password = handleDecryptPassword(passwordEncrypt);
-//        if(password == null){
-//            return null;
-//        }
-//
-//        if(password.length() > 15 || password.length() < 6){
-//            return "InvalidSize";
-//        }
-//
-//        String regexPass = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&{}])[A-Za-z\\d@$!%*?&{}]{6,}$";
-//        Pattern pattern = Pattern.compile(regexPass);
-//
-//        Matcher matcher = pattern.matcher(password);
-//        if(!matcher.matches()){
-//            return "InvalidStruct";
-//        }
-//
-//        return password;
-//    }
 
     public static String handleReadFile(String filePath) {
         StringBuilder content = new StringBuilder();
@@ -174,6 +131,43 @@ public class CommonUtils {
         return dataMap;
     }
 
+    public static String removeVietnameseDiacritics(String text) {
+        String normalizedText = Normalizer.normalize(text, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        String result = pattern.matcher(normalizedText).replaceAll("");
+        result = result.replaceAll("Đ", "D");
+        result = result.replaceAll(",", "");
+        return result;
+    }
+
+    public static FileInputStream convertWorkbookToStream(Workbook workbook, String fileName){
+        try {
+            // Create a temporary file
+            File tempFile = File.createTempFile(fileName, ".xlsx");
+            boolean result = tempFile.setExecutable(true);
+
+            // Write the workbook to the temporary file
+            FileOutputStream fos = new FileOutputStream(tempFile);
+            workbook.write(fos);
+            fos.close();
+
+            // Convert the temporary file to a MultipartFile
+            return new FileInputStream(tempFile);
+        }
+        catch (Exception ignored){
+        }
+        return null;
+    }
+
+    public static String getCurrentDate(){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        LocalDate today = LocalDate.now();
+
+        return today.format(formatter);
+    }
+
+
     public static LocalDate convertDateIntoLocalDate(Date date){
         Instant instant = date.toInstant();
         return instant.atZone(ZoneId.systemDefault()).toLocalDate();
@@ -191,4 +185,29 @@ public class CommonUtils {
             return null;
         }
     }
+
+    public static String dateToString(Date date){
+        if (Objects.isNull(date)){
+            return null;
+        }
+
+        try {
+            ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("Asia/Bangkok"));
+            return zonedDateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        }catch (Exception e){
+            return null;
+        }
+
+    }
+
+    public static Date parseDateString(String dateStr) {
+        try {
+            LocalDate localDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            ZonedDateTime zonedDateTime = localDate.atStartOfDay(ZoneId.of("Asia/Bangkok"));
+            return Date.from(zonedDateTime.toInstant());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }
