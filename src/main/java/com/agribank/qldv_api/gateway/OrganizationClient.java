@@ -3,6 +3,7 @@ package com.agribank.qldv_api.gateway;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -68,6 +69,11 @@ public interface OrganizationClient {
 
     @GetMapping("api/v1/organization/party-branch")
     DefaultResponse<List<Organization>> partyBranch();
+
+    @PostMapping("api/v1/organization/search-rp")
+    DefaultResponse<PageResponse<Organization>> searchRp(
+            @RequestBody OrganizationRpSearchRequest request
+    );
 
     @GetMapping("api/v1/organization/all-parent")
     DefaultResponse<List<Organization>> getOrganizationAllParent(@RequestParam(name = "code") String code);

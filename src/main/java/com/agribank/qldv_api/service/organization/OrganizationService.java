@@ -18,6 +18,7 @@ import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.BaseResponse;
+import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -361,6 +362,16 @@ public class OrganizationService implements EntityHandler {
             return new ArrayList<>();
         }
         return organizationDTOs;
+    }
+
+    public PageResponse<Organization> searchRp(OrganizationRpSearchRequest request){
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        request.setCode(getOrganizationCode(request.getCode(), userRequested));
+        if (Objects.isNull(request.getOrderBy())){
+            request.setOrderBy("code");
+        }
+
+        return client.searchRp(request).getData();
     }
 
     public List<OrganizationResponse> getAll(){

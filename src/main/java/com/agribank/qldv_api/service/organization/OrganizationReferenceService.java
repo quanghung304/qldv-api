@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -18,7 +19,7 @@ public class OrganizationReferenceService {
     private final OrganizationReferenceClient client;
     private final ModelMapper modelMapper;
 
-    public List<OrganizationReferenceResponse> getAll(){
+    public List<OrganizationReferenceResponse> getAllChild(){
         List<OrganizationReference> organizationReferences = client.getListChild(EOrganizationReference.GROUP_A.getCode()).getData();
         if(organizationReferences.isEmpty()){
             return null;
@@ -43,6 +44,18 @@ public class OrganizationReferenceService {
 
     public OrganizationReference findById(String code){
         return client.findById(code).getData();
+    }
+
+    public List<OrganizationReferenceResponse> getAll(){
+        List<OrganizationReference> organizationReferenceList = client.findAll().getData();
+        if(organizationReferenceList.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return organizationReferenceList.stream().map(
+                organizationReference -> modelMapper
+                        .map(organizationReference, OrganizationReferenceResponse.class)
+        ).toList();
     }
 
     public List<OrganizationReference> findAll(){
