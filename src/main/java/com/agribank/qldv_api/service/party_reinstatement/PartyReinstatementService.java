@@ -12,7 +12,6 @@ import com.agribank.qldv_api.response.party_reinstatement.PartyReinstatementResp
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
-import com.agribank.qldvutils.entity.CommitteeDecision;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
@@ -27,7 +26,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -41,7 +40,6 @@ public class PartyReinstatementService implements EntityHandler {
     private final RequestService requestService;
     private final CheckAuthorityService checkAuthorityService;
     private final ModelMapper modelMapper;
-    private final CommitteeDecisionService committeeDecisionService;
     private final OrganizationService organizationService;
     private final DvHistoryService dvHistoryService;
     private final DVService dvService;
@@ -49,7 +47,7 @@ public class PartyReinstatementService implements EntityHandler {
     private final EForm form = EForm.BIEU_22;
 
     private Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(PartyReinstatementDraft.FIELD_MAP);
+        return new LinkedHashMap<>(PartyReinstatementDraft.FIELD_MAP);
     }
 
     public String create(PartyReinstatementRequest request) {
@@ -191,6 +189,7 @@ public class PartyReinstatementService implements EntityHandler {
         partyReinstatement.setConclusionDate(partyReinstatementDraft.getConclusionDate());
         partyReinstatement.setDecisionNumber(partyReinstatementDraft.getDecisionNumber());
         partyReinstatement.setDecisionDate(partyReinstatementDraft.getDecisionDate());
+        partyReinstatement.setEffectiveDate(partyReinstatementDraft.getEffectiveDate());
 
         client.save(partyReinstatement);
         partyReinstatementDraftService.save(partyReinstatementDraft);

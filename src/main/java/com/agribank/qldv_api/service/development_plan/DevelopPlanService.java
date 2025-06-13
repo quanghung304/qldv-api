@@ -24,7 +24,7 @@ public class DevelopPlanService {
 
 
     public Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(DevelopmentPlanDraft.BASE_FIELD_MAP);
+        return new LinkedHashMap<>(DevelopmentPlanDraft.BASE_FIELD_MAP);
     }
 
     public DevelopmentPlan searchPrntBrcd(DevelopPrntBrcdRequest request){

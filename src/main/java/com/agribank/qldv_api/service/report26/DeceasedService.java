@@ -36,7 +36,7 @@ public class DeceasedService implements EntityHandler {
     private final DvHistoryService dvHistoryService;
 
     private Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(PartyActivityExemptionDraft.FIELD_MAP);
+        return new LinkedHashMap<>(PartyActivityExemptionDraft.FIELD_MAP);
     }
 
     public DeceasedDraft createDraft(DeceasedRequest request) {

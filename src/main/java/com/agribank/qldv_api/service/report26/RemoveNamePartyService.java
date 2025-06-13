@@ -36,7 +36,7 @@ public class RemoveNamePartyService implements EntityHandler {
     private final DvHistoryService dvHistoryService;
 
     private Map<String, String> getCombinedFieldMap() {
-        return new HashMap<>(RemoveNamePartyDraft.FIELD_MAP);
+        return new LinkedHashMap<>(RemoveNamePartyDraft.FIELD_MAP);
     }
 
     public RemoveNamePartyDraft createDraft(RemoveNamePartyRequest request) {
