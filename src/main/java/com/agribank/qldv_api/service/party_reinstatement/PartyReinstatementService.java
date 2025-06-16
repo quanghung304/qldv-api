@@ -56,12 +56,7 @@ public class PartyReinstatementService implements EntityHandler {
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
         DV dvInfo = dvService.findByStaffCode(request.getStaffCode());
         if (Objects.isNull(dvInfo)) {
-            throw new CommonException("Người dùng có mã nhân viên: " +
-                    request.getStaffCode() +
-                    " và mã tổ chức Đảng: " +
-                    request.getOrganizationCode() +
-                    " không chính xác. Vui lòng kiểm tra lại"
-            );
+            throw new CommonException("Không tìm thấy thông tin Đảng viên: " + request.getStaffCode() + ". Vui lòng kiểm tra lại sau!");
         }
 
         if (
