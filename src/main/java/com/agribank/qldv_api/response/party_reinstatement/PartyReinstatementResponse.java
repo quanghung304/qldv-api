@@ -11,6 +11,7 @@ import java.sql.Date;
 public class PartyReinstatementResponse {
     String id;
     String organizationCode;
+    String fullName;
     String staffCode;
     String conclusionNumber;
     Date conclusionDate;
