@@ -11,10 +11,8 @@ import com.agribank.qldv_api.request.party_reinstatement.PartyReinstatementReque
 import com.agribank.qldv_api.response.party_reinstatement.PartyReinstatementResponse;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
-import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.DvHistory;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
@@ -124,7 +122,13 @@ public class PartyReinstatementService implements EntityHandler {
             throw new CommonException("Không tìm thấy dữ liệu!");
         }
 
-        return modelMapper.map(partyReinstatement, PartyReinstatementResponse.class);
+        PartyReinstatementResponse response = modelMapper.map(partyReinstatement, PartyReinstatementResponse.class);
+        DV dv = dvService.findByStaffCode(partyReinstatement.getStaffCode());
+        if (Objects.nonNull(dv)){
+            response.setFullName(dv.getFullName());
+        }
+
+        return response;
     }
 
     public PartyReinstatement findById(String id) {
