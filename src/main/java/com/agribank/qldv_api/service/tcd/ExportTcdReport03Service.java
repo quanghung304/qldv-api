@@ -16,14 +16,14 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service("exportTcd")
-public class ExportTcdReportService extends ExportService {
+public class ExportTcdReport03Service extends ExportService {
     @Lazy
     @Autowired
     private TcdReportService organizationService;
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
 
-    public ExportTcdReportService(ExcelColumnInfoService excelColumnInfoService,  ZipHelper zipHelper) {
+    public ExportTcdReport03Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper) {
         super(excelColumnInfoService,  zipHelper);
     }
 

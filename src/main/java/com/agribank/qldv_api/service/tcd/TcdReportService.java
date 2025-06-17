@@ -4,11 +4,14 @@ import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.enums.EReport01Type;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
+import com.agribank.qldv_api.response.tcd.Rp17Response;
+import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.TransformationHistoryService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.TransformationHistory;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
+import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.request.transformation_history.TransformationHistoryRpRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +24,9 @@ import java.util.*;
 public class TcdReportService {
     private final OrganizationService organizationService;
     private final TransformationHistoryService transformationHistoryService;
-    private final ExportTcdReportService exportTcdReportService;
+    private final ExportTcdReport03Service exportTcdReport03Service;
+    private final DVService dvService;
+    private final ExportTcdRp17Service exportTcdRp17Service;
 
 
     public PageResponse<Rp0304Response> search0304(OrganizationRpSearchRequest request){
@@ -114,7 +119,22 @@ public class TcdReportService {
 
     public ExportResponse exportExcelRp0304(OrganizationRpSearchRequest request) {
         try {
-            return exportTcdReportService.exportData(request, EExcelColumnInfo.DS_CHI_DANG_BO.getName(), "", EExcelColumnInfo.DS_CHI_DANG_BO.name(), 1, EExcelColumnInfo.DS_CHI_DANG_BO.getName());
+            return exportTcdReport03Service.exportData(request, EExcelColumnInfo.BC_03_04_DS.getName(), "", EExcelColumnInfo.BC_03_04_DS.name(), 1, EExcelColumnInfo.BC_03_04_DS.getName());
+        }
+        catch (Exception exception){
+            System.out.println(exception.getMessage());
+        }
+        return null;
+    }
+
+    public PageResponse<Rp17Response> searchRp17(SearchRp17Request request) {
+        return dvService.searchRp17(request);
+    }
+
+
+    public ExportResponse exportExcelRp17(SearchRp17Request request) {
+        try {
+            return exportTcdRp17Service.exportData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.name(), 1, EExcelColumnInfo.BC_17_DSDV.getName());
         }
         catch (Exception exception){
             System.out.println(exception.getMessage());

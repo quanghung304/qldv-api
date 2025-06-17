@@ -2,8 +2,10 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
+import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
+import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -20,14 +22,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class TcdReportController {
     private final TcdReportService service;
 
-    @PostMapping("/search/03-04")
+    @PostMapping("/search/report-03-04")
     public ResponseEntity<BaseResponse<PageResponse<Rp0304Response>>> search(@RequestBody @Valid OrganizationRpSearchRequest request) {
         request.validate();
         return BaseResponse.success(service.search0304(request));
     }
 
-    @PostMapping("/export/03-04")
-    public ResponseEntity<BaseResponse<ExportResponse>> exportExcel(@RequestBody @Valid OrganizationRpSearchRequest request) {
+    @PostMapping("/export/report-03-04")
+    public ResponseEntity<BaseResponse<ExportResponse>> exportExcel0304(@RequestBody @Valid OrganizationRpSearchRequest request) {
         return BaseResponse.success(service.exportExcelRp0304(request));
     }
+
+    @PostMapping("/search/report-17")
+    public ResponseEntity<BaseResponse<PageResponse<Rp17Response>>> search(@RequestBody @Valid SearchRp17Request request) {
+        request.validate();
+        return BaseResponse.success(service.searchRp17(request));
+    }
+
+    @PostMapping("/export/report-17")
+    public ResponseEntity<BaseResponse<ExportResponse>> exportExcel17(@RequestBody @Valid SearchRp17Request request) {
+        return BaseResponse.success(service.exportExcelRp17(request));
+    }
+
 }

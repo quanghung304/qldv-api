@@ -11,8 +11,10 @@ import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.dv.DVResponse;
+import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.log.DVLogService;
+import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvDraft;
@@ -20,6 +22,7 @@ import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -41,6 +44,7 @@ public class DVService implements EntityHandler {
     private final CheckAuthorityService authorityService;
     private final RequestService requestService;
     private final ModelMapper modelMapper;
+    private final OrganizationService organizationService;
 
     private static final EForm form = EForm.BIEU_15;
 
@@ -283,5 +287,31 @@ public class DVService implements EntityHandler {
         }
 
         return dvs.stream().map(dv -> modelMapper.map(dv, DVResponse.class)).collect(Collectors.toList());
+    }
+
+    public PageResponse<Rp17Response> searchRp17(SearchRp17Request request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        PageResponse<DV> dvPageResponse = dvClient.searchRp17(request).getData();
+        PageResponse<Rp17Response> response = new PageResponse<>();
+        if (Objects.isNull(dvPageResponse)) {
+            return response;
+        }
+
+        response.setTotalPages(dvPageResponse.getTotalPages());
+        response.setCurrentPage(dvPageResponse.getCurrentPage());
+        response.setTotalItems(dvPageResponse.getTotalItems());
+
+        if (Objects.nonNull(dvPageResponse.getData())) {
+            response.setData(dvPageResponse.getData().stream()
+                    .map(dv -> modelMapper.map(dv, Rp17Response.class)
+                    ).toList()
+            );
+        }
+
+        return response;
+    }
+
+    private UserDetailsImpl getUserRequested(){
+        return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }
