@@ -20,7 +20,7 @@ public class ExportHandlerService {
         Gson gson = new Gson();
         String paramString = gson.toJson(param);
         try {
-            if(Objects.equals(type, EExcelColumnInfo.DS_CHI_DANG_BO.name())){
+            if(Objects.equals(type, EExcelColumnInfo.BC_03_04_DS.name())){
                 OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);
                 exportResult = tcdReportService.exportExcelRp0304(paramExport);
             }

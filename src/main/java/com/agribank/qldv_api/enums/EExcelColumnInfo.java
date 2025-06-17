@@ -11,7 +11,8 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum EExcelColumnInfo {
-    DS_CHI_DANG_BO("Danh sách chi, Đảng bộ", "DANH SÁCH CHI ĐẢNG BỘ",ERequestType.TO_CHUC_DANG.getId());
+    BC_03_04_DS("Danh sách chi, Đảng bộ", "DANH SÁCH CHI ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
+    BC_17_DSDV("Thông tin Đảng viên", "THÔNG TIN ĐẢNG VIÊN", ERequestType.TO_CHUC_DANG.getId());
 
     String name;
     String nameUpperCase;

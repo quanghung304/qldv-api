@@ -11,7 +11,6 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.RequestService;
-import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.OrganizationDto;
@@ -24,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,7 +38,6 @@ public class OrganizationService implements EntityHandler {
     private final OrganizationClient client;
     private final RequestClient requestClient;
     private final ModelMapper modelMapper;
-    private final UserService userService;
     private final OrganizationReferenceService organizationReferenceService;
     private final RequestService requestService;
     private final CheckAuthorityService checkAuthorityService;
@@ -78,7 +77,7 @@ public class OrganizationService implements EntityHandler {
     }
 
     private OrganizationResponse save(OrganizationCreateRequest organizationRequest) {
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
         OrganizationDraft organizationDraft = modelMapper.map(organizationRequest, OrganizationDraft.class);
         organizationDraft.setApprove(EApprovalStatus.PENDING.getId());
         organizationDraft.setId(UUID.randomUUID().toString());
@@ -119,7 +118,7 @@ public class OrganizationService implements EntityHandler {
         if (Objects.isNull(organizationRequest.getStatus())) {
             throw new CommonException("Kiểm tra lại giá trị trạng thái hoạt động");
         }
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
 
         Organization organizationOld = (Organization) CommonUtils.handleCloneObject(organization);
 
@@ -174,7 +173,7 @@ public class OrganizationService implements EntityHandler {
 
     public PageResponse<OrganizationResponse> search(OrganizationSearchRequest request){
         PageResponse<OrganizationResponse> response = new PageResponse<>();
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
 
         request.setCode(getOrganizationCode(request.getCode(), userRequested));
         if (Objects.isNull(request.getOrderBy())){
@@ -248,7 +247,7 @@ public class OrganizationService implements EntityHandler {
 
     public OrganizationResponse findByUserId(String userId) {
         if (Objects.isNull(userId)){
-            UserDetailsImpl userRequested = userService.getUserRequested();
+            UserDetailsImpl userRequested = getUserRequested();
             userId = userRequested.getId();
         }
         Organization organization = client.findByUserId(userId).getData();
@@ -265,7 +264,7 @@ public class OrganizationService implements EntityHandler {
         if (Objects.isNull(organization)){
             throw new CommonException("Sai code, vui lòng kiểm tra lại");
         }
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
         Request partActivityRequest = requestService.initializeRequest(null, organization, form, getCombinedFieldMap());
         partActivityRequest.setFormCode(form.getCode());
         partActivityRequest.setFormName(form.getName());
@@ -301,7 +300,7 @@ public class OrganizationService implements EntityHandler {
         }
         Organization organization = modelMapper.map(organizationDraft, Organization.class);
 
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
         organizationDraft.setApprove(EApprovalStatus.APPROVED.getId());
         organizationDraft.setApprovedBy(userRequested.getId());
         organizationDraftService.save(organizationDraft);
@@ -327,7 +326,7 @@ public class OrganizationService implements EntityHandler {
             throw new CommonException("Không tìm thấy bản ghi có id: " + referenceId);
         }
 
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
         organizationDraft.setApprovedBy(userRequested.getId());
         organizationDraft.setApprove(EApprovalStatus.DENIED.getId());
         organizationDraftService.save(organizationDraft);
@@ -353,7 +352,7 @@ public class OrganizationService implements EntityHandler {
     }
 
     public List<OrganizationDto> getListOrganizationCodeName(){
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
         List<Organization> organizations = client.findByParent(userRequested.getOrganizationCode()).getData();
         List<OrganizationDto> organizationDTOs = organizations.stream()
                 .map(organization -> new OrganizationDto(organization.getCode(), organization.getName()))
@@ -365,7 +364,7 @@ public class OrganizationService implements EntityHandler {
     }
 
     public PageResponse<Organization> searchRp(OrganizationRpSearchRequest request){
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
         request.setCode(getOrganizationCode(request.getCode(), userRequested));
         if (Objects.isNull(request.getOrderBy())){
             request.setOrderBy("code");
@@ -375,7 +374,7 @@ public class OrganizationService implements EntityHandler {
     }
 
     public List<OrganizationResponse> getAll(){
-        UserDetailsImpl userRequested = userService.getUserRequested();
+        UserDetailsImpl userRequested = getUserRequested();
         String code = getOrganizationCode(null, userRequested);
         List<Organization> organizations = client.getOrganizationAllParent(code).getData();
         if (Objects.isNull(organizations) || organizations.isEmpty()){
@@ -392,5 +391,9 @@ public class OrganizationService implements EntityHandler {
     @SneakyThrows
     public BaseResponse importExcel(MultipartFile file) {
         return importOrganizationService.handleReadFileUpload(file, EExcelImport.BIEU_1.name());
+    }
+
+    private UserDetailsImpl getUserRequested() {
+        return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }
