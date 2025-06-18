@@ -147,6 +147,9 @@ public class ImportFileService {
         for(int i=startIndex; i<lastIndexRow; i++){
             Row row = sheet.getRow(i);
             Map<String, Object> tempData = new HashMap<>();
+            if (Objects.isNull(row)){
+                continue;
+            }
             for(int j=0; j<totalColumn; j++){
                 if(!headers.containsKey(j)){
                     continue;

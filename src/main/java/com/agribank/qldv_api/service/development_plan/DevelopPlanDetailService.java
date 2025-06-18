@@ -163,6 +163,7 @@ public class DevelopPlanDetailService implements EntityHandler {
                     .target(year.getTarget())
                     .min(year.getMin())
                     .year(year.getYear())
+                    .strive(year.getStrive())
                     .build();
             Map<String, Object> map = CommonUtils.createFilteredDataMap(developmentPlanDetailDraft, getCombinedFieldMap());
             mapList.add(map);
@@ -428,60 +429,94 @@ public class DevelopPlanDetailService implements EntityHandler {
     }
 
     @SneakyThrows
-    public String importExcel(MultipartFile file,
-                              String organizationCode,
-                              String name,
-                              Integer start,
-                              Integer end) {
-        DevelopPlanDataRequest request = new DevelopPlanDataRequest();
-        request.setOrganizationCode(organizationCode);
-        request.setName(name);
-        request.setStart(start);
-        request.setEnd(end);
-
+    public String importExcel(MultipartFile file) {
         BaseResponse response = importDevelopPlanService.handleReadFileUpload(file, EExcelImport.BIEU_12.name());
         List<Map<String, Object>> dataImport = (List<Map<String, Object>>) response.getData();
-        List<DevelopPlanDetailRequest> planDetailRequests = new ArrayList<>();
+        Map<String, DevelopPlanDataRequest> developPlanDataRequestMap = new HashMap<>();
+        Map<String, List<DevelopPlanDetailRequest>>  developPlanDetailRequestMap = new HashMap<>();
+        String oldCode = "";
+        Integer oldYear = 0;
         for(Map<String, Object> dataItem : dataImport){
-            DevelopPlanDetailRequest department = new DevelopPlanDetailRequest();
-            department.setMin(Integer.valueOf(dataItem.get("year").toString()));
-            department.setYear(Integer.valueOf(dataItem.get("target").toString()));
-            department.setTarget(Integer.valueOf(dataItem.get("min").toString()));
-            planDetailRequests.add(department);
+            String code = dataItem.get("code").toString();
+            Integer year = Integer.parseInt(dataItem.get("year").toString());
+            if (oldCode.equals(code) && oldYear.equals(year)){
+                throw new CommonException(String.format("Trùng lặp năm vui lòng kiểm tra lại dữ liệu tại chi đảng bộ: %s - năm %s", code, year));
+            }
+            List<DevelopPlanDetailRequest> developPlanDetailRequestList = getDevelopPlanDetailRequest(dataItem, developPlanDetailRequestMap);
+            developPlanDetailRequestMap.put(code, developPlanDetailRequestList);
+
+            DevelopPlanDataRequest developPlanDataRequest = getDevelopPlanDataRequest(dataItem, developPlanDataRequestMap);
+            developPlanDataRequest.setEnd(developPlanDetailRequestList.get(
+                    developPlanDetailRequestList.size() -1
+            ).getYear());
+            developPlanDataRequest.setStart(developPlanDetailRequestList.get(0).getYear());
+            developPlanDataRequest.setOrganizationCode(code);
+            developPlanDataRequest.setData(developPlanDetailRequestList);
+            developPlanDataRequestMap.put(code, developPlanDataRequest);
+
+            oldCode = code;
+            oldYear = year;
         }
 
-        request.setData(planDetailRequests);
+        Map<String, Organization> organizationMap = getOrganizationMap(developPlanDataRequestMap);
 
-        return addDevelopPlanDetail(request);
+        for (Map.Entry<String, DevelopPlanDataRequest> entry : developPlanDataRequestMap.entrySet()) {
+            String code = entry.getKey();
+            DevelopPlanDataRequest developPlanDataRequest = entry.getValue();
+
+            Organization organization = organizationMap.getOrDefault(code, null);
+            if (Objects.nonNull(organization)) {
+                developPlanDataRequest.setName(organization.getName());
+            }
+            addDevelopPlanDetail(developPlanDataRequest);
+        }
+
+
+        return "Import thành công";
     }
 
-    @SneakyThrows
-    public String importExcelUpdate(MultipartFile file,
-                              String refId,
-                              String organizationCode,
-                              String name,
-                              Integer start,
-                              Integer end) {
-        DevelopPlanDetailUpdateRequest request = new DevelopPlanDetailUpdateRequest();
-        request.setRefId(refId);
-        request.setOrganizationCode(organizationCode);
-        request.setName(name);
-        request.setStart(start);
-        request.setEnd(end);
-
-        BaseResponse response = importDevelopPlanService.handleReadFileUpload(file, EExcelImport.BIEU_12.name());
-        List<Map<String, Object>> dataImport = (List<Map<String, Object>>) response.getData();
-        List<DevelopPlanDetailRequest> planDetailRequests = new ArrayList<>();
-        for(Map<String, Object> dataItem : dataImport){
-            DevelopPlanDetailRequest department = new DevelopPlanDetailRequest();
-            department.setMin(Integer.valueOf(dataItem.get("min").toString()));
-            department.setYear(Integer.valueOf(dataItem.get("year").toString()));
-            department.setTarget(Integer.valueOf(dataItem.get("target").toString()));
-            planDetailRequests.add(department);
+    private DevelopPlanDataRequest getDevelopPlanDataRequest(Map<String, Object> dataItem, Map<String, DevelopPlanDataRequest> developPlanDataRequestMap){
+        String code = dataItem.get("code").toString();
+        Integer year = Integer.valueOf(dataItem.get("year").toString());
+        DevelopPlanDataRequest developPlanDetailRequest = developPlanDataRequestMap.getOrDefault(code, null);
+        if (Objects.isNull(developPlanDetailRequest)) {
+            developPlanDetailRequest = DevelopPlanDataRequest.builder()
+                    .organizationCode(code)
+                    .start(year)
+                    .build();
+        }else {
+            developPlanDetailRequest.setEnd(year);
         }
 
-        request.setData(planDetailRequests);
+        return developPlanDetailRequest;
+    }
 
-        return updateDevelopPlanDetail(request);
+    private List<DevelopPlanDetailRequest> getDevelopPlanDetailRequest(Map<String, Object> dataItem, Map<String, List<DevelopPlanDetailRequest>>  developPlanDetailRequestMap){
+        String code = dataItem.get("code").toString();
+        Integer year = Integer.valueOf(dataItem.get("year").toString());
+        Integer min = Integer.valueOf(dataItem.get("min").toString());
+        Integer target = Integer.valueOf(dataItem.get("target").toString());
+        Integer strive = Integer.valueOf(dataItem.get("strive").toString());
+
+        List<DevelopPlanDetailRequest> developPlanDetailRequest = developPlanDetailRequestMap.getOrDefault(code, new ArrayList<>());
+        DevelopPlanDetailRequest developPlanDetail = DevelopPlanDetailRequest.builder()
+                .min(min)
+                .year(year)
+                .target(target)
+                .strive(strive)
+                .build();
+        developPlanDetailRequest.add(developPlanDetail);
+
+        return developPlanDetailRequest;
+    }
+
+    private Map<String, Organization> getOrganizationMap(Map<String, DevelopPlanDataRequest> developPlanDataRequestMap){
+        List<String> codes = new ArrayList<>(developPlanDataRequestMap.keySet());
+        List<Organization> organizations = organizationService.findAllByCode(codes);
+        Map<String, Organization> organizationMap = new HashMap<>();
+        for(Organization organization : organizations){
+            organizationMap.put(organization.getCode(), organization);
+        }
+        return organizationMap;
     }
 }

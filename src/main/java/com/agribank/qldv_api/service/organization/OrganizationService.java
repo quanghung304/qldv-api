@@ -393,6 +393,10 @@ public class OrganizationService implements EntityHandler {
         return importOrganizationService.handleReadFileUpload(file, EExcelImport.BIEU_1.name());
     }
 
+    public List<Organization> findAllByCode(List<String> codeList){
+        return client.findAllByCode(codeList).getData();
+    }
+
     private UserDetailsImpl getUserRequested() {
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
