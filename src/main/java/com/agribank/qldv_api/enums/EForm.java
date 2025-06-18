@@ -23,6 +23,7 @@ public enum EForm {
     BIEU_20("B20", "Đề nghị kết nạp Đảng", ERequestType.DANG_VIEN.getId()),
     BIEU_21("B21", "CÔNG NHẬN ĐẢNG VIÊN CHÍNH THỨC", ERequestType.DANG_VIEN.getId()),
     BIEU_22("B22", "KHÔI PHỤC ĐẢNG TỊCH", ERequestType.DANG_VIEN.getId()),
+    BIEU_25_TRANSFER_TO_AGRIBANK("B25_TO", "CHUYỂN SHĐ ĐẾN ĐẢNG BỘ AGRIBANK", ERequestType.DANG_VIEN.getId()),
     BIEU_26_PARTY_ACTIVITY_EXEMPTION("BIEU_26_EXEM", "MIỄN SINH HOẠT ĐẢNG", ERequestType.DANG_VIEN.getId()),
     BIEU_26_LEAVE_PARTY("BIEU_26_LEAV", "RA KHỎI ĐẢNG", ERequestType.DANG_VIEN.getId()),
     BIEU_26_REMOVE_NAME_PARTY("BIEU_26_RMV", "XÓA TÊN", ERequestType.DANG_VIEN.getId()),
