@@ -5,7 +5,10 @@ import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribank;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
+import com.agribank.qldvutils.response.BaseResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -17,4 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface TransferToAgribankClient extends BaseClient<TransferToAgribank, String> {
     @PostMapping("list")
     DefaultListResponse<TransferToAgribank> getList(@RequestBody TransferToFilterRequest request);
+
+    @GetMapping("/{processId}")
+    BaseResponse<TransferToAgribank> findByProcessId(@PathVariable String processId);
 }

@@ -2,6 +2,7 @@ package com.agribank.qldv_api.service.party_transfer;
 
 import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
+import com.agribank.qldv_api.enums.EProcessStatus;
 import com.agribank.qldv_api.enums.ETransferType;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.OrganizationClient;
@@ -99,6 +100,7 @@ public class TransferToAgribankService implements EntityHandler {
                 .fullName(transferToAgribankDraft.getFullName())
                 .transferType(ETransferType.TRANSFER_TO_AGRIBANK.getId())
                 .organizationCode(transferToAgribankDraft.getReceivingOrgBCode())
+                .status(EProcessStatus.PROCESSING.getId())
                 .build();
         transferProcess = transferProcessClient.save(transferProcess).getData();
 
