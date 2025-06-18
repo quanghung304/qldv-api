@@ -4,7 +4,8 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
-import java.sql.Date;
+import java.util.Date;
+
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -17,4 +18,5 @@ public class PartyReinstatementResponse {
     Date conclusionDate;
     String decisionNumber;
     Date decisionDate;
+    Date effectiveDate;
 }
