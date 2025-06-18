@@ -1,10 +1,12 @@
 package com.agribank.qldv_api.controller;
 
 
+import com.agribank.qldv_api.enums.EExcelImport;
 import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldv_api.service.DVService;
+import com.agribank.qldv_api.service.ImportDVService;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvDraft;
@@ -17,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -25,6 +29,7 @@ import java.util.List;
 @RequestMapping("/api/v1/dv")
 public class DVController {
     private final DVService service;
+    private final ImportDVService importDVService;
 
     @PostMapping("/search")
     public ResponseEntity<DefaultResponse<PageResponse<DVDto>>> search(@RequestBody SearchDVRequest request) {
@@ -61,5 +66,11 @@ public class DVController {
     @GetMapping("/party-reinstatement")
     public ResponseEntity<BaseResponse<List<DVResponse>>> getPartyReinstatement() {
         return BaseResponse.success(service.getDVByPartyReinstatement());
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<BaseResponse<String>> importExcel(@RequestParam(name = "file") MultipartFile file) throws IOException {
+        BaseResponse response = importDVService.handleReadFileUpload(file, EExcelImport.DV.name());
+        return BaseResponse.success(response.getMessage(), null);
     }
 }

@@ -29,6 +29,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -314,4 +315,75 @@ public class DVService implements EntityHandler {
     private UserDetailsImpl getUserRequested(){
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
+
+    public List<DvDraft> createManyDV(List<DvDraft> dvDrafts){
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        dvDrafts = dvDraftClient.saveAll(dvDrafts).getData();
+        List<Request> saveRequests = new ArrayList<>();
+        for (DvDraft dvDraft: dvDrafts){
+            Request request = requestService.initializeRequest(dvDraft, null, form, DV.FIELD_MAP);
+            request.setOrganizationCode(dvDraft.getOrganizationCode());
+            request.setStaffCode(dvDraft.getStaffCode());
+            request.setReferenceId(dvDraft.getId());
+            request.setCreatedBy(userDetails.getId());
+            saveRequests.add(request);
+        }
+
+        requestClient.saveAll(saveRequests);
+
+        return dvDrafts;
+    }
+
+    public List<DvDraft> updateManyDV(List<DV> oldDVs, List<DvDraft> dvDrafts){
+        List<Request> saveRequests = new ArrayList<>();
+        List<DvDraft> newDVDrafts = new ArrayList<>();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        for (int i = 0; i < oldDVs.size(); i++) {
+            DvDraft draft = dvDrafts.get(i);
+            DV oldDv = oldDVs.get(i);
+            DvDraft newDV = new DvDraft();
+            modelMapper.map(oldDv, newDV);
+
+            //
+            newDV.setOrganizationCode(draft.getOrganizationCode());
+            newDV.setStaffCode(draft.getStaffCode());
+            newDV.setResumeNumber(draft.getResumeNumber());
+            newDV.setPartyCardNumber(draft.getPartyCardNumber());
+            newDV.setFullName(draft.getFullName());
+            newDV.setUsingName(draft.getUsingName());
+            newDV.setBirthday(draft.getBirthday());
+            newDV.setAdmissionDate(draft.getAdmissionDate());
+            newDV.setOfficialRecognitionDay(draft.getOfficialRecognitionDay());
+            newDV.setGender(draft.getGender());
+            newDV.setEthnic(draft.getEthnic());
+            newDV.setReligion(draft.getReligion());
+
+            newDV.setStatus(EApprovalStatus.PENDING.getId());
+            newDV.setCreatedBy(userDetails.getId());
+
+            newDVDrafts.add(newDV);
+        }
+
+        newDVDrafts = dvDraftClient.saveAll(newDVDrafts).getData();
+
+        for (int i = 0; i < oldDVs.size(); i++) {
+            DV oldDv = oldDVs.get(i);
+            DvDraft newDV = newDVDrafts.get(i);
+
+            Request request = requestService.initializeRequest(newDV, oldDv, form, DV.FIELD_MAP);
+            request.setOrganizationCode(newDV.getOrganizationCode());
+            request.setStaffCode(oldDv.getStaffCode());
+            request.setReferenceId(newDV.getId());
+            request.setCreatedBy(userDetails.getId());
+
+            saveRequests.add(request);
+        }
+
+        requestClient.saveAll(saveRequests);
+
+        return dvDrafts;
+    }
+
 }

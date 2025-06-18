@@ -4,10 +4,12 @@ import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
+import com.agribank.qldvutils.entity.DvDraft;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -62,4 +64,13 @@ public interface DVClient {
     DefaultListResponse<DV> findByOrganizationCodes(
             @RequestParam List<String> codes
     );
+
+    @PostMapping("api/v1/dv/find-by-vneids")
+    DefaultListResponse<DV> findByVneids(@RequestBody List<String> vneids);
+
+    @PostMapping("api/v1/dv/find-by-party-card-numbers")
+    DefaultListResponse<DV> findByPartyCardNumbers(@RequestBody List<String> partyCardNumbers);
+
+    @PostMapping("api/v1/dv/find-by-staff-codes")
+    DefaultListResponse<DV> findByStaffCodes(@RequestBody List<String> staffCodes);
 }
