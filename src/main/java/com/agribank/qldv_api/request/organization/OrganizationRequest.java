@@ -14,6 +14,7 @@ import java.util.Objects;
 public class OrganizationRequest {
     String code;
     String name;
+    String form;
     //được ủy quyền kết nạp, khai trừ
     Integer authorized;
     //Số kết luận/nghị quyết
@@ -29,11 +30,11 @@ public class OrganizationRequest {
     String status;
 
     public void validate(){
-        if (Objects.isNull(code)){
+        if (Objects.isNull(code) || code.isBlank()){
             throw new CommonException("code is null");
         }
 
-        if (Objects.isNull(resolutionNumber)){
+        if (Objects.isNull(resolutionNumber) || resolutionNumber.isBlank()){
             throw new CommonException("resolutionNumber is null");
         }
 
@@ -49,12 +50,16 @@ public class OrganizationRequest {
             throw new CommonException("resolutionDate is null");
         }
 
-        if (Objects.isNull(establishmentDecisionNumber)){
+        if (Objects.isNull(establishmentDecisionNumber) || establishmentDecisionNumber.isBlank()){
             throw new CommonException("establishmentDecisionNumber is null");
         }
 
         if (!CommonUtils.validateDatesAfter(decisionDate, effectiveDate)){
             throw new CommonException("Ngày hiệu lực phải sau ngày quyết đinh");
+        }
+
+        if (Objects.isNull(form) || form.isBlank()){
+            throw new CommonException("form is null");
         }
     }
 }

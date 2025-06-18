@@ -135,8 +135,27 @@ public class OrganizationService implements EntityHandler {
         organizationDraft.setOrganizationCode(userRequested.getOrganizationCode());
         organizationDraft.setCreatedBy(userRequested.getId());
 
+        String form = getForm(organizationOld);
+        if (form.contains(organizationRequest.getForm())) {
+            organizationDraft.setForm(organizationRequest.getForm());
+        }else {
+            throw new CommonException("Bạn chỉ có thể sửa hình thức tổ chức cùng cấp với tổ chức Đảng hiện tại");
+        }
+
         saveRequest(organizationDraft, userRequested.getId(), organizationOld);
         return modelMapper.map(organizationDraft, OrganizationResponse.class);
+    }
+
+    private String getForm(Organization organizationOld) {
+        String form = EOrganizationReference.GROUP_D.getCode();
+        if (EOrganizationReference.GROUP_A.getCode().contains(organizationOld.getForm())) {
+            form = EOrganizationReference.GROUP_A.getCode();
+        }else if (EOrganizationReference.GROUP_B.getCode().contains(organizationOld.getForm())) {
+            form = EOrganizationReference.GROUP_B.getCode();
+        }else if (EOrganizationReference.GROUP_C.getCode().contains(organizationOld.getForm())) {
+            form = EOrganizationReference.GROUP_C.getCode();
+        }
+        return form;
     }
 
     private Map<String, String> getCombinedFieldMap() {
