@@ -1,0 +1,20 @@
+package com.agribank.qldv_api.gateway.party_transfer.transfer_to;
+
+import com.agribank.qldv_api.gateway.BaseClient;
+import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
+import com.agribank.qldv_api.response.DefaultListResponse;
+import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribank;
+import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+@FeignClient(
+        name = "TransferToAgribankClient",
+        url = "${qldv.database.url}" + "/api/v1/transfer-to-agri",
+        configuration = DatabaseFeignConfiguration.class
+)
+public interface TransferToAgribankClient extends BaseClient<TransferToAgribank, String> {
+    @PostMapping("list")
+    DefaultListResponse<TransferToAgribank> getList(@RequestBody TransferToFilterRequest request);
+}

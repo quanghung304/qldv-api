@@ -10,6 +10,7 @@ import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldv_api.service.TransformationHistoryService;
 import com.agribank.qldv_api.service.form02.SplitOrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
+import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
 import com.agribank.qldv_api.service.report26.DeceasedService;
 import com.agribank.qldv_api.service.report26.LeavePartyService;
 import com.agribank.qldv_api.service.report26.PartyActivityExemptionService;
@@ -40,7 +41,8 @@ public class EntityHandlerRegistry {
             PartyReinstatementService partyReinstatementService,
             DVRecognitionService dvRecognitionService,
             SplitOrganizationService splitOrganizationService,
-            OrganizationMergeService organizationMergeService
+            OrganizationMergeService organizationMergeService,
+            TransferToAgribankService transferToAgribankService
     ) {
         this.handlers = Map.ofEntries(
                 entry(EForm.BIEU_01.getCode(), organizationService),
@@ -54,6 +56,7 @@ public class EntityHandlerRegistry {
                 entry(EForm.BIEU_20.getCode(), membershipProposalService),
                 entry(EForm.BIEU_21.getCode(), dvRecognitionService),
                 entry(EForm.BIEU_22.getCode(), partyReinstatementService),
+                entry(EForm.BIEU_25_TRANSFER_TO_AGRIBANK.getCode(), transferToAgribankService),
                 entry(EForm.BIEU_26_PARTY_ACTIVITY_EXEMPTION.getCode(), partyActivityExemptionService),
                 entry(EForm.BIEU_26_LEAVE_PARTY.getCode(), leavePartyService),
                 entry(EForm.BIEU_26_REMOVE_NAME_PARTY.getCode(), removeNamePartyService),
