@@ -79,4 +79,8 @@ public class DevelopPlanService {
     public DevelopmentPlan findById(String id) {
         return developmentPlanClient.findById(id).getData().orElse(null);
     }
+
+    public DevelopmentPlan findByOrganizationCode(String organizationCode) {
+        return developmentPlanClient.findByOrganizationCode(organizationCode).getData();
+    }
 }

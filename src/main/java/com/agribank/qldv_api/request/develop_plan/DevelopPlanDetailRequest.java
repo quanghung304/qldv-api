@@ -13,6 +13,7 @@ public class DevelopPlanDetailRequest {
     Integer year;
     Integer target;
     Integer min;
+    Integer strive;
 
     public void validate(){
         if (min > target) {
@@ -20,6 +21,9 @@ public class DevelopPlanDetailRequest {
         }
         if (min < 0) {
             throw new ValidationException("min can not smaller than 0");
+        }
+        if (min > strive) {
+            throw new ValidationException("strive can not smaller than min");
         }
     }
 }
