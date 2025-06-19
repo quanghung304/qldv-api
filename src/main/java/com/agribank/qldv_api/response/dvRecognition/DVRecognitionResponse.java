@@ -20,4 +20,6 @@ public class DVRecognitionResponse {
     Date conclusionDate;
     //Ngay QD
     Date decisionDate;
+    //Ngay QD
+    Date effectiveDate;
 }

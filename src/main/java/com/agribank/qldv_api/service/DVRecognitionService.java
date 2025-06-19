@@ -88,6 +88,7 @@ public class DVRecognitionService implements EntityHandler {
         draft.setConclusionDate(request.getConclusionDate());
         draft.setDecisionNumber(request.getDecisionNumber());
         draft.setDecisionDate(request.getDecisionDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
         draft.setCreatedBy(userRequested.getId());
         draft.setStatus(EApprovalStatus.PENDING.getId());
         if (Objects.nonNull(dvRecognition)){
@@ -134,7 +135,7 @@ public class DVRecognitionService implements EntityHandler {
         dvRecognitionDraftService.save(dvRecognitionDraft);
 
         DV dv = dvClient.findByStaffCode(dvRecognitionDraft.getStaffCode()).getData();
-        dv.setOfficialRecognitionDay(dvRecognitionDraft.getDecisionDate());
+        dv.setOfficialRecognitionDay(dvRecognitionDraft.getEffectiveDate());
         dvClient.save(dv);
         return true;
     }
@@ -157,10 +158,11 @@ public class DVRecognitionService implements EntityHandler {
         dvRecognition.setConclusionDate(dvRecognitionDraft.getConclusionDate());
         dvRecognition.setDecisionNumber(dvRecognitionDraft.getDecisionNumber());
         dvRecognition.setDecisionDate(dvRecognitionDraft.getDecisionDate());
+        dvRecognition.setEffectiveDate(dvRecognitionDraft.getEffectiveDate());
         client.save(dvRecognition);
 
         DV dv = dvClient.findByStaffCode(dvRecognitionDraft.getStaffCode()).getData();
-        dv.setOfficialRecognitionDay(dvRecognitionDraft.getDecisionDate());
+        dv.setOfficialRecognitionDay(dvRecognitionDraft.getEffectiveDate());
         dvClient.save(dv);
         return true;
     }
@@ -196,6 +198,7 @@ public class DVRecognitionService implements EntityHandler {
         response.setConclusionDate(dvRecognition.getConclusionDate());
         response.setDecisionNumber(dvRecognition.getDecisionNumber());
         response.setDecisionDate(dvRecognition.getDecisionDate());
+        response.setEffectiveDate(dvRecognition.getEffectiveDate());
         if (Objects.nonNull(dv)){
             response.setDvName(dv.getFullName());
         }
