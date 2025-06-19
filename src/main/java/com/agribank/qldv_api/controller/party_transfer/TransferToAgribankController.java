@@ -5,9 +5,8 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribank;
-import com.agribank.qldvutils.request.PagingRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
-import com.agribank.qldvutils.response.DefaultListResponse;
+import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,12 +25,18 @@ public class TransferToAgribankController {
     }
 
     @PostMapping("list")
-    public ResponseEntity<DefaultListResponse<TransferToAgribank>> getList(@RequestBody TransferToFilterRequest request) {
-        return DefaultListResponse.success(transferToAgribankService.getList(request));
+    public ResponseEntity<DefaultResponse<PageResponse<TransferToAgribank>>> getList(@RequestBody TransferToFilterRequest request) {
+        return DefaultResponse.success(transferToAgribankService.getList(request));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DefaultResponse<TransferToAgribank>> getDetail(@PathVariable String id) {
         return DefaultResponse.success(transferToAgribankService.getDetail(id));
+    }
+
+    @PutMapping("update")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<Request>> updateTransferForm(@RequestBody TransferToAgribankRequest transferToAgribankRequest) {
+        return DefaultResponse.success(transferToAgribankService.update(transferToAgribankRequest));
     }
 }

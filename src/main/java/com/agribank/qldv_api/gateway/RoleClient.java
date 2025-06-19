@@ -4,6 +4,7 @@ import com.agribank.qldv_api.request.role.RoleSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
 import com.agribank.qldvutils.entity.Role;
+import com.agribank.qldvutils.response.DefaultListResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +27,7 @@ public interface RoleClient {
     PageResponse<Role> searchRole(@RequestBody RoleSearchRequest request);
 
     @GetMapping("api/v1/role/find-by-user-id")
-    DefaultResponse<List<Role>> getRolesByUserId(@RequestParam(name = "userId") String userId);
+    DefaultListResponse<Role> getRolesByUserId(@RequestParam(name = "userId") String userId);
 
     @PostMapping("api/v1/role/find-by-id-in")
     DefaultResponse<List<Role>> findByIdIn(@RequestBody List<String> ids);

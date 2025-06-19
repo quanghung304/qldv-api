@@ -1,10 +1,8 @@
 package com.agribank.qldv_api.service.party_transfer;
 
-import com.agribank.qldv_api.enums.EApprovalStatus;
-import com.agribank.qldv_api.enums.EForm;
-import com.agribank.qldv_api.enums.EProcessStatus;
-import com.agribank.qldv_api.enums.ETransferType;
+import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.exception.ExceptionMessage;
+import com.agribank.qldv_api.gateway.DVClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.party_transfer.TransferProcessClient;
@@ -14,6 +12,7 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.party_transfer.TransferToAgribankRequest;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
+import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
@@ -21,6 +20,7 @@ import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgriba
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribankDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
+import com.agribank.qldvutils.response.PageResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,6 +42,7 @@ public class TransferToAgribankService implements EntityHandler {
     TransferToAgribankDraftClient transferToDraftClient;
     TransferProcessClient transferProcessClient;
     RequestClient requestClient;
+    DVClient dvClient;
 
     RequestService requestService;
 
@@ -63,9 +64,9 @@ public class TransferToAgribankService implements EntityHandler {
        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
        TransferToAgribankDraft transferToAgribank = modelMapper.map(request, TransferToAgribankDraft.class);
+       transferToAgribank.setReceivingOrgBName(receivingOrganization.getName());
        transferToAgribank.setCreatedBy(userDetails.getId());
-        transferToAgribank = transferToDraftClient.save(transferToAgribank).getData();
-
+       transferToAgribank = transferToDraftClient.save(transferToAgribank).getData();
 
        Request transferToAgribankRequest = requestService.initializeRequest(transferToAgribank, null, form, TransferToAgribankDraft.FIELD_MAP);
        transferToAgribankRequest.setOrganizationCode(userDetails.getOrganizationCode());
@@ -78,13 +79,51 @@ public class TransferToAgribankService implements EntityHandler {
     }
 
 
-    public List<TransferToAgribank> getList(TransferToFilterRequest request) {
+    public PageResponse<TransferToAgribank> getList(TransferToFilterRequest request) {
         return transferToAgribankClient.getList(request).getData();
     }
 
 
     public TransferToAgribank getDetail(String id) {
         return transferToAgribankClient.findById(id).getData().orElse(null);
+    }
+
+    public Request update(TransferToAgribankRequest request) {
+        TransferToAgribank transferToAgribank = transferToAgribankClient.findById(request.getId()).getData().orElse(null);
+
+        if (Objects.isNull(transferToAgribank)) {
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        Organization receivingOrganizationB = organizationClient.findByCode(request.getReceivingOrgBCode()).getData();
+
+        if (Objects.isNull(receivingOrganizationB)) {
+            throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
+        }
+
+        Organization receivingOrganizationC = organizationClient.findByCode(request.getReceivingOrgCCode()).getData();
+
+        if (Objects.isNull(receivingOrganizationC)) {
+            throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        TransferToAgribankDraft transferToAgribankDraft = modelMapper.map(request, TransferToAgribankDraft.class);
+        transferToAgribankDraft.setId(null);
+        transferToAgribankDraft.setReceivingOrgBName(receivingOrganizationB.getName());
+        transferToAgribankDraft.setReceivingOrgCName(receivingOrganizationC.getName());
+        transferToAgribankDraft.setCreatedBy(userDetails.getId());
+        transferToAgribankDraft = transferToDraftClient.save(transferToAgribankDraft).getData();
+
+        Request transferToAgribankRequest = requestService.initializeRequest(transferToAgribankDraft, transferToAgribank, form, TransferToAgribankDraft.FIELD_MAP);
+        transferToAgribankRequest.setOrganizationCode(userDetails.getOrganizationCode());
+        transferToAgribankRequest.setStaffCode(request.getStaffCode());
+        transferToAgribankRequest.setCreatedBy(userDetails.getId());
+        transferToAgribankRequest.setReferenceId(transferToAgribankDraft.getId());
+        requestClient.save(transferToAgribankRequest);
+
+        return transferToAgribankRequest;
     }
 
     @Override
@@ -108,6 +147,14 @@ public class TransferToAgribankService implements EntityHandler {
         transferToAgribank.setProcessId(transferProcess.getId());
         transferToAgribankClient.save(transferToAgribank);
 
+        DV dv = DV.builder()
+                .staffCode(transferToAgribank.getStaffCode())
+                .fullName(transferToAgribank.getFullName())
+                .dvStatus(EDVStatus.PARTY_MEMBER.getStatus())
+                .organizationCode(transferToAgribank.getReceivingOrgBCode())
+                .build();
+        dvClient.save(dv);
+
         transferToAgribankDraft.setApprovedBy(userDetails.getId());
         transferToAgribankDraft.setStatus(EApprovalStatus.APPROVED.getId());
         transferToDraftClient.save(transferToAgribankDraft).getData();
@@ -116,8 +163,42 @@ public class TransferToAgribankService implements EntityHandler {
     }
 
     @Override
-    public boolean applyUpdate(String referenceId) {
-        return false;
+    public boolean applyUpdate(String draftId) {
+        TransferToAgribankDraft transferToAgribankDraft = transferToDraftClient.findById(draftId).getData().orElse(null);
+
+        if (Objects.isNull(transferToAgribankDraft)) {
+            return false;
+        }
+
+        TransferProcess transferProcess = null;
+        List<TransferProcess> transferProcesses = transferProcessClient.findProcessingTransfer(transferToAgribankDraft.getStaffCode(), ETransferType.TRANSFER_TO_AGRIBANK.getId())
+                .getData();
+
+        //dua dang vien ra khoi danh sach dang csh dang khi dang bo cap B gan dang vien ve chi bo cap C
+        if (!transferProcesses.isEmpty() && Objects.nonNull(transferToAgribankDraft.getReceivingOrgCCode())) {
+            transferProcess = transferProcesses.get(0);
+            transferProcess.setStatus(EProcessStatus.DONE.getId());
+            transferProcessClient.save(transferProcess);
+        }
+
+        TransferToAgribank transferToAgribank = transferToAgribankClient.findByStaffCode(transferToAgribankDraft.getStaffCode()).getData();
+        mapDraftToOfficial(transferToAgribank, transferToAgribankDraft);
+        transferToAgribankClient.save(transferToAgribank);
+
+        DV dv = DV.builder()
+                .staffCode(transferToAgribank.getStaffCode())
+                .fullName(transferToAgribank.getFullName())
+                .dvStatus(EDVStatus.PARTY_MEMBER.getStatus())
+                .organizationCode(transferToAgribank.getReceivingOrgCCode())
+                .build();
+        dvClient.save(dv);
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        transferToAgribankDraft.setApprovedBy(userDetails.getId());
+        transferToAgribankDraft.setStatus(EApprovalStatus.APPROVED.getId());
+        transferToDraftClient.save(transferToAgribankDraft).getData();
+
+        return true;
     }
 
     @Override
@@ -136,5 +217,24 @@ public class TransferToAgribankService implements EntityHandler {
         transferToAgribankDraft.setStatus(EApprovalStatus.DENIED.getId());
         transferToAgribankDraft.setApprovedBy(userDetails.getId());
         transferToDraftClient.save(transferToAgribankDraft);
+    }
+
+    private void mapDraftToOfficial(TransferToAgribank transfer, TransferToAgribankDraft draft) {
+        transfer.setStaffCode(draft.getStaffCode());
+        transfer.setFullName(draft.getFullName());
+        transfer.setDecisionNumber(draft.getDecisionNumber());
+        transfer.setIssueDate(draft.getIssueDate());
+        transfer.setEffectiveDate(draft.getEffectiveDate());
+        transfer.setIssuingOrganization(draft.getIssuingOrganization());
+        transfer.setExpectedExpiryDate(draft.getExpectedExpiryDate());
+        transfer.setFirstIntroNumber(draft.getFirstIntroNumber());
+        transfer.setFirstIntroDate(draft.getFirstIntroDate());
+        transfer.setTransferringPartyName(draft.getTransferringPartyName());
+        transfer.setSecondIntroNumber(draft.getSecondIntroNumber());
+        transfer.setTransferDate(draft.getTransferDate());
+        transfer.setReceivingOrgBCode(draft.getReceivingOrgBCode());
+        transfer.setReceivingOrgBName(draft.getReceivingOrgBName());
+        transfer.setReceivingOrgCCode(draft.getReceivingOrgCCode());
+        transfer.setReceivingOrgCName(draft.getReceivingOrgCName());
     }
 }

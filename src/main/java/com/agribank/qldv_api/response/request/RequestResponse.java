@@ -18,6 +18,7 @@ public class RequestResponse {
     String formName;
     String organizationCode;
     String organizationName;
+    String staffName;
     Object oldData;
     Object newData;
     Date createdAt;
