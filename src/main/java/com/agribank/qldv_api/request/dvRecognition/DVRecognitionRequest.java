@@ -18,4 +18,5 @@ public class DVRecognitionRequest {
     String decisionNumber;
     Date conclusionDate;
     Date decisionDate;
+    Date effectiveDate;
 }
