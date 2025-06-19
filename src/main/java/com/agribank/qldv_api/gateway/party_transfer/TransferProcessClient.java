@@ -6,11 +6,9 @@ import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.request.party_transfer.TransferProcessRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.DefaultListResponse;
+import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(
         name = "TransferProcessClient",
@@ -19,8 +17,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 )
 public interface TransferProcessClient extends BaseClient<TransferProcess, String> {
     @PostMapping("list")
-    DefaultListResponse<TransferProcess> getList(@RequestBody TransferProcessRequest request);
+    BaseResponse<PageResponse<TransferProcess>> getList(@RequestBody TransferProcessRequest request);
 
     @GetMapping("count/{organizationCode}")
     BaseResponse<Integer> countByOrganizationCode(@PathVariable String organizationCode);
+
+    @GetMapping("find-processing")
+    DefaultListResponse<TransferProcess> findProcessingTransfer(
+            @RequestParam String staffCode,
+            @RequestParam Integer type
+    );
 }

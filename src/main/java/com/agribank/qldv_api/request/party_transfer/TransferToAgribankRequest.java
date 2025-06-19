@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.Comment;
 
 import java.util.Date;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TransferToAgribankRequest {
+    String id;
     @NotNull(message = "Không được để trống trường mã cán bộ")
     String staffCode;
     String fullName;
@@ -25,6 +25,8 @@ public class TransferToAgribankRequest {
     String transferringPartyName;
     String secondIntroNumber;
     Date transferDate;
-    @NotNull(message = "Không được để trống trường mã đảng bộ nhận sinh hoạt")
+    @NotNull(message = "Không được để trống trường mã đảng bộ tiếp nhận")
     String receivingOrgBCode;
+    @NotNull(message = "Không được để trống trường mã chi bộ tiếp nhận")
+    String receivingOrgCCode;
 }

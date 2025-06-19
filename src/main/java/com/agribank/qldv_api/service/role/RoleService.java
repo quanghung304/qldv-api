@@ -5,6 +5,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.role.RoleResponse;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.response.DefaultListResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class RoleService {
     }
 
     public List<Role> getRoleByUserId(String userId) {
-        DefaultResponse<List<Role>> roleDefaultResponse = roleClient.getRolesByUserId(userId);
+        DefaultListResponse<Role> roleDefaultResponse = roleClient.getRolesByUserId(userId);
         return roleDefaultResponse.getData();
     }
 

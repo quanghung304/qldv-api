@@ -6,10 +6,10 @@ import com.agribank.qldv_api.gateway.party_transfer.transfer_to.TransferToAgriba
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.party_transfer.TransferProcessRequest;
+import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -18,7 +18,7 @@ public class TransferProcessService {
     private final TransferProcessClient transferProcessClient;
     private final TransferToAgribankClient transferToAgribankClient;
 
-    public List<TransferProcess> getList(TransferProcessRequest request) {
+    public PageResponse<TransferProcess> getList(TransferProcessRequest request) {
         return transferProcessClient.getList(request).getData();
     }
 
