@@ -14,6 +14,7 @@ public class DevelopPlanDetailResponse {
     Integer target;
     Integer min;
     Integer year;
+    Integer strive;
     Date createdAt;
     Date updatedAt;
 }
