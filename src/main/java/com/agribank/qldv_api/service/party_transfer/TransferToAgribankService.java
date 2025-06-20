@@ -157,7 +157,7 @@ public class TransferToAgribankService implements EntityHandler {
 
         transferToAgribankDraft.setApprovedBy(userDetails.getId());
         transferToAgribankDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        transferToDraftClient.save(transferToAgribankDraft).getData();
+        transferToDraftClient.save(transferToAgribankDraft);
 
         return true;
     }
