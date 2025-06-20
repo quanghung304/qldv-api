@@ -1,6 +1,5 @@
 package com.agribank.qldv_api.request.party_transfer;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -27,6 +26,5 @@ public class TransferToAgribankRequest {
     Date transferDate;
     @NotNull(message = "Không được để trống trường mã đảng bộ tiếp nhận")
     String receivingOrgBCode;
-    @NotNull(message = "Không được để trống trường mã chi bộ tiếp nhận")
     String receivingOrgCCode;
 }
