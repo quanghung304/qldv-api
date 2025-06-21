@@ -10,6 +10,7 @@ import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -39,5 +40,13 @@ public class TransferProcessService {
 
     public Integer countByOrganizationCode(String organizationCode) {
         return transferProcessClient.countByOrganizationCode(organizationCode).getData();
+    }
+
+    public TransferProcess save(TransferProcess transferProcess) {
+        return transferProcessClient.save(transferProcess).getData();
+    }
+
+    public List<TransferProcess> findProcessingTransfer(String staffCode, Integer type){
+        return transferProcessClient.findProcessingTransfer(staffCode, type).getData();
     }
 }
