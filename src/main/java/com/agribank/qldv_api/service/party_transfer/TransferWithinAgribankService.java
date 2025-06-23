@@ -12,6 +12,7 @@ import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
@@ -284,11 +285,16 @@ public class TransferWithinAgribankService implements EntityHandler {
         transfer.setSecondIntroNumber(draft.getSecondIntroNumber());
         transfer.setCommitteeProposalDate(draft.getCommitteeProposalDate());
         transfer.setNumberOfSubmission(draft.getNumberOfSubmission());
-        transfer.setDepartureReceptionDate(draft.getDepartureReceptionDate());
-        transfer.setTransferDate(draft.getTransferDate());
-        transfer.setReceivingOrgBCode(draft.getReceivingOrgBCode());
-        transfer.setReceivingOrgBName(draft.getReceivingOrgBName());
-        transfer.setReceivingOrgCCode(draft.getReceivingOrgCCode());
-        transfer.setReceivingOrgCName(draft.getReceivingOrgCName());
+        if (Objects.nonNull(draft.getTransferDate())) {
+            transfer.setTransferDate(draft.getTransferDate());
+        }
+        if (Objects.nonNull(draft.getReceivingOrgBCode())){
+            transfer.setReceivingOrgBCode(draft.getReceivingOrgBCode());
+            transfer.setReceivingOrgBName(draft.getReceivingOrgBName());
+        }
+        if (Objects.nonNull(draft.getReceivingOrgCCode())){
+            transfer.setReceivingOrgCCode(draft.getReceivingOrgCCode());
+            transfer.setReceivingOrgCName(draft.getReceivingOrgCName());
+        }
     }
 }
