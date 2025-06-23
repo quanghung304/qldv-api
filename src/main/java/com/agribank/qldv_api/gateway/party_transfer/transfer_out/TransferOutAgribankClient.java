@@ -7,7 +7,6 @@ import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,4 +23,7 @@ public interface TransferOutAgribankClient extends BaseClient<TransferOutAgriban
 
     @GetMapping("find-by-staffcode/{staffCode}")
     BaseResponse<TransferOutAgribank> findByStaffCode(@PathVariable String staffCode);
+
+    @GetMapping("find-by-process/{processId}")
+    BaseResponse<TransferOutAgribank> findByProcess(@PathVariable String processId);
 }

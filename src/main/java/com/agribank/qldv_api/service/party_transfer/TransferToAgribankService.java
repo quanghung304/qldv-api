@@ -101,19 +101,23 @@ public class TransferToAgribankService implements EntityHandler {
             throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
         }
 
-        Organization receivingOrganizationC = organizationClient.findByCode(request.getReceivingOrgCCode()).getData();
-
-        if (Objects.isNull(receivingOrganizationC)) {
-            throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
-        }
-
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         TransferToAgribankDraft transferToAgribankDraft = modelMapper.map(request, TransferToAgribankDraft.class);
         transferToAgribankDraft.setId(null);
         transferToAgribankDraft.setReceivingOrgBName(receivingOrganizationB.getName());
-        transferToAgribankDraft.setReceivingOrgCName(receivingOrganizationC.getName());
         transferToAgribankDraft.setCreatedBy(userDetails.getId());
+
+        if (Objects.nonNull(request.getReceivingOrgCCode())) {
+            Organization receivingOrganizationC = organizationClient.findByCode(request.getReceivingOrgCCode()).getData();
+
+            if (Objects.isNull(receivingOrganizationC)) {
+                throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
+            }
+
+            transferToAgribankDraft.setReceivingOrgCName(receivingOrganizationC.getName());
+        }
+
         transferToAgribankDraft = transferToDraftClient.save(transferToAgribankDraft).getData();
 
         Request transferToAgribankRequest = requestService.initializeRequest(transferToAgribankDraft, transferToAgribank, form, TransferToAgribankDraft.FIELD_MAP);
