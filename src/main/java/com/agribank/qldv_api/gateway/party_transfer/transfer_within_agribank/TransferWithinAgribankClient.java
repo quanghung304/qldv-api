@@ -9,6 +9,8 @@ import com.agribank.qldvutils.request.report26.Report26SearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.report26.Report26DtoResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -21,5 +23,10 @@ public interface TransferWithinAgribankClient extends BaseClient<TransferWithinA
     @PostMapping("/search")
     DefaultResponse<PageResponse<TransferWithinAgribank>> search(
             @RequestBody TransferWithinAgribankSearch request
+    );
+
+    @GetMapping("/find-by-process/{processId}")
+    DefaultResponse<TransferWithinAgribank> findByProcessId(
+            @PathVariable(name = "processId") String processId
     );
 }
