@@ -80,4 +80,7 @@ public interface OrganizationClient {
 
     @GetMapping("api/v1/organization/find-all")
     DefaultResponse<List<Organization>> findAll();
+
+    @GetMapping("api/v1/organization/form-b")
+    DefaultResponse<List<Organization>> getOrganizationFormB();
 }
