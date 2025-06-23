@@ -13,6 +13,7 @@ import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementServi
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankService;
+import com.agribank.qldv_api.service.party_transfer.TransferWithinBaseService;
 import com.agribank.qldv_api.service.report26.DeceasedService;
 import com.agribank.qldv_api.service.report26.LeavePartyService;
 import com.agribank.qldv_api.service.report26.PartyActivityExemptionService;
@@ -46,7 +47,8 @@ public class EntityHandlerRegistry {
             OrganizationMergeService organizationMergeService,
             TransferToAgribankService transferToAgribankService,
             TransferOutAgribankService transferOutAgribankService,
-            TransferWithinAgribankService transferWithinAgribankService
+            TransferWithinAgribankService transferWithinAgribankService,
+            TransferWithinBaseService transferWithinBaseService
     ) {
         this.handlers = Map.ofEntries(
                 entry(EForm.BIEU_01.getCode(), organizationService),
@@ -63,6 +65,7 @@ public class EntityHandlerRegistry {
                 entry(EForm.BIEU_25_TRANSFER_TO_AGRIBANK.getCode(), transferToAgribankService),
                 entry(EForm.BIEU_25_TRANSFER_OUT_AGRIBANK.getCode(), transferOutAgribankService),
                 entry(EForm.BIEU_25_TRANSFER_WITHIN_AGRIBANK.getCode(), transferWithinAgribankService),
+                entry(EForm.BIEU_25_TRANSFER_WITHIN_BASE.getCode(), transferWithinBaseService),
                 entry(EForm.BIEU_26_PARTY_ACTIVITY_EXEMPTION.getCode(), partyActivityExemptionService),
                 entry(EForm.BIEU_26_LEAVE_PARTY.getCode(), leavePartyService),
                 entry(EForm.BIEU_26_REMOVE_NAME_PARTY.getCode(), removeNamePartyService),

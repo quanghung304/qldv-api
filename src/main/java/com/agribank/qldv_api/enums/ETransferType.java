@@ -2,6 +2,8 @@ package com.agribank.qldv_api.enums;
 
 import lombok.Getter;
 
+import java.util.Objects;
+
 @Getter
 public enum ETransferType {
     TRANSFER_TO_AGRIBANK(1, "Chuyển đến Đảng bộ Agribank"),
@@ -16,5 +18,15 @@ public enum ETransferType {
     ETransferType(int id, String name) {
         this.id = id;
         this.name = name;
+    }
+
+    public static ETransferType getTransferType(int i) {
+        for (ETransferType type: ETransferType.values()) {
+            if (Objects.equals(i, type.id)) {
+                return type;
+            }
+        }
+
+        return null;
     }
 }

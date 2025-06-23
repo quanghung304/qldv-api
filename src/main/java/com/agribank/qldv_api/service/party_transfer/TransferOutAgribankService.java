@@ -54,15 +54,15 @@ public class TransferOutAgribankService implements EntityHandler {
             throw new CommonException("Không tìm thấy thông tin đảng viên");
         }
 
-        TransferOutAgribankDraft draft = draftOutClient.findByStaffCode(request.getStaffCode()).getData();
+        List<TransferOutAgribankDraft> draftList = draftOutClient.findByStaffCode(request.getStaffCode()).getData();
 
-        if (Objects.nonNull(draft)) {
+        if (Objects.nonNull(draftList)) {
             throw new CommonException("Đã tồn tại yêu cầu chuyển sinh hoạt đảng cho cán bộ");
         }
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        draft = modelMapper.map(request, TransferOutAgribankDraft.class);
+        TransferOutAgribankDraft draft = modelMapper.map(request, TransferOutAgribankDraft.class);
         draft.setFullName(dv.getFullName());
         draft.setCreatedBy(userDetails.getId());
         draft = draftOutClient.save(draft).getData();
