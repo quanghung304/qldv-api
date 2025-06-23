@@ -89,4 +89,9 @@ public class OrganizationController {
     public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getAll() {
         return BaseResponse.success(service.getAll());
     }
+
+    @GetMapping("/get/form-b")
+    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getOrganizationFormB() {
+        return BaseResponse.success(service.getOrganizationFormB());
+    }
 }

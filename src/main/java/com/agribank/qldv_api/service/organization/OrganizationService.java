@@ -419,4 +419,15 @@ public class OrganizationService implements EntityHandler {
     private UserDetailsImpl getUserRequested() {
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
+
+
+    public List<OrganizationResponse> getOrganizationFormB(){
+        List<Organization> organizations = client.getOrganizationFormB().getData();
+        if (Objects.isNull(organizations) || organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
+
 }
