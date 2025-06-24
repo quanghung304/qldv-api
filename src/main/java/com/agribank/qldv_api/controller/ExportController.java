@@ -17,7 +17,7 @@ import java.util.Objects;
 public class ExportController {
     private final ExportHandlerService exportHandlerService;
 
-    @PostMapping("/export/excel")
+    @PostMapping("/excel")
     public void exportExcel(HttpServletResponse response, @RequestBody Object param, @RequestParam String type) throws IOException {
         try {
             ExportResponse exportResult = exportHandlerService.handleExport(param, type);

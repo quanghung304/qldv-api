@@ -2,8 +2,10 @@ package com.agribank.qldv_api.service.export;
 
 import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.response.export.ExportResponse;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp24Service;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ExportHandlerService {
     private final TcdReportService tcdReportService;
+    private final ExportDVRp24Service exportDVRp24Service;
 
     public ExportResponse handleExport(Object param, String type) {
         ExportResponse exportResult = new ExportResponse();
@@ -28,6 +31,10 @@ public class ExportHandlerService {
             else if (Objects.equals(type, EExcelColumnInfo.BC_17_DSDV.name())){
                 SearchRp17Request paramExport = gson.fromJson(paramString, SearchRp17Request.class);
                 exportResult = tcdReportService.exportExcelRp17(paramExport);
+            }else if (Objects.equals(type, EExcelColumnInfo.BC_24_DSDV.name())){
+                SearchRp24Request paramExport = gson.fromJson(paramString, SearchRp24Request.class);
+                exportResult = exportDVRp24Service.exportData(paramExport, EExcelColumnInfo.BC_24_DSDV.getName(), "", EExcelColumnInfo.BC_24_DSDV.name(), 1, EExcelColumnInfo.BC_24_DSDV.getName());
+
             }
         }
         catch (Exception exception){
