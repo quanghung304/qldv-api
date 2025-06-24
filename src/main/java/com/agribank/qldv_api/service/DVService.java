@@ -22,6 +22,7 @@ import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -386,4 +387,9 @@ public class DVService implements EntityHandler {
         return dvDrafts;
     }
 
+
+    public PageResponse<DV> searchRp24(SearchRp24Request request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        return dvClient.searchRp24(request).getData();
+    }
 }

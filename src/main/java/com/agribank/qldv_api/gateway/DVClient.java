@@ -6,6 +6,7 @@ import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvDraft;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -63,6 +64,11 @@ public interface DVClient {
     @GetMapping("api/v1/dv/find-by-codes")
     DefaultListResponse<DV> findByOrganizationCodes(
             @RequestParam List<String> codes
+    );
+
+    @PostMapping("api/v1/dv/search-report-24")
+    DefaultResponse<PageResponse<DV>> searchRp24(
+            @RequestBody SearchRp24Request request
     );
 
     @PostMapping("api/v1/dv/find-by-vneids")

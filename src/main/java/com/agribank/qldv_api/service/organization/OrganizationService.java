@@ -247,7 +247,7 @@ public class OrganizationService implements EntityHandler {
     }
 
     public List<String> getChildCode(String code){
-        List<Organization> organizations = client.findByParent(code).getData();
+        List<Organization> organizations = findByParent(code);
         List<String> codeChild = new ArrayList<>();
         if (!organizations.isEmpty()){
             codeChild = organizations.stream().map(Organization::getCode).toList();
@@ -372,7 +372,7 @@ public class OrganizationService implements EntityHandler {
 
     public List<OrganizationDto> getListOrganizationCodeName(){
         UserDetailsImpl userRequested = getUserRequested();
-        List<Organization> organizations = client.findByParent(userRequested.getOrganizationCode()).getData();
+        List<Organization> organizations = findByParent(userRequested.getOrganizationCode());
         List<OrganizationDto> organizationDTOs = organizations.stream()
                 .map(organization -> new OrganizationDto(organization.getCode(), organization.getName()))
                 .collect(Collectors.toList());
@@ -418,6 +418,10 @@ public class OrganizationService implements EntityHandler {
 
     private UserDetailsImpl getUserRequested() {
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    public List<Organization> findByParent(String parentCode){
+        return  client.findByParent(parentCode).getData();
     }
 
 
