@@ -10,7 +10,6 @@ import java.util.Date;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TransferWithinAgribankRequest {
-    String id;
     @NotNull(message = "Không được để trống trường mã cán bộ")
     String staffCode;
     String fullName;

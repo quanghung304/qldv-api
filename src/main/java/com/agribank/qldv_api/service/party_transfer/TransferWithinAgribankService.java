@@ -1,7 +1,6 @@
 package com.agribank.qldv_api.service.party_transfer;
 
 import com.agribank.qldv_api.enums.*;
-import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_within_agribank.TransferWithinAgribankClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -12,7 +11,6 @@ import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
-import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
@@ -42,10 +40,14 @@ public class TransferWithinAgribankService implements EntityHandler {
     private final TransferProcessService transferProcessService;
     private final ModelMapper modelMapper;
 
-    private EForm form = EForm.BIEU_25_TRANSFER_WITHIN_AGRIBANK;
+    private final EForm form = EForm.BIEU_25_TRANSFER_WITHIN_AGRIBANK;
 
     public Request createRequest(TransferWithinAgribankRequest request) {
         DV dv = dvService.findByStaffCode(request.getStaffCode());
+        if (Objects.isNull(dv)) {
+            throw new CommonException("Không tìm thấy dũ liệu. Vui lòng kiểm tra lại thông Đảng viên");
+        }
+
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         TransferWithinAgribankDraft transferWithinAgribankDraft = TransferWithinAgribankDraft.builder()
@@ -207,7 +209,7 @@ public class TransferWithinAgribankService implements EntityHandler {
         if (Objects.isNull(transferWithinAgribankDraft)) {
             return false;
         }
-        TransferProcess transferProcess = null;
+        TransferProcess transferProcess;
         List<TransferProcess> transferProcesses = transferProcessService.findProcessingTransfer(transferWithinAgribankDraft.getStaffCode(), ETransferType.TRANSFER_WITHIN_AGRIBANK.getId());
 
         if (
