@@ -4,6 +4,7 @@ import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
+import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,10 @@ public class ExportHandlerService {
             if(Objects.equals(type, EExcelColumnInfo.BC_03_04_DS.name())){
                 OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);
                 exportResult = tcdReportService.exportExcelRp0304(paramExport);
+            }
+            else if (Objects.equals(type, EExcelColumnInfo.BC_17_DSDV.name())){
+                SearchRp17Request paramExport = gson.fromJson(paramString, SearchRp17Request.class);
+                exportResult = tcdReportService.exportExcelRp17(paramExport);
             }
         }
         catch (Exception exception){
