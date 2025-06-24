@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("api/v1/split")
 @RequiredArgsConstructor
-public class SpitOrganizationController {
+public class SplitOrganizationController {
     private final SplitOrganizationService spitOrganizationService;
 
     @PostMapping("create")

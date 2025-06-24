@@ -185,7 +185,7 @@ public class OrganizationMergeService implements EntityHandler {
         OrganizationMerge organizationMerge = modelMapper.map(mergeDraft, OrganizationMerge.class);
         organizationMerge = organizationMergeClient.save(organizationMerge).getData();
 
-        //luu danh sach chi nhanh dc sap nhap
+        //luu danh sach chi nhanh dc sap nhap/hop nhat
         List<OrganizationMergeDetail> mergeDetails = new ArrayList<>();
         List<String> mergedCodes = new ArrayList<>();
 
@@ -202,7 +202,7 @@ public class OrganizationMergeService implements EntityHandler {
         mergeDraft.setStatus(EApprovalStatus.APPROVED.getId());
         mergeDraftClient.save(mergeDraft);
 
-        //chuyen cac dang vien tu TCD bi sap nhap sang TCD nhan sap nhap
+        //chuyen cac dang vien tu TCD bi sap nhap/hop nhat sang TCD nhan sap nhap/hop nhat
         mergeOrganization(mergedCodes, organizationMerge.getOrganizationCode());
 
         return true;
@@ -236,6 +236,15 @@ public class OrganizationMergeService implements EntityHandler {
 
     @Override
     public void setDenied(String referenceId) {
+        OrganizationMergeDraft draft = mergeDraftClient.findById(referenceId).getData().orElse(null);
 
+        if (Objects.isNull(draft)) {
+            return;
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        draft.setStatus(EApprovalStatus.DENIED.getId());
+        draft.setApprovedBy(userDetails.getId());
+        mergeDraftClient.save(draft);
     }
 }
