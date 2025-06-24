@@ -7,5 +7,6 @@ public class Constants {
     public static final String BTCDU_CODE = "1001";
     public static final Integer BRANCH_CODE_HEAD_QUARTER = 1001;
     public static final Integer FORM_B_NAME_LENGTH = 4;
+    public static final Integer FORM_C_NAME_LENGTH = 6;
     public static final List<Integer> ORGANIZATION_NAME_LENGTH = List.of(FORM_B_NAME_LENGTH,6,8);
 }

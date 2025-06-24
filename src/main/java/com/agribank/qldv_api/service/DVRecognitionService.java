@@ -205,4 +205,7 @@ public class DVRecognitionService implements EntityHandler {
         return response;
     }
 
+    public List<DVRecognition> getDvRByStaffCodeIn(List<String> staffCodes){
+        return client.getDvRByStaffCodeIn(staffCodes).getData();
+    }
 }
