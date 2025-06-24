@@ -119,11 +119,11 @@ public class SplitOrganizationService implements EntityHandler {
     }
 
     private String getParentCode(String code) {
-        if (!Constants.ORGANIZATION_NAME_LENGHT.contains(code.length())) {
+        if (!Constants.ORGANIZATION_NAME_LENGTH.contains(code.length())) {
             throw new CommonException("Mã tổ chức đảng không hợp lệ");
         }
 
-        if (code.length() == Constants.ORGANIZATION_NAME_LENGHT.get(0)) {
+        if (code.length() == Constants.ORGANIZATION_NAME_LENGTH.get(0)) {
             return Constants.DANG_UY_AGRIBANK_CODE;
         }
 
