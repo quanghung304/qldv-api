@@ -4,6 +4,7 @@ import com.agribank.qldv_api.enums.EProcessStatus;
 import com.agribank.qldv_api.enums.ETransferType;
 import com.agribank.qldv_api.gateway.party_transfer.TransferProcessClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_out.TransferOutAgribankClient;
+import com.agribank.qldv_api.gateway.party_transfer.transfer_temporary.TransferTemporaryClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_to.TransferToAgribankClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_within_agribank.TransferWithinAgribankClient;
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
@@ -25,6 +26,7 @@ public class TransferProcessService {
     TransferProcessClient transferProcessClient;
     TransferToAgribankClient transferToAgribankClient;
     TransferOutAgribankClient transferOutAgribankClient;
+    private final TransferTemporaryClient transferTemporaryClient;
     TransferWithinAgribankClient transferWithinAgribankClient;
 
     public PageResponse<TransferProcess> getList(TransferProcessRequest request) {
@@ -47,6 +49,7 @@ public class TransferProcessService {
         return switch (transferType) {
             case TRANSFER_TO_AGRIBANK -> transferToAgribankClient.findByProcessId(transferProcess.getId());
             case TRANSFER_OUT_AGRIBANK -> transferOutAgribankClient.findByProcess(transferProcess.getId());
+            case TEMPORARY_TRANSFER -> transferTemporaryClient.findByProcessId(transferProcess.getId());
             case TRANSFER_WITHIN_AGRIBANK ->  transferWithinAgribankClient.findByProcessId(transferProcess.getId());
             default -> null;
         };

@@ -11,6 +11,7 @@ import com.agribank.qldv_api.service.TransformationHistoryService;
 import com.agribank.qldv_api.service.form02.SplitOrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
+import com.agribank.qldv_api.service.party_transfer.TransferTemporaryService;
 import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinBaseService;
@@ -48,7 +49,8 @@ public class EntityHandlerRegistry {
             TransferToAgribankService transferToAgribankService,
             TransferOutAgribankService transferOutAgribankService,
             TransferWithinAgribankService transferWithinAgribankService,
-            TransferWithinBaseService transferWithinBaseService
+            TransferWithinBaseService transferWithinBaseService,
+            TransferTemporaryService transferTemporaryService
     ) {
         this.handlers = Map.ofEntries(
                 entry(EForm.BIEU_01.getCode(), organizationService),
@@ -63,6 +65,7 @@ public class EntityHandlerRegistry {
                 entry(EForm.BIEU_21.getCode(), dvRecognitionService),
                 entry(EForm.BIEU_22.getCode(), partyReinstatementService),
                 entry(EForm.BIEU_25_TRANSFER_TO_AGRIBANK.getCode(), transferToAgribankService),
+                entry(EForm.BIEU_25_TRANSFER_TEMPORARY.getCode(), transferTemporaryService),
                 entry(EForm.BIEU_25_TRANSFER_OUT_AGRIBANK.getCode(), transferOutAgribankService),
                 entry(EForm.BIEU_25_TRANSFER_WITHIN_AGRIBANK.getCode(), transferWithinAgribankService),
                 entry(EForm.BIEU_25_TRANSFER_WITHIN_BASE.getCode(), transferWithinBaseService),
