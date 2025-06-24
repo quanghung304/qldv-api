@@ -262,6 +262,7 @@ public class RequestService {
                     result = handler.applyUpdate(request.getReferenceId());
                 }
             } catch (Exception e) {
+                System.out.println(e);
                 continue;
             }
 
