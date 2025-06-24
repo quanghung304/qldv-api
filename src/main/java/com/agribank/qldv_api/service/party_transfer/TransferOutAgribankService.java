@@ -56,7 +56,7 @@ public class TransferOutAgribankService implements EntityHandler {
 
         List<TransferOutAgribankDraft> draftList = draftOutClient.findByStaffCode(request.getStaffCode()).getData();
 
-        if (Objects.nonNull(draftList)) {
+        if (!draftList.isEmpty()) {
             throw new CommonException("Đã tồn tại yêu cầu chuyển sinh hoạt đảng cho cán bộ");
         }
 
