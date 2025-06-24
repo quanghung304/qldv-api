@@ -11,6 +11,7 @@ import java.util.Date;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TransferWithinAgribankUpdateRequest extends TransferWithinAgribankRequest{
+    String id;
     Date expectedExpiryDate;
     Date transferDate;
     String receivingOrgBCode;
