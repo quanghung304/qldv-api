@@ -1,5 +1,7 @@
 package com.agribank.qldv_api.utils;
 
+import com.agribank.qldv_api.enums.Constants;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -10,6 +12,7 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.*;
 import java.text.Normalizer;
@@ -210,4 +213,13 @@ public class CommonUtils {
         }
     }
 
+    public static String getOrganizationByRequestedUser() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE)) {
+            return null;
+        }
+
+        return userDetails.getOrganizationCode().substring(0, Constants.FORM_B_NAME_LENGTH);
+    }
 }

@@ -16,6 +16,7 @@ import java.util.Objects;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrganizationTransformRequest extends BaseFormDto {
+    String id;
     Integer type;
     String organizationCode;
     @NotNull
