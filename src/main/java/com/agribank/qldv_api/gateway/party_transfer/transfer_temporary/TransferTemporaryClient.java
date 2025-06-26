@@ -2,6 +2,7 @@ package com.agribank.qldv_api.gateway.party_transfer.transfer_temporary;
 
 import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
+import com.agribank.qldvutils.dto.TransferTemporaryDto;
 import com.agribank.qldvutils.entity.party_transfer.transfer_temporary.TransferTemporary;
 import com.agribank.qldvutils.request.party_transfer.TransferTemporaryFilterRequest;
 import com.agribank.qldvutils.response.BaseResponse;
@@ -21,7 +22,7 @@ import java.util.List;
 )
 public interface TransferTemporaryClient extends BaseClient<TransferTemporary, String> {
     @PostMapping("list")
-    BaseResponse<PageResponse<TransferTemporary>> getList(@RequestBody TransferTemporaryFilterRequest request);
+    BaseResponse<PageResponse<TransferTemporaryDto>> getList(@RequestBody TransferTemporaryFilterRequest request);
 
     @GetMapping("/{processId}")
     BaseResponse<TransferTemporary> findByProcessId(@PathVariable String processId);

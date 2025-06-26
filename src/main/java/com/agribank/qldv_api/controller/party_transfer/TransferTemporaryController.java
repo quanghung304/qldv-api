@@ -3,6 +3,7 @@ package com.agribank.qldv_api.controller.party_transfer;
 import com.agribank.qldv_api.request.party_transfer.TransferTemporaryRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.party_transfer.TransferTemporaryService;
+import com.agribank.qldvutils.dto.TransferTemporaryDto;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.transfer_temporary.TransferTemporary;
 import com.agribank.qldvutils.request.party_transfer.TransferTemporaryFilterRequest;
@@ -25,7 +26,7 @@ public class TransferTemporaryController {
     }
 
     @PostMapping("list")
-    public ResponseEntity<DefaultResponse<PageResponse<TransferTemporary>>> getList(@RequestBody TransferTemporaryFilterRequest request) {
+    public ResponseEntity<DefaultResponse<PageResponse<TransferTemporaryDto>>> getList(@RequestBody TransferTemporaryFilterRequest request) {
         return DefaultResponse.success(transferTemporaryService.getList(request));
     }
 
