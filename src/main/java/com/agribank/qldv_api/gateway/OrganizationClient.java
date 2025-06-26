@@ -83,4 +83,7 @@ public interface OrganizationClient {
 
     @GetMapping("api/v1/organization/form-b")
     DefaultResponse<List<Organization>> getOrganizationFormB();
+
+    @DeleteMapping("api/v1/organization/delete-by-id/{id}")
+    DefaultResponse<Organization> deleteById(@PathVariable("id") String id);
 }

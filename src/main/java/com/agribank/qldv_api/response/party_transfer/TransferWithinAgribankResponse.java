@@ -18,7 +18,7 @@ public class TransferWithinAgribankResponse {
     String decisionIssuingUnit;
     Date effectiveDate;
     Date dateOfProposal;
-    Date numberOfDoc;
+    String numberOfDoc;
     Date committeeProposalDate;
     String numberOfSubmission;
     String secondIntroNumber;
