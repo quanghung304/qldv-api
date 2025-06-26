@@ -12,6 +12,7 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.party_transfer.TransferTemporaryRequest;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
+import com.agribank.qldvutils.dto.TransferTemporaryDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
@@ -78,7 +79,7 @@ public class TransferTemporaryService implements EntityHandler {
     }
 
 
-    public PageResponse<TransferTemporary> getList(TransferTemporaryFilterRequest request) {
+    public PageResponse<TransferTemporaryDto> getList(TransferTemporaryFilterRequest request) {
         return transferTemporaryClient.getList(request).getData();
     }
 
