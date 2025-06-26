@@ -26,7 +26,6 @@ import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetailDraft;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDraft;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.form02.MergeFilterRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -138,11 +137,6 @@ public class OrganizationMergeService implements EntityHandler {
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }
-    }
-
-    public List<OrganizationMerge> getList(MergeFilterRequest request) {
-        request.setType(EReport01Type.MERGE.getId());
-        return organizationMergeClient.getList(request).getData();
     }
 
     public OrganizationMergeResponse getDetail(String id) {

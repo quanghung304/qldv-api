@@ -79,4 +79,10 @@ public interface DVClient {
 
     @PostMapping("api/v1/dv/find-by-staff-codes")
     DefaultListResponse<DV> findByStaffCodes(@RequestBody List<String> staffCodes);
+
+    @PostMapping("api/v1/dv/find-by-staff-code-actives")
+    DefaultListResponse<DV> findByStaffCodeActiveIn(@RequestBody List<String> staffCodes);
+
+    @PostMapping("api/v1/dv/find-organization-code-actives")
+    DefaultListResponse<DV> findByOrganizationCodeActiveIn(@RequestBody List<String> organizationCodes);
 }

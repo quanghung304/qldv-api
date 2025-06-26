@@ -9,6 +9,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class OrganizationMergeResponse extends BaseFormDto {
+    String id;
     String organizationCode;
     String organizationName;
     List<MergeDetailResponse> mergeDetails;
