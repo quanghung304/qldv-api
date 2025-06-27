@@ -12,6 +12,8 @@ public class OrganizationMergeResponse extends BaseFormDto {
     String id;
     String organizationCode;
     String organizationName;
+    String form;
+    String decisionCommittee;
     List<MergeDetailResponse> mergeDetails;
 
     @Data
