@@ -1,5 +1,7 @@
-package com.agribank.qldv_api.gateway;
+package com.agribank.qldv_api.gateway.form02.updown;
 
+import com.agribank.qldv_api.gateway.BaseClient;
+import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldvutils.entity.form02.updown.TransformationHistory;
 import com.agribank.qldvutils.request.form02.TransformationHistoryRpRequest;

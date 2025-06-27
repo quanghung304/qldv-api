@@ -4,7 +4,9 @@ import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.enums.EOrganizationStatus;
 import com.agribank.qldv_api.enums.EReport01Type;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DVClient;
+import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeClient;
@@ -13,50 +15,57 @@ import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDetailDraftCl
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.form02.MergeOrganizationRequest;
-import com.agribank.qldv_api.response.form02.OrganizationMergeResponse;
+import com.agribank.qldv_api.response.form02.OrganizationMerResponse;
+import com.agribank.qldv_api.service.CheckAuthorityService;
+import com.agribank.qldv_api.service.DvOrgService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
-import com.agribank.qldv_api.utils.CommonUtils;
-import com.agribank.qldvutils.entity.BaseFormEntity;
-import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.Organization;
-import com.agribank.qldvutils.entity.Request;
+import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMerge;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetailDraft;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.form02.SearchOrganizationUnionRequest;
+import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class OrganizationMergeService implements EntityHandler {
-    ModelMapper modelMapper;
-    ObjectMapper objectMapper;
-
-    DVClient dvClient;
-    OrganizationClient organizationClient;
-    OrganizationMergeClient organizationMergeClient;
-    OrganizationMergeDetailClient mergeDetailClient;
-    OrganizationMergeDraftClient mergeDraftClient;
-    OrganizationMergeDetailDraftClient mergeDetailDraftClient;
-    RequestClient requestClient;
-
-    RequestService requestService;
-
+public class OrganizationMergeService extends MergeUnifyService implements EntityHandler {
     static EForm form = EForm.BIEU_02_MERGE;
+
+    public OrganizationMergeService(
+            ObjectMapper objectMapper,
+            ModelMapper modelMapper,
+            DVClient dvClient,
+            OrganizationClient organizationClient,
+            OrganizationMergeClient mergeClient,
+            OrganizationMergeDetailClient mergeDetailClient,
+            OrganizationMergeDraftClient mergeDraftClient,
+            OrganizationMergeDetailDraftClient mergeDetailDraftClient,
+            RequestClient requestClient,
+            DvOrgHistoryClient dvOrgHistoryClient,
+            RequestService requestService,
+            OrganizationService organizationService,
+            DvOrgService dvOrgService,
+            CheckAuthorityService checkAuthorityService
+    ) {
+        super(
+                objectMapper, modelMapper, dvClient, organizationClient, mergeClient, mergeDetailClient, mergeDraftClient,
+                mergeDetailDraftClient, requestClient, dvOrgHistoryClient, requestService, organizationService, dvOrgService,
+                checkAuthorityService
+        );
+    }
 
     public Map<String, String> getCombinedFieldMap() {
         Map<String, String> combinedFieldMap = new LinkedHashMap<>();
@@ -104,7 +113,7 @@ public class OrganizationMergeService implements EntityHandler {
         mergeDetailDraftClient.saveAll(mergeDetails);
 
         Request mergeRequest = requestService.initializeRequest(organizationMerge, null, form, getCombinedFieldMap());
-        String jsonData = createJsonData(organizationMerge, mergeDetails);
+        String jsonData = createJsonData(organizationMerge, mergeDetails, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
         mergeRequest.setNewData(jsonData);
         mergeRequest.setReferenceId(organizationMerge.getId());
         mergeRequest.setCreatedBy(userDetails.getId());
@@ -114,50 +123,68 @@ public class OrganizationMergeService implements EntityHandler {
         return mergeRequest;
     }
 
-    private String createJsonData(OrganizationMergeDraft organizationMerge, List<OrganizationMergeDetailDraft> organizationMergeDetails) {
-        try {
-            Map<String, Object> draftDataMap = CommonUtils.createFilteredDataMap(organizationMerge, getCombinedFieldMap());
-            Map<String, String> fieldMap = OrganizationMergeDetailDraft.FIELD_MAP_MERGE;
-            int i = 1;
-
-            for (OrganizationMergeDetailDraft mergedOrganization : organizationMergeDetails) {
-                BeanWrapper wrapper = new BeanWrapperImpl(mergedOrganization);
-
-                // Iterate over fieldMap keys (entity fields)
-                for (String fieldName : fieldMap.keySet()) {
-                    if (wrapper.isReadableProperty(fieldName)) {
-                        Object value = wrapper.getPropertyValue(fieldName);
-                        draftDataMap.put(fieldMap.get(fieldName) + " " + i, value);
-                    }
-                }
-                i++;
-            }
-
-            return objectMapper.writeValueAsString(draftDataMap);
-        } catch (Exception e) {
-            throw new CommonException(e.getMessage());
-        }
+    @Override
+    public PageResponse<OrganizationMerResponse> getList(SearchOrganizationUnionRequest request){
+        request.setType(EReport01Type.MERGE.getId());
+        return search(request);
     }
 
-    public OrganizationMergeResponse getDetail(String id) {
-        OrganizationMerge organizationMerge = organizationMergeClient.findById(id).getData().orElse(null);
-
-        if (Objects.isNull(organizationMerge)) {
-            throw new CommonException("Không tìm thấy yêu cầu sáp nhập");
+    public Request update(MergeOrganizationRequest request) {
+        if (Objects.isNull(request.getId())) {
+            throw new CommonException("Trường id không được bỏ trống");
         }
 
-        OrganizationMergeResponse response = modelMapper.map(organizationMerge, OrganizationMergeResponse.class);
+        OrganizationMerge merge = mergeClient.findById(request.getId()).getData()
+                .orElseThrow(() -> new CommonException(ExceptionMessage.NO_DATA));
 
-        List<OrganizationMergeDetail> mergeDetails = mergeDetailClient.findByRefId(id).getData();
-        List<OrganizationMergeResponse.MergeDetailResponse> detailResponses = new ArrayList<>();
+        List<OrganizationMergeDetail> mergeDetails = mergeDetailClient.findByRefId(merge.getId()).getData();
 
-        for (OrganizationMergeDetail mergeDetail: mergeDetails) {
-            OrganizationMergeResponse.MergeDetailResponse detailResponse = modelMapper.map(mergeDetail, OrganizationMergeResponse.MergeDetailResponse.class);
-            detailResponses.add(detailResponse);
+        Organization mergingOrganization = organizationClient.findByCode(request.getOrganizationCode()).getData();
+
+        if (Objects.isNull(mergingOrganization)) {
+            throw new CommonException("Chi bộ nhận sáp nhập không tồn tại");
         }
 
-        response.setMergeDetails(detailResponses);
-        return response;
+        List<Organization> mergedOrganizations = organizationClient.findAllByCode(request.getMergedCodes()).getData();
+        if (mergedOrganizations.isEmpty()) {
+            throw new CommonException("Danh sách chi bộ nhận sáp nhập không hợp lệ");
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        OrganizationMergeDraft draft = modelMapper.map(request, OrganizationMergeDraft.class);
+        draft.setType(EReport01Type.MERGE.getId());
+        draft.setOrganizationName(mergingOrganization.getName());
+        draft.setForm(mergingOrganization.getForm());
+        draft.setCreatedBy(userDetails.getStaffCode());
+        draft.setRefId(merge.getId());
+        draft = mergeDraftClient.save(draft).getData();
+
+        List<OrganizationMergeDetailDraft> draftDetails = new ArrayList<>();
+        for (Organization mergedOrganization: mergedOrganizations) {
+            OrganizationMergeDetailDraft detail = OrganizationMergeDetailDraft.builder()
+                    .referenceId(draft.getId())
+                    .oldCode(mergedOrganization.getCode())
+                    .oldName(mergedOrganization.getName())
+                    .build();
+
+            draftDetails.add(detail);
+        }
+        mergeDetailDraftClient.saveAll(draftDetails);
+
+        Request mergeRequest = requestService.initializeRequest(draft, merge, form, getCombinedFieldMap());
+
+        String newData = createJsonData(draft, draftDetails, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
+        mergeRequest.setNewData(newData);
+        String oldData = createJsonData(merge, mergeDetails, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
+        mergeRequest.setOldData(oldData);
+
+        mergeRequest.setReferenceId(draft.getId());
+        mergeRequest.setCreatedBy(userDetails.getId());
+        mergeRequest.setOrganizationCode(mergingOrganization.getCode());
+        requestClient.save(mergeRequest);
+
+        return mergeRequest;
     }
 
     @Override
@@ -174,11 +201,12 @@ public class OrganizationMergeService implements EntityHandler {
         if (mergeDetailDrafts.isEmpty()) {
             return false;
         }
+
         //Luu ho so ban goc
         OrganizationMerge organizationMerge = modelMapper.map(mergeDraft, OrganizationMerge.class);
-        organizationMerge = organizationMergeClient.save(organizationMerge).getData();
+        organizationMerge = mergeClient.save(organizationMerge).getData();
 
-        //luu danh sach chi nhanh dc sap nhap/hop nhat
+        //luu danh sach chi nhanh dc sap nhap
         List<OrganizationMergeDetail> mergeDetails = new ArrayList<>();
         List<String> mergedCodes = new ArrayList<>();
 
@@ -195,31 +223,102 @@ public class OrganizationMergeService implements EntityHandler {
         mergeDraft.setStatus(EApprovalStatus.APPROVED.getId());
         mergeDraftClient.save(mergeDraft);
 
-        //chuyen cac dang vien tu TCD bi sap nhap/hop nhat sang TCD nhan sap nhap/hop nhat
-        mergeOrganization(mergedCodes, organizationMerge.getOrganizationCode());
+        //chuyen cac dang vien tu TCD bi sap nhap sang TCD nhan sap nhap
+        mergeOrganization(organizationMerge.getOrganizationCode(),mergedCodes, organizationMerge.getId());
 
         return true;
     }
 
-    private void mergeOrganization(List<String> mergedCodes, String mergingCode) {
+    private void mergeOrganization(String mergingCode, List<String> mergedCodes, String organizationMergeId) {
         List<Organization> mergedOrganizations = organizationClient.findAllByCode(mergedCodes).getData();
 
         for(Organization organization: mergedOrganizations) {
             organization.setStatus(EOrganizationStatus.NO.getStatus());
         }
 
+        List<DvOrgHistory> dvOrgHistories = new ArrayList<>();
         List<DV> mergedMembers = dvClient.findByOrganizationCodes(mergedCodes).getData();
+
         for (DV member: mergedMembers) {
+            DvOrgHistory dvOrgHistory = DvOrgHistory.builder()
+                    .staffCode(member.getStaffCode())
+                    .oldOrgCode(member.getOrganizationCode())
+                    .newOrgCode(mergingCode)
+                    .refId(organizationMergeId)
+                    .build();
+            dvOrgHistories.add(dvOrgHistory);
+
             member.setOrganizationCode(mergingCode);
         }
 
+        dvOrgService.saveAll(dvOrgHistories);
         organizationClient.saveAll(mergedOrganizations);
         dvClient.saveAll(mergedMembers);
     }
 
     @Override
-    public boolean applyUpdate(String referenceId) {
-        return false;
+    public boolean applyUpdate(String draftId) {
+        OrganizationMergeDraft mergeDraft = mergeDraftClient.findById(draftId).getData().orElse(null);
+
+        if (Objects.isNull(mergeDraft) || !Objects.equals(mergeDraft.getStatus(), EApprovalStatus.PENDING.getId())) {
+            throw new CommonException("Yêu cầu không hợp lệ");
+        }
+
+        List<OrganizationMergeDetailDraft> mergeDetailDrafts = mergeDetailDraftClient.findByRefId(draftId).getData();
+
+        if (mergeDetailDrafts.isEmpty()) {
+            return false;
+        }
+
+        List<String> newMergedCodes = new ArrayList<>();
+        for (OrganizationMergeDetailDraft detailDraft: mergeDetailDrafts) {
+            newMergedCodes.add(detailDraft.getOldCode());
+        }
+
+        OrganizationMerge organizationMerge = mergeClient.findById(mergeDraft.getRefId()).getData()
+                .orElseThrow(() -> new CommonException(ExceptionMessage.NO_DATA));
+
+        List<OrganizationMergeDetail> oldMergeDetails = mergeDetailClient.findByRefId(organizationMerge.getId()).getData();
+
+        List<String> oldMergedCodes = new ArrayList<>();
+        for (OrganizationMergeDetail detail: oldMergeDetails) {
+            oldMergedCodes.add(detail.getOldCode());
+        }
+
+        rollbackMergeAction(organizationMerge.getOrganizationCode(), oldMergedCodes, organizationMerge.getId());
+        mergeOrganization(mergeDraft.getOrganizationCode(), newMergedCodes, organizationMerge.getId());
+
+        return true;
+    }
+
+    private void rollbackMergeAction(String newCode, List<String> oldMergedCodes, String refId) {
+        List<Organization> oldMergedOrganization = organizationClient.findAllByCode(oldMergedCodes).getData();
+
+        for (Organization organization: oldMergedOrganization) {
+            organization.setStatus(EOrganizationStatus.YES.getStatus());
+        }
+
+        List<DvOrgHistory> dvOrgHistories = dvOrgHistoryClient.findByNewOrgCodeAndRefId(newCode, refId).getData();
+        Map<String, DvOrgHistory> dvOrgHistoryMap = new HashMap<>();
+        List<String> staffCodes = new ArrayList<>();
+
+        for (DvOrgHistory dvOrgHistory: dvOrgHistories) {
+            dvOrgHistoryMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory);
+            staffCodes.add(dvOrgHistory.getStaffCode());
+        }
+
+        List<DV> dvList = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
+
+        for (DV dv: dvList) {
+            if (Objects.equals(dv.getOrganizationCode(), newCode)) {
+                String oldCode = dvOrgHistoryMap.get(dv.getStaffCode()).getOldOrgCode();
+                dv.setOrganizationCode(oldCode);
+            }
+        }
+
+        organizationClient.saveAll(oldMergedOrganization);
+        dvClient.saveAll(dvList);
+        dvOrgHistoryClient.deleteAll(dvOrgHistories);
     }
 
     @Override
@@ -229,15 +328,6 @@ public class OrganizationMergeService implements EntityHandler {
 
     @Override
     public void setDenied(String referenceId) {
-        OrganizationMergeDraft draft = mergeDraftClient.findById(referenceId).getData().orElse(null);
-
-        if (Objects.isNull(draft)) {
-            return;
-        }
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        draft.setStatus(EApprovalStatus.DENIED.getId());
-        draft.setApprovedBy(userDetails.getId());
-        mergeDraftClient.save(draft);
+        denyMergeRequest(referenceId);
     }
 }

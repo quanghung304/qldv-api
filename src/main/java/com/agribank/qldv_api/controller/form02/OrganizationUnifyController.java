@@ -31,7 +31,7 @@ public class OrganizationUnifyController {
 
     @PostMapping("/search")
     public ResponseEntity<DefaultResponse<PageResponse<OrganizationMerResponse>>> search(@RequestBody @Valid SearchOrganizationUnionRequest request) {;
-        return DefaultResponse.success(unifyService.search(request));
+        return DefaultResponse.success(unifyService.getList(request));
     }
 
     @GetMapping("/{id}")

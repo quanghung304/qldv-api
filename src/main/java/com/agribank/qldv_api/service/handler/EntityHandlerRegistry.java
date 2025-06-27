@@ -8,7 +8,7 @@ import com.agribank.qldv_api.service.form02.OrganizationMergeService;
 import com.agribank.qldv_api.service.form02.OrganizationUnifyService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.MembershipProposalService;
-import com.agribank.qldv_api.service.TransformationHistoryService;
+import com.agribank.qldv_api.service.form02.TransformationHistoryService;
 import com.agribank.qldv_api.service.form02.SplitOrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
