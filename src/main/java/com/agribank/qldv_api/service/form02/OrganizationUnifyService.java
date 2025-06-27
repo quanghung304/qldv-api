@@ -2,6 +2,7 @@ package com.agribank.qldv_api.service.form02;
 
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.DVClient;
+import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeClient;
@@ -12,13 +13,12 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.form02.UnifyOrgUpdateRequest;
 import com.agribank.qldv_api.request.form02.UnifyOrganizationRequest;
 import com.agribank.qldv_api.response.form02.OrganizationMerResponse;
-import com.agribank.qldv_api.response.form02.OrganizationMergeResponse;
 import com.agribank.qldv_api.response.request.RequestResponse;
+import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.DvOrgService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
-import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMerge;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
@@ -33,33 +33,37 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class OrganizationUnifyService implements EntityHandler {
-    ModelMapper modelMapper;
-    ObjectMapper objectMapper;
-
-    DVClient dvClient;
-    OrganizationClient organizationClient;
-    OrganizationMergeClient organizationMergeClient;
-    OrganizationMergeDetailClient mergeDetailClient;
-    OrganizationMergeDraftClient mergeDraftClient;
-    OrganizationMergeDetailDraftClient mergeDetailDraftClient;
-    RequestClient requestClient;
-    OrganizationService organizationService;
-    DvOrgService dvOrgService;
-
-    RequestService requestService;
-
+public class OrganizationUnifyService extends MergeUnifyService implements EntityHandler {
     static final EForm form = EForm.BIEU_02_UNION;
+
+    public OrganizationUnifyService(
+            ObjectMapper objectMapper,
+            ModelMapper modelMapper,
+            DVClient dvClient,
+            OrganizationClient organizationClient,
+            OrganizationMergeClient mergeClient,
+            OrganizationMergeDetailClient mergeDetailClient,
+            OrganizationMergeDraftClient mergeDraftClient,
+            OrganizationMergeDetailDraftClient mergeDetailDraftClient,
+            RequestClient requestClient,
+            DvOrgHistoryClient dvOrgHistoryClient,
+            RequestService requestService,
+            OrganizationService organizationService,
+            DvOrgService dvOrgService,
+            CheckAuthorityService checkAuthorityService
+    ) {
+        super(
+                objectMapper, modelMapper, dvClient, organizationClient, mergeClient, mergeDetailClient, mergeDraftClient,
+                mergeDetailDraftClient, requestClient, dvOrgHistoryClient, requestService, organizationService, dvOrgService,
+                checkAuthorityService
+        );
+    }
 
     public Map<String, String> getCombinedFieldMap() {
         Map<String, String> combinedFieldMap = new LinkedHashMap<>();
@@ -92,7 +96,7 @@ public class OrganizationUnifyService implements EntityHandler {
         mergeDetailDraftClient.saveAll(unifyDetails);
 
         Request unifyRequest = requestService.initializeRequest(organizationUnify, null, form, getCombinedFieldMap());
-        String jsonData = createJsonData(organizationUnify, unifyDetails);
+        String jsonData = createJsonData(organizationUnify, unifyDetails, OrganizationMergeDetailDraft.FIELD_MAP_UNIFY);
         unifyRequest.setNewData(jsonData);
         unifyRequest.setReferenceId(organizationUnify.getId());
         unifyRequest.setCreatedBy(userDetails.getId());
@@ -117,8 +121,14 @@ public class OrganizationUnifyService implements EntityHandler {
         return unifiedOrganizations;
     }
 
+    @Override
+    public PageResponse<OrganizationMerResponse> getList(SearchOrganizationUnionRequest request) {
+        request.setType(EReport01Type.UNION.getId());
+        return search(request);
+    }
+
     public RequestResponse update(UnifyOrgUpdateRequest request){
-        OrganizationMerge oldUnify = organizationMergeClient.findById(request.getId()).getData()
+        OrganizationMerge oldUnify = mergeClient.findById(request.getId()).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu. Vui lòng kiểm tra lại"));
 
         List<Organization> unifiedOrganizations = getUnifiedOrganizations(request.getUnifyCodes(), true);
@@ -156,8 +166,8 @@ public class OrganizationUnifyService implements EntityHandler {
 
         List<OrganizationMergeDetail> oldDetails = mergeDetailClient.findByRefId(oldUnify.getId()).getData();
 
-        String newJsonData = createJsonData(organizationUnify, unifyDetails);
-        String oldJsonData = createJsonData(oldUnify, oldDetails);
+        String newJsonData = createJsonData(organizationUnify, unifyDetails, OrganizationMergeDetailDraft.FIELD_MAP_UNIFY);
+        String oldJsonData = createJsonData(oldUnify, oldDetails, OrganizationMergeDetailDraft.FIELD_MAP_UNIFY);
         unifyRequest.setNewData(newJsonData);
         unifyRequest.setOldData(oldJsonData);
 
@@ -167,52 +177,6 @@ public class OrganizationUnifyService implements EntityHandler {
         requestClient.save(unifyRequest);
 
         return modelMapper.map(unifyRequest, RequestResponse.class);
-    }
-
-    private String createJsonData(Object organizationUnify, List<?> unifyDetails) {
-        try {
-            Map<String, Object> draftDataMap = CommonUtils.createFilteredDataMap(organizationUnify, getCombinedFieldMap());
-            Map<String, String> fieldMap = OrganizationMergeDetailDraft.FIELD_MAP_UNIFY;
-            int i = 1;
-
-            for (Object detail : unifyDetails) {
-                BeanWrapper wrapper = new BeanWrapperImpl(detail);
-
-                // Iterate over fieldMap keys (entity fields)
-                for (String fieldName : fieldMap.keySet()) {
-                    if (wrapper.isReadableProperty(fieldName)) {
-                        Object value = wrapper.getPropertyValue(fieldName);
-                        draftDataMap.put(fieldMap.get(fieldName) + " " + i, value);
-                    }
-                }
-                i++;
-            }
-
-            return objectMapper.writeValueAsString(draftDataMap);
-        } catch (Exception e) {
-            throw new CommonException(e.getMessage());
-        }
-    }
-
-    public OrganizationMergeResponse getDetail(String id) {
-        OrganizationMerge organizationUnify = organizationMergeClient.findById(id).getData().orElse(null);
-
-        if (Objects.isNull(organizationUnify)) {
-            throw new CommonException("Không tìm thấy yêu cầu hợp nhất");
-        }
-
-        OrganizationMergeResponse response = modelMapper.map(organizationUnify, OrganizationMergeResponse.class);
-
-        List<OrganizationMergeDetail> details = mergeDetailClient.findByRefId(id).getData();
-        List<OrganizationMergeResponse.MergeDetailResponse> detailResponses = new ArrayList<>();
-
-        for (OrganizationMergeDetail detail: details) {
-            OrganizationMergeResponse.MergeDetailResponse detailResponse = modelMapper.map(detail, OrganizationMergeResponse.MergeDetailResponse.class);
-            detailResponses.add(detailResponse);
-        }
-
-        response.setMergeDetails(detailResponses);
-        return response;
     }
 
     @Override
@@ -231,7 +195,7 @@ public class OrganizationUnifyService implements EntityHandler {
         }
         //Luu ho so ban goc
         OrganizationMerge organizationUnify = modelMapper.map(draft, OrganizationMerge.class);
-        organizationUnify = organizationMergeClient.save(organizationUnify).getData();
+        organizationUnify = mergeClient.save(organizationUnify).getData();
 
         //luu danh sach chi nhanh dc sap nhap/hop nhat
         List<OrganizationMergeDetail> details = new ArrayList<>();
@@ -324,7 +288,7 @@ public class OrganizationUnifyService implements EntityHandler {
             return false;
         }
 
-        OrganizationMerge organizationMerge = organizationMergeClient.findById(organizationMergeDraft.getRefId())
+        OrganizationMerge organizationMerge = mergeClient.findById(organizationMergeDraft.getRefId())
                 .getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
 
@@ -456,7 +420,7 @@ public class OrganizationUnifyService implements EntityHandler {
         organizationMergeDraft.setStatus(EApprovalStatus.APPROVED.getId());
         mergeDraftClient.save(organizationMergeDraft);
         mergeDetailClient.saveAll(newDetailList);
-        organizationMergeClient.save(organizationMerge);
+        mergeClient.save(organizationMerge);
     }
 
     //set lại trạng thái TCD hoạt động
@@ -478,41 +442,6 @@ public class OrganizationUnifyService implements EntityHandler {
 
     @Override
     public void setDenied(String referenceId) {
-        OrganizationMergeDraft draft = mergeDraftClient.findById(referenceId).getData().orElse(null);
-
-        if (Objects.isNull(draft)) {
-            return;
-        }
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        draft.setStatus(EApprovalStatus.DENIED.getId());
-        draft.setApprovedBy(userDetails.getId());
-        mergeDraftClient.save(draft);
-    }
-
-    public PageResponse<OrganizationMerResponse> search(SearchOrganizationUnionRequest request){
-        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
-        request.setType(EReport01Type.UNION.getId());
-
-        PageResponse<OrganizationMerge> organizationMergePageResponse = organizationMergeClient.searchUnion(request).getData();
-
-        PageResponse<OrganizationMerResponse> response = new PageResponse<>();
-        if (Objects.isNull(organizationMergePageResponse)) {
-            return response;
-        }
-
-        response.setCurrentPage(organizationMergePageResponse.getCurrentPage());
-        response.setTotalPages(organizationMergePageResponse.getTotalPages());
-        response.setTotalItems(organizationMergePageResponse.getTotalItems());
-        response.setData(organizationMergePageResponse.getData()
-                .stream()
-                .map(o -> modelMapper.map(o, OrganizationMerResponse.class)).toList());
-
-        return response;
-    }
-
-
-    private UserDetailsImpl getUserRequested(){
-        return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        denyMergeRequest(referenceId);
     }
 }

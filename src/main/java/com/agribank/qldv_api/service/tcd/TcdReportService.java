@@ -6,7 +6,7 @@ import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
 import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.DVService;
-import com.agribank.qldv_api.service.TransformationHistoryService;
+import com.agribank.qldv_api.service.form02.TransformationHistoryService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.form02.updown.TransformationHistory;

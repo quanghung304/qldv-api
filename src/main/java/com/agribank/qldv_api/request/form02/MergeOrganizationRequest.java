@@ -13,6 +13,7 @@ import java.util.List;
 public class MergeOrganizationRequest extends BaseFormRequest {
     private static final Integer MAX_SIZE = 5;
 
+    private String id;
     @NotNull(message = "không để trống trường mã tổ chức đảng nhận sáp nhập")
     private String organizationCode;
     private List<String> mergedCodes;
