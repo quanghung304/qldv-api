@@ -5,7 +5,6 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveSearchRequest;
 import com.agribank.qldv_api.response.establishment_dissolve.EstablishmentDissolveResponse;
 import com.agribank.qldv_api.service.organization.OrganizationService;
-import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.EstablishmentDissolve;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +20,10 @@ import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
 @Service
 @RequiredArgsConstructor
 public class EstablishmentDissolveService {
-
     private final EstablishmentDissolveClient client;
     private final ModelMapper modelMapper;
     private final UserService userService;
-    private final OrganizationService organizationService;
+    private final OrganizationService organizationService;;
 
     public void save(EstablishmentDissolve establishmentDissolve) {
         client.save(establishmentDissolve);
@@ -33,10 +31,6 @@ public class EstablishmentDissolveService {
 
     public void saveAll(List<EstablishmentDissolve> establishmentDissolves) {
         client.saveAll(establishmentDissolves);
-    }
-
-    public EstablishmentDissolve findByCode(String code) {
-        return client.findById(code).getData();
     }
 
     public PageResponse<EstablishmentDissolveResponse> search(EstablishmentDissolveSearchRequest request) {
@@ -70,7 +64,15 @@ public class EstablishmentDissolveService {
         return response;
     }
 
-    public EstablishmentDissolveResponse get(String code){
-        return modelMapper.map(findByCode(code), EstablishmentDissolveResponse.class);
+    public EstablishmentDissolveResponse get(String id){
+        EstablishmentDissolve establishmentDissolve = findById(id);
+        if (Objects.isNull(establishmentDissolve)) {
+            return null;
+        }
+        return modelMapper.map(establishmentDissolve, EstablishmentDissolveResponse.class);
+    }
+
+    public EstablishmentDissolve findById(String id){
+        return client.findById(id).getData();
     }
 }

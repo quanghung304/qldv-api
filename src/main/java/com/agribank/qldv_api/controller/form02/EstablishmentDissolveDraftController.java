@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.controller;
+package com.agribank.qldv_api.controller.form02;
 
 import com.agribank.qldv_api.request.DraftRequest;
 import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveRequest;
@@ -30,21 +30,17 @@ public class EstablishmentDissolveDraftController {
         return BaseResponse.success(service.createOrUpdate(request));
     }
 
-    @PreAuthorize("hasAuthority('QLDV_APPROVER')")
-    @PostMapping("/approve")
-    public ResponseEntity<BaseResponse<List<DraftResponse>>> approve(@RequestBody List<DraftRequest> request) {
-        return BaseResponse.success(service.approve(request));
-    }
-
-    @PostMapping("/search")
-    public ResponseEntity<BaseResponse<PageResponse<EDDraftResponse>>> search(@RequestBody EDDraftSearchRequest request) {
-        request.validate();
-        return BaseResponse.success(service.search(request));
-    }
-
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<BaseResponse<String>> delete(@PathVariable(name = "id") String id) {
         return BaseResponse.success(service.delete(id), null);
+    }
+
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/update")
+    public ResponseEntity<BaseResponse<EstablishmentDissolveDraft>> update(@RequestBody @Valid EstablishmentDissolveRequest request) {
+        request.validate();
+        return BaseResponse.success(service.update(request));
     }
 }
