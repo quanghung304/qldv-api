@@ -33,9 +33,9 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
     private final RequestClient requestClient;
     private final OrganizationClient organizationClient;
     private final OrganizationService organizationService;
-    private final EstablishmentDissolveService establishmentDissolveService;
     private final UserService userService;
     private final CheckAuthorityService checkAuthorityService;
+    private final EstablishmentDissolveService establishmentDissolveService;
     private final RequestService requestService;
 
     private final EForm form = EForm.BIEU_02_ESTA;
@@ -97,134 +97,48 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         return establishmentDissolve;
     }
 
-    public PageResponse<EDDraftResponse> search(EDDraftSearchRequest request){
-        PageResponse<EDDraftResponse> response = new PageResponse<>();
-        UserDetailsImpl userRequested = userService.getUserRequested();
-
-        List<String> codeChild = organizationService.getChildCode(userRequested.getOrganizationCode());
-        if (Objects.nonNull(request.getCode()) && !codeChild.contains(request.getCode())
-                && BRANCH_CODE_HEAD_QUARTER < Integer.parseInt(userRequested.getOrganizationCode())){
-            return response;
+    public EstablishmentDissolveDraft update(EstablishmentDissolveRequest request) {
+        if (Objects.isNull(request.getId())) {
+            throw new CommonException("Không tìm thấy dữ liệu");
         }
 
-        if (BRANCH_CODE_HEAD_QUARTER < userRequested.getBrcd() && Objects.isNull(request.getCode())){
-            request.setCode(userRequested.getOrganizationCode());
+        EstablishmentDissolve  dissolve =  dissolveClient.findById(request.getId()).getData();
+
+        if (Objects.isNull(dissolve)) {
+            throw new CommonException("Không tìm thấy dữ liệu");
         }
 
-        request.setOrderBy("code");
-
-        PageResponse<EstablishmentDissolveDraft> draftPageResponse = client.search(request).getData();
-        if (Objects.isNull(draftPageResponse)) {
-            return response;
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+        if (Objects.isNull(organization)) {
+            throw new CommonException("Không tồn tại tổ chức Đảng này! vui lòng kiểm tra lại");
         }
-
-        response.setTotalPages(draftPageResponse.getTotalPages());
-        response.setCurrentPage(draftPageResponse.getCurrentPage());
-        response.setTotalItems(draftPageResponse.getTotalItems());
-
-        if (Objects.nonNull(draftPageResponse.getData())) {
-            response.setData(draftPageResponse.getData().stream()
-                    .map(organization -> modelMapper.map(organization, EDDraftResponse.class)
-                    ).toList()
-            );
-        }
-
-        return response;
-    }
-
-    public List<DraftResponse> approve(List<DraftRequest> requests){
-        List<String> ids = requests.stream().map(DraftRequest::getId).distinct().toList();
-
-        List<EstablishmentDissolveDraft> dissolveDraftList = client.findAllByIds(ids).getData();
-        Map<String, EstablishmentDissolveDraft> dissolveDraftMap = new HashMap<>();
-        if (Objects.isNull(dissolveDraftList) || dissolveDraftList.isEmpty()) {
-            throw new CommonException("Kiểm tra lại id request");
-        }
-
-        for (EstablishmentDissolveDraft d : dissolveDraftList) {
-            dissolveDraftMap.put(d.getId(), d);
-        }
-
-        List<DraftResponse> responses = new ArrayList<>();
-        List<EstablishmentDissolve> establishmentDissolvesSave = new ArrayList<>();
-        List<EstablishmentDissolveDraft> establishmentDissolveDrafts = new ArrayList<>();
 
         UserDetailsImpl userRequested = userService.getUserRequested();
-        for (DraftRequest draftRequest : requests) {
-            //kiểm tra giá trị approve
-            if (Objects.isNull(draftRequest.getStatus())
-                    || EApprovalStatus.getValue(draftRequest.getStatus()) == -1
-                    || EApprovalStatus.PENDING.getId() == draftRequest.getStatus()
-            ){
-                responses.add(fromModel(draftRequest.getId(),
-                        draftRequest.getStatus(),
-                        "Sai status vui lòng kiểm tra lại!"));
-                continue;
-            }
-
-            EstablishmentDissolveDraft  establishmentDissolveDraft = dissolveDraftMap.getOrDefault(draftRequest.getId(), null);
-
-            if (Objects.isNull(establishmentDissolveDraft)){
-                responses.add(fromModel(draftRequest.getId(),
-                        draftRequest.getStatus(),
-                        "Không tồn tại bản ghi id: "
-                                + draftRequest.getId()));
-                continue;
-            }
-
-
-            //chặn duyệt lại những approve đã tùng được thao tác duyệt hoặc từ chối rồi
-            if (!establishmentDissolveDraft.getStatus().equals(EApprovalStatus.PENDING.getId())){
-                responses.add(
-                        fromModel(establishmentDissolveDraft.getId(),
-                                draftRequest.getStatus(),
-                                "Bản ghi id: "
-                                        + establishmentDissolveDraft.getId()
-                                        + ", " + establishmentDissolveDraft.getName()
-                                        + ", đã được duyệt"));
-                continue;
-            }
-
-            establishmentDissolveDraft.setApprovedBy(userRequested.getId());
-            //trường hợp đông ý
-            if (draftRequest.getStatus().equals(EApprovalStatus.APPROVED.getId())) {
-                establishmentDissolveDraft.setStatus(EApprovalStatus.APPROVED.getId());
-                establishmentDissolveDrafts.add(establishmentDissolveDraft);
-                responses.add(fromModel(establishmentDissolveDraft.getId(),
-                        draftRequest.getStatus(),
-                        "Yêu cầu đã được duyệt thành công!"));
-
-                establishmentDissolvesSave.add(modelMapper.map(establishmentDissolveDraft, EstablishmentDissolve.class));
-                continue;
-            }
-
-            //TH từ chối
-            if (draftRequest.getStatus().equals(EApprovalStatus.DENIED.getId())) {
-                establishmentDissolveDraft.setStatus(EApprovalStatus.DENIED.getId());
-                establishmentDissolveDrafts.add(establishmentDissolveDraft);
-                responses.add(fromModel(establishmentDissolveDraft.getId(),
-                        draftRequest.getStatus(),
-                        "Yêu cầu từ chối đã được duyệt thành công!"));
-            }
-        }
-
-        if (establishmentDissolveDrafts.isEmpty()){
-            return responses;
-        }
-
-        establishmentDissolveService.saveAll(establishmentDissolvesSave);
-        client.saveAll(establishmentDissolveDrafts);
-
-        return responses;
-    }
-
-    private DraftResponse fromModel(String id, Integer approve, String mess) {
-        return DraftResponse.builder()
-                .id(id)
-                .approve(approve+"")
-                .message(mess)
+        EstablishmentDissolveDraft dissolveDraft = EstablishmentDissolveDraft.builder()
+                .organizationCode(request.getOrganizationCode())
+                .name(request.getName())
+                .form(request.getForm())
+                .status(EApprovalStatus.PENDING.getId())
+                .createdBy(userRequested.getId())
+                .refId(request.getId())
                 .build();
+        dissolveDraft.setConclusionNumber(request.getConclusionNumber());
+        dissolveDraft.setConclusionDate(request.getConclusionDate());
+        dissolveDraft.setDecisionNumber(request.getDecisionNumber());
+        dissolveDraft.setDecisionDate(request.getDecisionDate());
+        dissolveDraft.setEffectiveDate(request.getEffectiveDate());
+
+        dissolveDraft = client.save(dissolveDraft).getData();
+
+        Request establishDisolveRequest = requestService.initializeRequest(dissolveDraft, dissolve, form, getCombinedFieldMap());
+        establishDisolveRequest.setOrganizationCode(request.getOrganizationCode());
+        establishDisolveRequest.setReferenceId(dissolveDraft.getId());
+        establishDisolveRequest.setCreatedBy(userRequested.getId());
+        requestClient.save(establishDisolveRequest);
+
+        return dissolveDraft;
     }
+
 
     public String delete(String id){
         EstablishmentDissolveDraft establishmentDissolveDraft = client.findById(id).getData();
@@ -264,7 +178,48 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
     @Override
     public boolean applyUpdate(String referenceId) {
-        return false;
+        EstablishmentDissolveDraft draft = client.findById(referenceId).getData();
+
+        if (Objects.isNull(draft)) return false;
+
+        EstablishmentDissolve establishmentDissolve = establishmentDissolveService.findById(draft.getRefId());
+        if (Objects.isNull(establishmentDissolve)) return false;
+
+        establishmentDissolve.setName(draft.getName());
+        establishmentDissolve.setForm(draft.getForm());
+        establishmentDissolve.setDecisionCommittee(draft.getDecisionCommittee());
+        establishmentDissolve.setConclusionNumber(draft.getConclusionNumber());
+        establishmentDissolve.setConclusionDate(draft.getConclusionDate());
+        establishmentDissolve.setEffectiveDate(draft.getEffectiveDate());
+        establishmentDissolve.setDecisionDate(draft.getDecisionDate());
+        establishmentDissolve.setDecisionNumber(draft.getDecisionNumber());
+
+        Organization organization = organizationClient.findByCode(establishmentDissolve.getOrganizationCode()).getData();
+        if (Objects.isNull(organization)) return false;
+
+        String organizationCode = "";
+        if (!establishmentDissolve.getOrganizationCode().equals(draft.getOrganizationCode())) {
+            organization.setStatus(EOrganizationStatus.YES.getStatus());
+            organizationClient.save(organization);
+            organizationCode = draft.getOrganizationCode();
+            establishmentDissolve.setOrganizationCode(organizationCode);
+        }
+
+        if (!organizationCode.isBlank()){
+            organization = organizationClient.findByCode(organizationCode).getData();
+        }
+
+        if (Objects.isNull(organization)) return false;
+
+        draft.setStatus(EApprovalStatus.APPROVED.getId());
+        draft.setApprovedBy(userService.getUserRequested().getId());
+
+        dissolveClient.save(establishmentDissolve);
+        organization.setStatus(EOrganizationStatus.NO.getStatus());
+        organizationClient.save(organization);
+
+        client.save(draft);
+        return true;
     }
 
     @Override

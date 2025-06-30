@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.controller;
+package com.agribank.qldv_api.controller.form02;
 
 import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveSearchRequest;
 import com.agribank.qldv_api.response.establishment_dissolve.EstablishmentDissolveResponse;
@@ -21,8 +21,8 @@ public class EstablishmentDissolveController {
         return BaseResponse.success(service.search(request));
     }
 
-    @GetMapping("")
-    public ResponseEntity<BaseResponse<EstablishmentDissolveResponse>> get(@RequestParam(name = "code") String code) {
-        return BaseResponse.success(service.get(code));
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<EstablishmentDissolveResponse>> get(@PathVariable(name = "id") String id) {
+        return BaseResponse.success(service.get(id));
     }
 }
