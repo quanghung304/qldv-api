@@ -30,7 +30,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -391,5 +390,9 @@ public class DVService implements EntityHandler {
     public PageResponse<DV> searchRp24(SearchRp24Request request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         return dvClient.searchRp24(request).getData();
+    }
+
+    public List<DV> findByStaffCodeIn(List<String> staffCodes){
+        return dvClient.findByStaffCodes(staffCodes).getData();
     }
 }

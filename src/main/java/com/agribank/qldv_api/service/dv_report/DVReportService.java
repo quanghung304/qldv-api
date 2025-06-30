@@ -3,13 +3,17 @@ package com.agribank.qldv_api.service.dv_report;
 import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.response.dv_report.DvRp24Response;
+import com.agribank.qldv_api.response.dv_report.DvRp25Response;
 import com.agribank.qldv_api.service.DVRecognitionService;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DVRecognition;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -27,6 +31,7 @@ public class DVReportService {
     private final DVService dvService;
     private final OrganizationService organizationService;
     private final DVRecognitionService dvRecognitionService;
+    private final PartyReinstatementService partyReinstatementService;
     private final ModelMapper modelMapper;
 
     public PageResponse<DvRp24Response> search24(SearchRp24Request request){
@@ -131,4 +136,79 @@ public class DVReportService {
         }
 
         return organization.getName();
-    }}
+    }
+
+    public PageResponse<DvRp25Response> search25(SearchRp25Request request){
+        PageResponse<DvRp25Response> response = new PageResponse<>();
+        PageResponse<PartyReinstatement> partyReinstatementPageResponse = partyReinstatementService.searchRp25(request);
+        if (Objects.isNull(partyReinstatementPageResponse.getData()) || partyReinstatementPageResponse.getData().isEmpty()) {
+            return response;
+        }
+
+        response.setCurrentPage(partyReinstatementPageResponse.getCurrentPage());
+        response.setTotalPages(partyReinstatementPageResponse.getTotalPages());
+        response.setTotalItems(partyReinstatementPageResponse.getTotalItems());
+
+        List<String> staffCodes = partyReinstatementPageResponse.getData().stream()
+                .map(PartyReinstatement::getStaffCode).toList();
+        List<DV> dvs = dvService.findByStaffCodeIn(staffCodes);
+        if (dvs.isEmpty()) {
+            return response;
+        }
+
+        return makeResponse25(response, partyReinstatementPageResponse, dvs);
+    }
+
+    private PageResponse<DvRp25Response> makeResponse25(PageResponse<DvRp25Response> response, PageResponse<PartyReinstatement> partyReinstatementPageResponse, List<DV> dvs){
+        List<DvRp25Response> dvRp25Responses = new ArrayList<>();
+        List<Organization> organizations = organizationService.findAll();
+        Map<String, Organization> organizationMap = getOrganizationMap(organizations);
+
+        Map<String, DV> dvMap = new HashMap<>();
+        for (DV dv : dvs) {
+            dvMap.put(dv.getStaffCode(), dv);
+        }
+
+        for (PartyReinstatement partyReinstatement : partyReinstatementPageResponse.getData()) {
+            DV dv = dvMap.getOrDefault(partyReinstatement.getStaffCode(), null);
+            DvRp25Response dvRp25Response = DvRp25Response.builder()
+                    .organizationCode(partyReinstatement.getOrganizationCode())
+                    .staffCode(partyReinstatement.getStaffCode())
+                    .decisionNumber(partyReinstatement.getDecisionNumber())
+                    .effectiveDate(partyReinstatement.getEffectiveDate())
+                    .build();
+
+            if (Objects.nonNull(dv)){
+                dvRp25Response.setFullName(dv.getFullName());
+                dvRp25Response.setBirthDay(dv.getBirthday());
+                dvRp25Response.setMainJob(dv.getMainJob());
+                dvRp25Response.setRecruitBrcd(dv.getRecruitBrcd());
+                dvRp25Response.setAdmissionDate(dv.getAdmissionDate());
+                dvRp25Response.setOfficialRecognitionDay(dv.getOfficialRecognitionDay());
+            }
+
+            if (Objects.isNull(partyReinstatement.getOrganizationCode())){
+                dvRp25Responses.add(dvRp25Response);
+                continue;
+            }
+            String organizationCodeB = partyReinstatement.getOrganizationCode().substring(0, FORM_B_NAME_LENGTH);
+            dvRp25Response.setOrganizationGroupBName(getOrganizationName(
+                    organizationCodeB, EOrganizationReference.GROUP_B.name(), organizationMap));
+
+            if (partyReinstatement.getOrganizationCode().length() < FORM_C_NAME_LENGTH){
+                dvRp25Responses.add(dvRp25Response);
+                continue;
+            }
+            String organizationCodeC = partyReinstatement.getOrganizationCode().substring(0, FORM_C_NAME_LENGTH);
+            dvRp25Response.setOrganizationGroupCName(getOrganizationName(
+                    organizationCodeC, EOrganizationReference.GROUP_C.name(), organizationMap));
+
+            dvRp25Responses.add(dvRp25Response);
+        }
+        response.setData(dvRp25Responses);
+
+        return response;
+    }
+}
+
+

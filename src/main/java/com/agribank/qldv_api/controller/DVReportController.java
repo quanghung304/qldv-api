@@ -2,10 +2,13 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.response.dv_report.DvRp24Response;
+import com.agribank.qldv_api.response.dv_report.DvRp25Response;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.service.dv_report.DVReportService;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp24Service;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp25Service;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -28,8 +31,8 @@ public class DVReportController {
         return BaseResponse.success(service.search24(request));
     }
 
-    @PostMapping("/export/report-24")
-    public ResponseEntity<BaseResponse<ExportResponse>> export24(@RequestBody @Valid SearchRp24Request request) {
-        return BaseResponse.success(exportDVRp24Service.exportData(request, EExcelColumnInfo.BC_24_DSDV.getName(), "", EExcelColumnInfo.BC_24_DSDV.name(), 1, EExcelColumnInfo.BC_24_DSDV.getName()));
+    @PostMapping("/search/report-25")
+    public ResponseEntity<BaseResponse<PageResponse<DvRp25Response>>> search(@RequestBody @Valid SearchRp25Request request) {
+        return BaseResponse.success(service.search25(request));
     }
 }
