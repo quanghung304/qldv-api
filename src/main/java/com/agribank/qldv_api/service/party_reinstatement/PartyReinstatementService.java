@@ -9,6 +9,7 @@ import com.agribank.qldv_api.gateway.party_reinstatement.PartyReinstatementClien
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.party_reinstatement.PartyReinstatementRequest;
 import com.agribank.qldv_api.response.party_reinstatement.PartyReinstatementResponse;
+import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.UserDto;
@@ -22,6 +23,8 @@ import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatementDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.party_reinstatement.PartyReinstatementSearchRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
+import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.party_reinstatement.PartyReinstatementDtoResponse;
 import lombok.RequiredArgsConstructor;
@@ -221,5 +224,10 @@ public class PartyReinstatementService implements EntityHandler {
 
         partyReinstatementDraft.setStatus(EApprovalStatus.DENIED.getId());
         partyReinstatementDraftService.save(partyReinstatementDraft);
+    }
+
+    public PageResponse<PartyReinstatement> searchRp25(SearchRp25Request request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        return client.search25(request).getData();
     }
 }
