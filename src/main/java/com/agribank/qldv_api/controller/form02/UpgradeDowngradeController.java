@@ -53,7 +53,7 @@ public class UpgradeDowngradeController {
         return DefaultResponse.success(historyService.getDetail(id));
     }
 
-    @PostMapping("update")
+    @PutMapping("update")
     public ResponseEntity<DefaultResponse<Request>> update(@RequestBody @Valid OrganizationTransformRequest request) {
         return DefaultResponse.success(historyService.update(request));
     }
