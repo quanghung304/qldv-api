@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/excel-colum-info")
+@RequestMapping("/api/v1/excel-column-info")
 public class ExcelColumnInfoController {
     private final ExcelColumnInfoService service;
 
