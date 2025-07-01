@@ -18,6 +18,8 @@ import com.agribank.qldv_api.service.DvOrgService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.dto.OrganizationDto;
+import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMerge;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDraft;
@@ -94,6 +96,10 @@ public abstract class MergeUnifyService {
 
         OrganizationMergeResponse response = modelMapper.map(organizationMerge, OrganizationMergeResponse.class);
 
+        Organization organization = organizationService.findByCode(organizationMerge.getDecisionCommittee());
+        if (Objects.nonNull(organization)) {
+            response.setDecision(modelMapper.map(organization, OrganizationDto.class));
+        }
         List<OrganizationMergeDetail> mergeDetails = mergeDetailClient.findByRefId(id).getData();
         List<OrganizationMergeResponse.MergeDetailResponse> detailResponses = new ArrayList<>();
 
