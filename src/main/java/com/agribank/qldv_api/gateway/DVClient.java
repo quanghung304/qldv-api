@@ -4,13 +4,12 @@ import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.DvDraft;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
+import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public interface DVClient {
     );
 
     @PostMapping("api/v1/dv/search")
-    DefaultResponse<PageResponse<DV>> search(
+    DefaultResponse<PageResponse<DVSearchResponse>> search(
             @RequestBody SearchDVRequest request
     );
 

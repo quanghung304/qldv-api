@@ -3,6 +3,7 @@ package com.agribank.qldv_api.controller;
 import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
+import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldv_api.service.organization.OrganizationService;
@@ -93,5 +94,10 @@ public class OrganizationController {
     @GetMapping("/get/form-b")
     public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getOrganizationFormB() {
         return BaseResponse.success(service.getOrganizationFormB());
+    }
+
+    @GetMapping("filter-organizations")
+    public ResponseEntity<DefaultListResponse<OrganizationResponse>> getChildOrganizationByUser() {
+        return DefaultListResponse.success(service.getChildOrganizationByUser());
     }
 }

@@ -15,6 +15,7 @@ import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.log.DVLogService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvDraft;
@@ -24,6 +25,7 @@ import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
+import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -49,25 +51,14 @@ public class DVService implements EntityHandler {
 
     private static final EForm form = EForm.BIEU_15;
 
-    public PageResponse<DVDto> search(SearchDVRequest request){
-        PageResponse<DV> dvPageResponse = dvClient.search(request).getData();
-        PageResponse<DVDto> response = new PageResponse<>();
-        if (Objects.isNull(dvPageResponse)) {
-            return response;
+    public PageResponse<DVSearchResponse> search(SearchDVRequest request){
+        if (Objects.isNull(request.getOrganizationCode())) {
+            request.setOrganizationCode(CommonUtils.getOrganizationByRequestedUser());
+        } else {
+            authorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
         }
 
-        response.setTotalPages(dvPageResponse.getTotalPages());
-        response.setCurrentPage(dvPageResponse.getCurrentPage());
-        response.setTotalItems(dvPageResponse.getTotalItems());
-
-        if (Objects.nonNull(dvPageResponse.getData())) {
-            response.setData(dvPageResponse.getData().stream()
-                    .map(dv -> modelMapper.map(dv, DVDto.class)
-                    ).toList()
-            );
-        }
-
-        return response;
+        return dvClient.search(request).getData();
     }
 
     public String create(List<DVDto> requests) {
@@ -78,8 +69,13 @@ public class DVService implements EntityHandler {
         return response.getMessage();
     }
 
-    public DV findById(String id) {
-        return dvClient.findById(id).getData();
+    public DVDto findById(String id) {
+        DV dv = dvClient.findById(id).getData();
+        Organization organization = organizationClient.findByCode(dv.getOrganizationCode()).getData();
+
+        DVDto dvDto = modelMapper.map(dv, DVDto.class);
+        dvDto.setOrganizationName(organization.getName());
+        return dvDto;
     }
 
     public List<DVDto> getDVByOrganization(String organization) {
