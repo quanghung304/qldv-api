@@ -16,7 +16,10 @@ public enum EExcelColumnInfo {
     BC_03_04_DS("Danh sách chi, Đảng bộ", "DANH SÁCH CHI ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
     BC_17_DSDV("Thông tin Đảng viên", "THÔNG TIN ĐẢNG VIÊN", ERequestType.TO_CHUC_DANG.getId()),
     BC_24_DSDV("Danh sách công nhận Đảng viên chính thức", "DANH SÁCH CÔNG NHẬN ĐẢNG VIÊN CHÍNH THỨC", ERequestType.DANG_VIEN.getId()),
-    BC_25_DSDV("Danh sách Đảng viên được khôi phục Đảng tịch", "DANH SÁCH ĐẢNG VIÊN ĐƯỢC KHÔI PHỤC ĐẢNG TỊCH", ERequestType.DANG_VIEN.getId());
+    BC_25_DSDV("Danh sách Đảng viên được khôi phục Đảng tịch", "DANH SÁCH ĐẢNG VIÊN ĐƯỢC KHÔI PHỤC ĐẢNG TỊCH", ERequestType.DANG_VIEN.getId()),
+    BC_34_DSDV("Danh sách Đảng viên miễn sinh hoạt Đảng Xin ra khỏi Đảng Xóa tên Từ trần",
+            "DANH SÁCH ĐẢNG VIÊN MIỄN SINH HOẠT ĐẢNG XIN RA KHỎI ĐẢNG XÓA TÊN TỪ TRẦN",
+            ERequestType.DANG_VIEN.getId());
 
     String name;
     String nameUpperCase;

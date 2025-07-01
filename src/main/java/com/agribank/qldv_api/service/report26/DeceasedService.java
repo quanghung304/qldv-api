@@ -160,9 +160,12 @@ public class DeceasedService implements EntityHandler {
         deceasedDraft.setStatus(EApprovalStatus.DENIED.getId());
         deceasedDraftService.save(deceasedDraft);
     }
-    
 
     public RP26DetailResponse getDetail(String id){
         return client.getDetail(id).getData();
+    }
+
+    public List<Deceased> findAllById(List<String> ids){
+        return client.findAllById(ids).getData();
     }
 }

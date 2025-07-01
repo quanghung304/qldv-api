@@ -166,4 +166,8 @@ public class RemoveNamePartyService implements EntityHandler {
     public RP26DetailResponse getDetail(String id){
         return client.getDetail(id).getData();
     }
+
+    public List<RemoveNameParty> findAllById(List<String> ids){
+        return client.findAllById(ids).getData();
+    }
 }

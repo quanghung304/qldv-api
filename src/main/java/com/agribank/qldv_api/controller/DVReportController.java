@@ -1,14 +1,12 @@
 package com.agribank.qldv_api.controller;
 
-import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.response.dv_report.DvRp24Response;
 import com.agribank.qldv_api.response.dv_report.DvRp25Response;
-import com.agribank.qldv_api.response.export.ExportResponse;
+import com.agribank.qldv_api.response.dv_report.DvRp34Response;
 import com.agribank.qldv_api.service.dv_report.DVReportService;
-import com.agribank.qldv_api.service.dv_report.ExportDVRp24Service;
-import com.agribank.qldv_api.service.dv_report.ExportDVRp25Service;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/v1/dv-report", produces = "application/json")
 public class DVReportController {
     private final DVReportService service;
-    private final ExportDVRp24Service exportDVRp24Service;
 
     @PostMapping("/search/report-24")
     public ResponseEntity<BaseResponse<PageResponse<DvRp24Response>>> search(@RequestBody @Valid SearchRp24Request request) {
@@ -34,5 +31,10 @@ public class DVReportController {
     @PostMapping("/search/report-25")
     public ResponseEntity<BaseResponse<PageResponse<DvRp25Response>>> search(@RequestBody @Valid SearchRp25Request request) {
         return BaseResponse.success(service.search25(request));
+    }
+
+    @PostMapping("/search/report-34")
+    public ResponseEntity<BaseResponse<PageResponse<DvRp34Response>>> search(@RequestBody @Valid SearchRp34Request request) {
+        return BaseResponse.success(service.search34(request));
     }
 }

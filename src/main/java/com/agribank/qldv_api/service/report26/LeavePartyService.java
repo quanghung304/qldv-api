@@ -171,4 +171,7 @@ public class LeavePartyService implements EntityHandler {
         return client.getDetail(id).getData();
     }
 
+    public List<LeaveParty> findAllById(List<String> ids){
+        return client.findAllById(ids).getData();
+    }
 }

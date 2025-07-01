@@ -4,11 +4,13 @@ import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp24Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp25Service;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp34Service;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class ExportHandlerService {
     private final TcdReportService tcdReportService;
     private final ExportDVRp24Service exportDVRp24Service;
     private final ExportDVRp25Service exportDVRp25Service;
+    private final ExportDVRp34Service exportDVRp34Service;
 
     public ExportResponse handleExport(Object param, String type) {
         ExportResponse exportResult = new ExportResponse();
@@ -50,6 +53,10 @@ public class ExportHandlerService {
                 case BC_25_DSDV:
                     SearchRp25Request searchRp25Request = gson.fromJson(paramString, SearchRp25Request.class);
                     exportResult = exportDVRp25Service.exportData(searchRp25Request, EExcelColumnInfo.BC_25_DSDV.getName(), "", EExcelColumnInfo.BC_25_DSDV.name(), 1, EExcelColumnInfo.BC_25_DSDV.getName());
+                    break;
+                case BC_34_DSDV:
+                    SearchRp34Request searchRp34Request = gson.fromJson(paramString, SearchRp34Request.class);
+                    exportResult = exportDVRp34Service.exportData(searchRp34Request, EExcelColumnInfo.BC_34_DSDV.getName(), "", EExcelColumnInfo.BC_34_DSDV.name(), 1, EExcelColumnInfo.BC_34_DSDV.getName());
                     break;
                 default:
                     break;
