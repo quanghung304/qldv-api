@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.response.form02;
 
 import com.agribank.qldv_api.response.BaseFormDto;
+import com.agribank.qldvutils.dto.OrganizationDto;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -14,6 +15,7 @@ public class OrganizationMergeResponse extends BaseFormDto {
     String organizationName;
     String form;
     String decisionCommittee;
+    OrganizationDto decision;
     List<MergeDetailResponse> mergeDetails;
 
     @Data
