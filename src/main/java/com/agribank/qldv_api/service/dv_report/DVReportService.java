@@ -1,19 +1,24 @@
 package com.agribank.qldv_api.service.dv_report;
 
 import com.agribank.qldv_api.enums.EOrganizationReference;
+import com.agribank.qldv_api.enums.EReport26;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.response.dv_report.DvRp24Response;
+import com.agribank.qldv_api.response.dv_report.DvRp34Response;
 import com.agribank.qldv_api.response.dv_report.DvRp25Response;
 import com.agribank.qldv_api.service.DVRecognitionService;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
+import com.agribank.qldv_api.service.report26.*;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DVRecognition;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
+import com.agribank.qldvutils.entity.report26.*;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -31,6 +36,11 @@ public class DVReportService {
     private final DVService dvService;
     private final OrganizationService organizationService;
     private final DVRecognitionService dvRecognitionService;
+    private final Report26Service report26Service;
+    private final PartyActivityExemptionService partyActivityExemptionService;
+    private final RemoveNamePartyService removeNamePartyService;
+    private final LeavePartyService leavePartyService;
+    private final DeceasedService deceasedService;
     private final PartyReinstatementService partyReinstatementService;
     private final ModelMapper modelMapper;
 
@@ -42,7 +52,7 @@ public class DVReportService {
         response.setCurrentPage(dvPageResponse.getCurrentPage());
         response.setTotalPages(dvPageResponse.getTotalPages());
         response.setTotalItems(dvPageResponse.getTotalItems());
-        if(Objects.isNull(dvPageResponse) || dvPageResponse.getData().isEmpty()){
+        if(Objects.isNull(dvPageResponse.getData()) || dvPageResponse.getData().isEmpty()){
             return response;
         }
 
@@ -209,6 +219,210 @@ public class DVReportService {
 
         return response;
     }
+
+    public PageResponse<DvRp34Response> search34(SearchRp34Request request){
+        PageResponse<DvRp34Response> response = new PageResponse<>();
+        PageResponse<Report26> pageResponse = report26Service.search34(request);
+
+        if (Objects.isNull(pageResponse) || pageResponse.getData().isEmpty()){
+            return response;
+        }
+
+        response.setCurrentPage(pageResponse.getCurrentPage());
+        response.setTotalItems(pageResponse.getTotalItems());
+        response.setTotalPages(pageResponse.getTotalPages());
+
+        List<DvRp34Response> dvRp34Responses = new ArrayList<>();
+
+        List<String> partActivityExemptionIds = new ArrayList<>();
+        List<String> removeNameIds = new ArrayList<>();
+        List<String> leavePartyIds = new ArrayList<>();
+        List<String> deceasedIds = new ArrayList<>();
+        List<String> staffCodes = new ArrayList<>();
+
+        for (Report26 report26 : pageResponse.getData()) {
+            dvRp34Responses.add(DvRp34Response.builder()
+                    .id(report26.getRefId())
+                    .organizationCode(report26.getOrganizationCode())
+                    .staffCode(report26.getStaffCode())
+                    .decisionNumber(report26.getDecisionNumber())
+                            .effectiveDate(report26.getDecisionDate())
+                    .build());
+
+            staffCodes.add(report26.getStaffCode());
+            if (EReport26.PARTY_ACTIVITY_EXEMPTION.getId() == report26.getType()){
+                partActivityExemptionIds.add(report26.getRefId());
+            } else if (EReport26.REMOVE_NAME_PARTY.getId() == report26.getType()) {
+                removeNameIds.add(report26.getRefId());
+            } else if (EReport26.LEAVE_PARTY.getId() == report26.getType()) {
+                leavePartyIds.add(report26.getRefId());
+            }else {
+                deceasedIds.add(report26.getRefId());
+            }
+        }
+
+        response.setData(dvRp34Responses);
+
+        List<Organization> organizations = organizationService.findAll();
+        Map<String, Organization> organizationMap = getOrganizationMap(organizations);
+
+        Map<String, PartyActivityExemption> partyActivityExemptionMap = getPartyActivityExemptionMap(partActivityExemptionIds);
+        Map<String, RemoveNameParty> removeNamePartyMap = getRemoveNamePartyMap(removeNameIds);
+        Map<String, LeaveParty> leavePartyMap = getLeavePartyMap(leavePartyIds);
+        Map<String, Deceased> deceasedMap = getDeceasedMap(deceasedIds);
+        Map<String, DV> dvMap = getDvMap(staffCodes);
+
+        return makeReponseDv34(response, dvRp34Responses, organizationMap, partyActivityExemptionMap, removeNamePartyMap, leavePartyMap, deceasedMap, dvMap);
+    }
+
+    private PageResponse<DvRp34Response> makeReponseDv34(PageResponse<DvRp34Response> response,
+                                                         List<DvRp34Response> dvRp34Responses,
+                                                         Map<String, Organization> organizationMap,
+                                                         Map<String, PartyActivityExemption> partyActivityExemptionMap,
+                                                         Map<String, RemoveNameParty> removeNamePartyMap,
+                                                         Map<String, LeaveParty> leavePartyMap,
+                                                         Map<String, Deceased> deceasedMap,
+                                                         Map<String, DV> dvMap){
+        for (DvRp34Response dvRp34Response : dvRp34Responses) {
+            PartyActivityExemption partyActivityExemption = partyActivityExemptionMap.getOrDefault(dvRp34Response.getId(), null);
+            if (Objects.nonNull(partyActivityExemption)) {
+                dvRp34Response.setTypeName(EReport26.PARTY_ACTIVITY_EXEMPTION.getValue());
+                dvRp34Response.setReasonPartyActivityExemption(partyActivityExemption.getReason());
+                dvRp34Response.setEffectiveDate(partyActivityExemption.getEffectiveDate());
+            }
+
+            RemoveNameParty removeNameParty = removeNamePartyMap.getOrDefault(dvRp34Response.getId(), null);
+            if (Objects.nonNull(removeNameParty)) {
+                dvRp34Response.setTypeName(EReport26.REMOVE_NAME_PARTY.getValue());
+                dvRp34Response.setReasonRemoveNameParty(removeNameParty.getReason());
+            }
+
+            LeaveParty leaveParty = leavePartyMap.getOrDefault(dvRp34Response.getId(), null);
+            if (Objects.nonNull(leaveParty)) {
+                dvRp34Response.setTypeName(EReport26.LEAVE_PARTY.getValue());
+                dvRp34Response.setReasonRemoveNameParty(leaveParty.getReason());
+            }
+
+            Deceased deceased = deceasedMap.getOrDefault(dvRp34Response.getId(), null);
+            if (Objects.nonNull(deceased)) {
+                dvRp34Response.setTypeName(EReport26.DECEASED.getValue());
+                dvRp34Response.setDateOfDeath(deceased.getDateOfDeath());
+            }
+
+            DV dv = dvMap.getOrDefault(dvRp34Response.getStaffCode(), null);
+            if (Objects.nonNull(dv)) {
+                dvRp34Response.setFullName(dv.getFullName());
+                dvRp34Response.setBirthDay(dv.getBirthday());
+                dvRp34Response.setMainJob(dv.getMainJob());
+                dvRp34Response.setRecruitBrcd(dv.getRecruitBrcd());
+            }
+
+            if (Objects.isNull(dvRp34Response.getOrganizationCode())){
+                continue;
+            }
+            String organizationCodeB = dvRp34Response.getOrganizationCode().substring(0, FORM_B_NAME_LENGTH);
+            dvRp34Response.setOrganizationGroupBName(getOrganizationName(
+                    organizationCodeB, EOrganizationReference.GROUP_B.name(), organizationMap));
+
+            if (dvRp34Response.getOrganizationCode().length() < FORM_C_NAME_LENGTH){
+                continue;
+            }
+            String organizationCodeC = dvRp34Response.getOrganizationCode().substring(0, FORM_C_NAME_LENGTH);
+            dvRp34Response.setOrganizationGroupCName(getOrganizationName(
+                    organizationCodeC, EOrganizationReference.GROUP_C.name(), organizationMap));
+        }
+
+        response.setData(dvRp34Responses);
+        return response;
+    }
+
+    private Map<String, PartyActivityExemption> getPartyActivityExemptionMap(List<String> partActivityExemptionIds){
+        Map<String, PartyActivityExemption> partyActivityExemptionMap = new HashMap<>();
+        if (partActivityExemptionIds.isEmpty()) {
+            return partyActivityExemptionMap;
+        }
+
+        List<PartyActivityExemption> partyActivityExemptions = partyActivityExemptionService.findAllById(partActivityExemptionIds);
+        if (partyActivityExemptions.isEmpty()) {
+            return partyActivityExemptionMap;
+        }
+
+        for (PartyActivityExemption partyActivityExemption : partyActivityExemptions) {
+            partyActivityExemptionMap.put(partyActivityExemption.getId(), partyActivityExemption);
+        }
+
+        return partyActivityExemptionMap;
+    }
+
+
+    private Map<String, RemoveNameParty> getRemoveNamePartyMap(List<String> removeNamePartyIds){
+        Map<String, RemoveNameParty> removeNamePartyHashMap = new HashMap<>();
+        if (removeNamePartyIds.isEmpty()) {
+            return removeNamePartyHashMap;
+        }
+
+        List<RemoveNameParty> removeNameParties = removeNamePartyService.findAllById(removeNamePartyIds);
+        if (removeNameParties.isEmpty()) {
+            return removeNamePartyHashMap;
+        }
+
+        for (RemoveNameParty removeNameParty : removeNameParties) {
+            removeNamePartyHashMap.put(removeNameParty.getId(), removeNameParty);
+        }
+
+        return removeNamePartyHashMap;
+    }
+
+    private Map<String, LeaveParty> getLeavePartyMap(List<String> leavePartyIds){
+        Map<String, LeaveParty> leavePartyHashMap = new HashMap<>();
+        if (leavePartyIds.isEmpty()) {
+            return leavePartyHashMap;
+        }
+
+        List<LeaveParty> leaveParties = leavePartyService.findAllById(leavePartyIds);
+        if (leaveParties.isEmpty()) {
+            return leavePartyHashMap;
+        }
+
+        for (LeaveParty leaveParty : leaveParties) {
+            leavePartyHashMap.put(leaveParty.getId(), leaveParty);
+        }
+
+        return leavePartyHashMap;
+    }
+
+    private Map<String, Deceased> getDeceasedMap(List<String> deceasedIds){
+        Map<String, Deceased> deceasedHashMap = new HashMap<>();
+        if (deceasedIds.isEmpty()) {
+            return deceasedHashMap;
+        }
+
+        List<Deceased> deceasedList = deceasedService.findAllById(deceasedIds);
+        if (deceasedList.isEmpty()) {
+            return deceasedHashMap;
+        }
+
+        for (Deceased deceased : deceasedList) {
+            deceasedHashMap.put(deceased.getId(), deceased);
+        }
+
+        return deceasedHashMap;
+    }
+
+    private Map<String, DV> getDvMap(List<String> staffCodes){
+        Map<String, DV> dvMap = new HashMap<>();
+        if (staffCodes.isEmpty()) {
+            return dvMap;
+        }
+
+        List<DV> dvs = dvService.findByStaffCodeIn(staffCodes);
+        if (dvs.isEmpty()) {
+            return dvMap;
+        }
+
+        for (DV dv : dvs) {
+            dvMap.put(dv.getStaffCode(), dv);
+        }
+        return dvMap;
+    }
 }
-
-

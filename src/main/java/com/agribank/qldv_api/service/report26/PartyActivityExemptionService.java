@@ -181,4 +181,7 @@ public class PartyActivityExemptionService implements EntityHandler {
         return client.getDetail(id).getData();
     }
 
+    public List<PartyActivityExemption> findAllById(List<String> ids){
+        return client.findAllById(ids).getData();
+    }
 }
