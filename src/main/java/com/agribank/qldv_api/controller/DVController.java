@@ -8,10 +8,10 @@ import com.agribank.qldv_api.response.dv.DVResponse;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.ImportDVService;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
-import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvDraft;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.response.BaseResponse;
+import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
 
 import jakarta.validation.Valid;
@@ -32,7 +32,7 @@ public class DVController {
     private final ImportDVService importDVService;
 
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<DVDto>>> search(@RequestBody SearchDVRequest request) {
+    public ResponseEntity<DefaultResponse<PageResponse<DVSearchResponse>>> search(@RequestBody SearchDVRequest request) {
         return DefaultResponse.success(service.search(request));
     }
 
@@ -54,7 +54,7 @@ public class DVController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultResponse<DV>> getDVDetail(@PathVariable String id) {
+    public ResponseEntity<DefaultResponse<DVDto>> getDVDetail(@PathVariable String id) {
         return DefaultResponse.success(service.findById(id));
     }
 

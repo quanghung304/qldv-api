@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request;
 import com.agribank.qldvutils.exception.CommonException;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,6 +19,7 @@ public class RegisterRequest {
     String fullName;
     String vneid;
     String phone;
+    @NotNull(message = "Không được để trống mã cán bộ")
     Integer staffCode;
     String address;
     Integer gender;

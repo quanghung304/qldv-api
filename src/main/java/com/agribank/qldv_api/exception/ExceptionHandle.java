@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +51,10 @@ public class ExceptionHandle {
 
         if (exception instanceof BadCredentialsException) {
             return BaseResponse.error("Tài khoản hoặc mật khẩu không đúng", HttpStatus.FORBIDDEN);
+        }
+
+        if (exception instanceof NoResourceFoundException) {
+            return BaseResponse.error("kiểm tra lại đường dẫn api", HttpStatus.BAD_REQUEST);
         }
 
         return BaseResponse.error(exception.getMessage());

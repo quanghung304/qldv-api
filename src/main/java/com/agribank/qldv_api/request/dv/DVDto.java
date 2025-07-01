@@ -17,10 +17,12 @@ import java.util.Objects;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DVDto {
     String id;
+    @NotNull(message = "Không được để trống mã cán bộ")
     //staff code
     String staffCode;
-    @NotNull
+    @NotNull(message = "Không được để trống mã chi, đảng bộ")
     String organizationCode;
+    String organizationName;
     //Số lý lịch
     String resumeNumber;
     //số thẻ Đảng viên

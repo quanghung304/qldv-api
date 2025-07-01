@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
+import static com.agribank.qldv_api.enums.Constants.BTCDU_CODE;
 
 @Service
 @RequiredArgsConstructor
@@ -276,7 +277,6 @@ public class OrganizationService implements EntityHandler {
         return modelMapper.map(organization, OrganizationResponse.class);
     }
 
-
     public String createRequestDelete(String code){
         checkAuthorityService.hasAuthorityOverOrganization(code);
         Organization organization = client.findByCode(code).getData();
@@ -294,7 +294,6 @@ public class OrganizationService implements EntityHandler {
 
         return "Tạo yêu cầu thành công";
     }
-
 
     @Override
     public boolean applyCreate(String referenceId, UserDetailsImpl userDetails) {
@@ -350,7 +349,6 @@ public class OrganizationService implements EntityHandler {
         organizationDraft.setApprove(EApprovalStatus.DENIED.getId());
         organizationDraftService.save(organizationDraft);
     }
-
 
     public List<OrganizationResponse> getAdvisoryAgency(){
         List<Organization> organizations = client.advisoryAgency().getData();
@@ -434,4 +432,21 @@ public class OrganizationService implements EntityHandler {
         return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
     }
 
+    public List<OrganizationResponse> getChildOrganizationByUser() {
+        String organizationCode = CommonUtils.getOrganizationByRequestedUser();
+        List<Organization> organizationList = new ArrayList<>();
+
+        if (Objects.nonNull(organizationCode)) {
+            organizationList = client.findByParentCode(organizationCode).getData();
+        } else {
+            organizationCode = BTCDU_CODE;
+            organizationList = client.findByParentCode(organizationCode).getData();
+            List<Organization> formBOrganization = client.getOrganizationFormB().getData();
+            organizationList.addAll(formBOrganization);
+        }
+
+        return organizationList.stream()
+                .map(organization -> modelMapper.map(organization, OrganizationResponse.class))
+                .toList();
+    }
 }
