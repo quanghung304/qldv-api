@@ -1,9 +1,12 @@
 package com.agribank.qldv_api.service.export;
 
 import com.agribank.qldv_api.enums.EExcelColumnInfo;
+import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp24Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp25Service;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp29Service;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp34Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp34Service;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
@@ -26,6 +29,7 @@ public class ExportHandlerService {
     private final TcdReportService tcdReportService;
     private final ExportDVRp24Service exportDVRp24Service;
     private final ExportDVRp25Service exportDVRp25Service;
+    private final ExportDVRp29Service exportDVRp29Service;
     private final ExportDVRp34Service exportDVRp34Service;
 
     public ExportResponse handleExport(Object param, String type) {
@@ -53,6 +57,10 @@ public class ExportHandlerService {
                 case BC_25_DSDV:
                     SearchRp25Request searchRp25Request = gson.fromJson(paramString, SearchRp25Request.class);
                     exportResult = exportDVRp25Service.exportData(searchRp25Request, EExcelColumnInfo.BC_25_DSDV.getName(), "", EExcelColumnInfo.BC_25_DSDV.name(), 1, EExcelColumnInfo.BC_25_DSDV.getName());
+                    break;
+                case BC_29_DSDV:
+                    SearchReport29Request searchReport29Request = gson.fromJson(paramString, SearchReport29Request.class);
+                    exportResult = exportDVRp29Service.exportData(searchReport29Request, EExcelColumnInfo.BC_29_DSDV.getName(), "", EExcelColumnInfo.BC_29_DSDV.name(), 1, EExcelColumnInfo.BC_29_DSDV.getName());
                     break;
                 case BC_34_DSDV:
                     SearchRp34Request searchRp34Request = gson.fromJson(paramString, SearchRp34Request.class);

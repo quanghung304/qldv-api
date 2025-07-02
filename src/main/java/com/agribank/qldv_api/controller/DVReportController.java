@@ -1,7 +1,9 @@
 package com.agribank.qldv_api.controller;
 
+import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.dv_report.DvRp24Response;
 import com.agribank.qldv_api.response.dv_report.DvRp25Response;
+import com.agribank.qldv_api.response.dv_report.DvRp29Response;
 import com.agribank.qldv_api.response.dv_report.DvRp34Response;
 import com.agribank.qldv_api.service.dv_report.DVReportService;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
@@ -31,6 +33,11 @@ public class DVReportController {
     @PostMapping("/search/report-25")
     public ResponseEntity<BaseResponse<PageResponse<DvRp25Response>>> search(@RequestBody @Valid SearchRp25Request request) {
         return BaseResponse.success(service.search25(request));
+    }
+
+    @PostMapping("/search/report-29")
+    public ResponseEntity<BaseResponse<PageResponse<DvRp29Response>>> search(@RequestBody @Valid SearchReport29Request request) {
+        return BaseResponse.success(service.search29(request));
     }
 
     @PostMapping("/search/report-34")

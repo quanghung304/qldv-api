@@ -20,6 +20,7 @@ import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgriba
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribankDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp29Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -230,5 +231,17 @@ public class TransferOutAgribankService implements EntityHandler {
         transfer.setIntroDocumentNumber(draft.getIntroDocumentNumber());
         transfer.setTransferDate(draft.getTransferDate());
         transfer.setReceivedOrganization(draft.getReceivedOrganization());
+    }
+
+    public PageResponse<TransferOutAgribank> search29(SearchRp29Request request) {
+        return outAgribankClient.search29(request).getData();
+    }
+
+    public PageResponse<TransferOutAgribank> searchRp29OnTime(SearchRp29Request request) {
+        return outAgribankClient.searchRp29OnTime(request).getData();
+    }
+
+    public PageResponse<TransferOutAgribank> searchRp29Late(SearchRp29Request request) {
+        return outAgribankClient.searchRp29Late(request).getData();
     }
 }

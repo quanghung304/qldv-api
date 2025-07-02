@@ -2,22 +2,29 @@ package com.agribank.qldv_api.service.dv_report;
 
 import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.enums.EReport26;
+import com.agribank.qldv_api.enums.EReport29Type;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.dv_report.DvRp24Response;
+import com.agribank.qldv_api.response.dv_report.DvRp29Response;
 import com.agribank.qldv_api.response.dv_report.DvRp34Response;
 import com.agribank.qldv_api.response.dv_report.DvRp25Response;
 import com.agribank.qldv_api.service.DVRecognitionService;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
+import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
 import com.agribank.qldv_api.service.report26.*;
+import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DVRecognition;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
+import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
 import com.agribank.qldvutils.entity.report26.*;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp29Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +49,9 @@ public class DVReportService {
     private final LeavePartyService leavePartyService;
     private final DeceasedService deceasedService;
     private final PartyReinstatementService partyReinstatementService;
+    private final TransferOutAgribankService transferOutAgribankService;
     private final ModelMapper modelMapper;
+
 
     public PageResponse<DvRp24Response> search24(SearchRp24Request request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
@@ -272,17 +281,17 @@ public class DVReportService {
         Map<String, Deceased> deceasedMap = getDeceasedMap(deceasedIds);
         Map<String, DV> dvMap = getDvMap(staffCodes);
 
-        return makeReponseDv34(response, dvRp34Responses, organizationMap, partyActivityExemptionMap, removeNamePartyMap, leavePartyMap, deceasedMap, dvMap);
+        return makeResponseDv34(response, dvRp34Responses, organizationMap, partyActivityExemptionMap, removeNamePartyMap, leavePartyMap, deceasedMap, dvMap);
     }
 
-    private PageResponse<DvRp34Response> makeReponseDv34(PageResponse<DvRp34Response> response,
-                                                         List<DvRp34Response> dvRp34Responses,
-                                                         Map<String, Organization> organizationMap,
-                                                         Map<String, PartyActivityExemption> partyActivityExemptionMap,
-                                                         Map<String, RemoveNameParty> removeNamePartyMap,
-                                                         Map<String, LeaveParty> leavePartyMap,
-                                                         Map<String, Deceased> deceasedMap,
-                                                         Map<String, DV> dvMap){
+    private PageResponse<DvRp34Response> makeResponseDv34(PageResponse<DvRp34Response> response,
+                                                          List<DvRp34Response> dvRp34Responses,
+                                                          Map<String, Organization> organizationMap,
+                                                          Map<String, PartyActivityExemption> partyActivityExemptionMap,
+                                                          Map<String, RemoveNameParty> removeNamePartyMap,
+                                                          Map<String, LeaveParty> leavePartyMap,
+                                                          Map<String, Deceased> deceasedMap,
+                                                          Map<String, DV> dvMap){
         for (DvRp34Response dvRp34Response : dvRp34Responses) {
             PartyActivityExemption partyActivityExemption = partyActivityExemptionMap.getOrDefault(dvRp34Response.getId(), null);
             if (Objects.nonNull(partyActivityExemption)) {
@@ -424,5 +433,94 @@ public class DVReportService {
             dvMap.put(dv.getStaffCode(), dv);
         }
         return dvMap;
+    }
+
+    public PageResponse<DvRp29Response> search29(SearchReport29Request searchReport29Request){
+        PageResponse<TransferOutAgribank> pageResponse = new PageResponse<>();
+        SearchRp29Request request = SearchRp29Request.builder()
+                .organizationCode(searchReport29Request.getOrganizationCode())
+                .fromDate(searchReport29Request.getFromDate())
+                .toDate(searchReport29Request.getToDate())
+                .build();
+
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        if (Objects.isNull(searchReport29Request.getType()) || EReport29Type.ALL.getId() == searchReport29Request.getType()) {
+            pageResponse = transferOutAgribankService.search29(request);
+        } else if (EReport29Type.ON_TIME.getId() == searchReport29Request.getType()) {
+            pageResponse = transferOutAgribankService.searchRp29OnTime(request);
+        }else {
+            pageResponse = transferOutAgribankService.searchRp29Late(request);
+        }
+
+        PageResponse<DvRp29Response> response = new PageResponse<>();
+        if (Objects.isNull(pageResponse.getData()) || pageResponse.getData().isEmpty()) {
+            return response;
+        }
+
+        response.setTotalItems(pageResponse.getTotalItems());
+        response.setTotalPages(pageResponse.getTotalPages());
+        response.setCurrentPage(pageResponse.getCurrentPage());
+
+        List<DvRp29Response> dvRp29Responses = new ArrayList<>();
+        List<String> staffCodes = new ArrayList<>();
+        for (TransferOutAgribank transfer : pageResponse.getData()) {
+            dvRp29Responses.add(DvRp29Response.builder()
+                    .staffCode(transfer.getStaffCode())
+                    .fullName(transfer.getFullName())
+                    .receivedOrganization(transfer.getReceivedOrganization())
+                    .transferDate(transfer.getTransferDate())
+                    .expectedExpiryDate(transfer.getExpectedExpiryDate())
+                    .transferStatus(
+                            Objects.isNull(transfer.getExpectedExpiryDate())
+                                    || Objects.isNull(transfer.getTransferDate())
+                                    ? "Chưa có dữ liệu ngày dự kiến và ngày Chuyển ra ngoài Đảng bộ Agribank"
+                                    : CommonUtils.validateDatesAfter(
+                                            transfer.getExpectedExpiryDate(), transfer.getTransferDate()
+                            )
+                                    ? "Đúng hạn" : "Quá hạn")
+                    .build());
+
+
+            staffCodes.add(transfer.getStaffCode());
+        }
+        response.setData(dvRp29Responses);
+
+        return makeResponseRp29(response, staffCodes, dvRp29Responses);
+    }
+
+    private PageResponse<DvRp29Response> makeResponseRp29(PageResponse<DvRp29Response> response,
+                                                          List<String> staffCodes,
+                                                          List<DvRp29Response> dvRp29Responses){
+        Map<String, DV> dvMap = getDvMap(staffCodes);
+        List<String> organizationCodes = new ArrayList<>();
+        for (Map.Entry<String, DV> entry : dvMap.entrySet()) {
+            organizationCodes.add(entry.getValue().getOrganizationCode());
+        }
+        List<Organization> organizations = organizationService.findAllByCode(organizationCodes);
+        Map<String, Organization> organizationMap = new HashMap<>();
+
+        for (Organization organization : organizations) {
+            organizationMap.put(organization.getCode(), organization);
+        }
+
+        for (DvRp29Response dvRp29Response : dvRp29Responses) {
+            String code = "";
+            DV dv = dvMap.getOrDefault(dvRp29Response.getStaffCode(), null);
+            if (Objects.nonNull(dv)){
+                code = dv.getOrganizationCode();
+                dvRp29Response.setBirthDay(dv.getBirthday());
+                dvRp29Response.setMainJob(dv.getMainJob());
+                dvRp29Response.setRecruitBrcd(dv.getRecruitBrcd());
+                dvRp29Response.setOrganizationCode(code);
+            }
+
+            Organization organization = organizationMap.getOrDefault(code, null);
+            if (Objects.nonNull(organization)) {
+                dvRp29Response.setOrganizationName(organization.getName());
+            }
+        }
+
+        response.setData(dvRp29Responses);
+        return response;
     }
 }
