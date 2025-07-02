@@ -30,10 +30,6 @@ public class OrganizationRequest {
     String status;
 
     public void validate(){
-        if (Objects.isNull(code) || code.isBlank()){
-            throw new CommonException("code is null");
-        }
-
         if (Objects.isNull(resolutionNumber) || resolutionNumber.isBlank()){
             throw new CommonException("resolutionNumber is null");
         }

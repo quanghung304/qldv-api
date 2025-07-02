@@ -86,4 +86,7 @@ public interface OrganizationClient {
 
     @DeleteMapping("api/v1/organization/delete-by-id/{id}")
     DefaultResponse<Organization> deleteById(@PathVariable("id") String id);
+
+    @DeleteMapping("api/v1/organization/delete-all-by-id")
+    DefaultResponse<Organization> deleteAllById(@RequestBody List<String> ids);
 }
