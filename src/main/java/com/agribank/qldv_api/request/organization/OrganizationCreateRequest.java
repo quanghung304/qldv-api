@@ -13,8 +13,6 @@ import java.util.Objects;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrganizationCreateRequest extends OrganizationRequest {
     Integer brcd;
-    //hình thức
-    String form;
     //Mã tcd cấp trên
     String parentCode;
 
@@ -22,8 +20,5 @@ public class OrganizationCreateRequest extends OrganizationRequest {
     @Override
     public void validate() {
         super.validate();
-        if (Objects.isNull(form)){
-            throw new CommonException("form is null");
-        }
     }
 }

@@ -29,9 +29,6 @@ import com.agribank.qldvutils.request.form02.SearchOrganizationUnionRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -375,6 +372,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         else{
             organization.setParentCode(newOrganizationCode.substring(0, newOrganizationCode.length() - 2));
         }
+        organization.setStatus(EOrganizationStatus.YES.getStatus());
 
         //Lưu mã TCD mới và xóa mã TCD bị nhầm
         organizationClient.save(organization);
