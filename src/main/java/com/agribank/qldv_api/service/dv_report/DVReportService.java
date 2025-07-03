@@ -9,6 +9,7 @@ import com.agribank.qldv_api.response.dv_report.DvRp24Response;
 import com.agribank.qldv_api.response.dv_report.DvRp29Response;
 import com.agribank.qldv_api.response.dv_report.DvRp34Response;
 import com.agribank.qldv_api.response.dv_report.DvRp25Response;
+import com.agribank.qldv_api.response.dv_report.DvRp21Response;
 import com.agribank.qldv_api.service.DVRecognitionService;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
@@ -22,10 +23,7 @@ import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
 import com.agribank.qldvutils.entity.report26.*;
-import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp29Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
+import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -473,9 +471,9 @@ public class DVReportService {
                     .transferStatus(
                             Objects.isNull(transfer.getExpectedExpiryDate())
                                     || Objects.isNull(transfer.getTransferDate())
-                                    ? "Chưa có dữ liệu ngày dự kiến và ngày Chuyển ra ngoài Đảng bộ Agribank"
+                                    ? "Chưa có dữ liệu"
                                     : CommonUtils.validateDatesAfter(
-                                            transfer.getExpectedExpiryDate(), transfer.getTransferDate()
+                                    transfer.getTransferDate(), transfer.getExpectedExpiryDate()
                             )
                                     ? "Đúng hạn" : "Quá hạn")
                     .build());
@@ -521,6 +519,69 @@ public class DVReportService {
         }
 
         response.setData(dvRp29Responses);
+        return response;
+    }
+
+    public PageResponse<DvRp21Response> searchRp21(SearchRp21Request request) {
+        PageResponse<DvRp21Response> response = new PageResponse<>();
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        PageResponse<DV> dvPageResponse = dvService.searchRp21(request);
+        if (Objects.isNull(dvPageResponse) || dvPageResponse.getData().isEmpty()){
+            return response;
+        }
+
+        List<DvRp21Response> dvRp21Respons = new ArrayList<>();
+        List<String> organizationCodes = new ArrayList<>();
+
+        for (DV dv : dvPageResponse.getData()){
+            DvRp21Response dvRp21Response = DvRp21Response.builder()
+                    .organizationCode(dv.getOrganizationCode())
+                    .staffCode(dv.getStaffCode())
+                    .fullName(dv.getFullName())
+                    .birthDay(dv.getBirthday())
+                    .mainJob(dv.getMainJob())
+                    .recruitBrcd(dv.getRecruitBrcd())
+                    .admissionDate(dv.getAdmissionDate())
+                    .recognitionDeadline(CommonUtils.addOneYears(dv.getAdmissionDate()))
+                    .build();
+
+            organizationCodes.add(dv.getOrganizationCode());
+            dvRp21Respons.add(dvRp21Response);
+        }
+        response.setData(dvRp21Respons);
+        response.setCurrentPage(dvPageResponse.getCurrentPage());
+        response.setTotalItems(dvPageResponse.getTotalItems());
+        response.setTotalPages(dvPageResponse.getTotalPages());
+
+        return makeResponse21(organizationCodes, dvRp21Respons, response);
+    }
+
+    private PageResponse<DvRp21Response> makeResponse21(List<String> organizationCodes, List<DvRp21Response> dvRp21Respons, PageResponse<DvRp21Response> response){
+        List<Organization> organizations = organizationService.findAllByCode(organizationCodes);
+        Map<String, Organization> organizationMap = getOrganizationMap(organizations);
+
+        for (DvRp21Response dvRp21Response : dvRp21Respons){
+            Organization organization = organizationMap.getOrDefault(dvRp21Response.getOrganizationCode(), null);
+            if (Objects.isNull(organization)){
+                continue;
+            }
+
+            if (Objects.isNull(dvRp21Response.getOrganizationCode())){
+                continue;
+            }
+            String organizationCodeB = dvRp21Response.getOrganizationCode().substring(0, FORM_B_NAME_LENGTH);
+            dvRp21Response.setOrganizationGroupBName(getOrganizationName(
+                    organizationCodeB, EOrganizationReference.GROUP_B.name(), organizationMap));
+
+            if (dvRp21Response.getOrganizationCode().length() < FORM_C_NAME_LENGTH){
+                continue;
+            }
+            String organizationCodeC = dvRp21Response.getOrganizationCode().substring(0, FORM_C_NAME_LENGTH);
+            dvRp21Response.setOrganizationGroupCName(getOrganizationName(
+                    organizationCodeC, EOrganizationReference.GROUP_C.name(), organizationMap));
+
+        }
+        response.setData(dvRp21Respons);
         return response;
     }
 }
