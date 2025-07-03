@@ -213,6 +213,17 @@ public class CommonUtils {
         }
     }
 
+    public static Date addOneYears(Date date){
+        if (Objects.isNull(date)){
+            return null;
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.YEAR, 1);
+
+        return calendar.getTime();
+    }
     public static String getOrganizationByRequestedUser() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 

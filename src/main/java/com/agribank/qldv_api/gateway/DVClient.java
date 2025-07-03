@@ -5,6 +5,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
@@ -84,4 +85,9 @@ public interface DVClient {
 
     @PostMapping("api/v1/dv/find-organization-code-actives")
     DefaultListResponse<DV> findByOrganizationCodeActiveIn(@RequestBody List<String> organizationCodes);
+
+    @PostMapping("api/v1/dv/search-report-21")
+    DefaultResponse<PageResponse<DV>> searchRp21(
+            @RequestBody SearchRp21Request request
+    );
 }

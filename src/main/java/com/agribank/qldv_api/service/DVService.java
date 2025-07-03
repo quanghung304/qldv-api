@@ -23,6 +23,7 @@ import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
@@ -288,7 +289,7 @@ public class DVService implements EntityHandler {
 
     public PageResponse<Rp17Response> searchRp17(SearchRp17Request request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
-        PageResponse<DV> dvPageResponse = dvClient.searchRp17(request).getData();
+        PageResponse<DV> dvPageResponse = getSearch17(request);
         PageResponse<Rp17Response> response = new PageResponse<>();
         if (Objects.isNull(dvPageResponse)) {
             return response;
@@ -306,6 +307,10 @@ public class DVService implements EntityHandler {
         }
 
         return response;
+    }
+
+    public PageResponse<DV> getSearch17(SearchRp17Request request){
+        return dvClient.searchRp17(request).getData();
     }
 
     private UserDetailsImpl getUserRequested(){
@@ -390,5 +395,10 @@ public class DVService implements EntityHandler {
 
     public List<DV> findByStaffCodeIn(List<String> staffCodes){
         return dvClient.findByStaffCodes(staffCodes).getData();
+    }
+
+    public PageResponse<DV> searchRp21(SearchRp21Request request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        return dvClient.searchRp21(request).getData();
     }
 }

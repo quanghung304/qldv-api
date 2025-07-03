@@ -1,10 +1,12 @@
 package com.agribank.qldv_api.request.dv;
 
 import com.agribank.qldv_api.exception.ValidationException;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Comment;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -118,6 +120,10 @@ public class DVDto {
     //Ngày, tháng, năm từ trần
     String dateOfDeath;
     Integer status;
+    //ngày công nhận chính thức lần 2
+    Date officialRecognitionDay2;
+   //Ngày kết nạp Đảng lần 2
+    Date admissionDate2;
 
     public void validate(){
         if (Objects.isNull(staffCode)){

@@ -28,12 +28,11 @@ public class TcdReportService {
     private final DVService dvService;
     private final ExportTcdRp17Service exportTcdRp17Service;
 
-
     public PageResponse<Rp0304Response> search0304(OrganizationRpSearchRequest request){
         PageResponse<Rp0304Response> response = new PageResponse<>();
 
         PageResponse<Organization> organizationPageResponse = organizationService.searchRp(request);
-        List<Organization> organizations = new ArrayList<>();
+        List<Organization> organizations;
         if(Objects.isNull(organizationPageResponse) || organizationPageResponse.getData().isEmpty()){
             return response;
         }

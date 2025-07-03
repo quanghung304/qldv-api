@@ -422,7 +422,6 @@ public class OrganizationService implements EntityHandler {
         return  client.findByParent(parentCode).getData();
     }
 
-
     public List<OrganizationResponse> getOrganizationFormB(){
         List<Organization> organizations = client.getOrganizationFormB().getData();
         if (Objects.isNull(organizations) || organizations.isEmpty()){
