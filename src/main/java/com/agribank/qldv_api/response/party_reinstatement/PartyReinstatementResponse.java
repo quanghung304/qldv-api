@@ -12,6 +12,7 @@ import java.util.Date;
 public class PartyReinstatementResponse {
     String id;
     String organizationCode;
+    String organizationName;
     String fullName;
     String staffCode;
     String conclusionNumber;
