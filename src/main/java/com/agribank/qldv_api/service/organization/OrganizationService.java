@@ -372,9 +372,9 @@ public class OrganizationService implements EntityHandler {
         UserDetailsImpl userRequested = getUserRequested();
         List<Organization> organizations = findByParent(userRequested.getOrganizationCode());
         List<OrganizationDto> organizationDTOs = organizations.stream()
-                .map(organization -> new OrganizationDto(organization.getCode(), organization.getName()))
+                .map(organization -> new OrganizationDto(organization.getCode(), organization.getName(), organization.getForm()))
                 .collect(Collectors.toList());
-        if (Objects.isNull(organizations) || organizations.isEmpty()){
+        if (organizations.isEmpty()){
             return new ArrayList<>();
         }
         return organizationDTOs;
