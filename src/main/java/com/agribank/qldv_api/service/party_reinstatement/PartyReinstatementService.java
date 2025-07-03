@@ -134,6 +134,11 @@ public class PartyReinstatementService implements EntityHandler {
             response.setFullName(dv.getFullName());
         }
 
+        Organization organization = organizationService.findByCode(partyReinstatement.getOrganizationCode());
+        if (Objects.nonNull(organization)) {
+            response.setOrganizationName(organization.getName());
+        }
+
         return response;
     }
 
