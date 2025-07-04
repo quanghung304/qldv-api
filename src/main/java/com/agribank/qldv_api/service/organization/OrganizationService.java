@@ -16,9 +16,11 @@ import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp01Response;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
@@ -447,5 +449,13 @@ public class OrganizationService implements EntityHandler {
         return organizationList.stream()
                 .map(organization -> modelMapper.map(organization, OrganizationResponse.class))
                 .toList();
+    }
+
+    public List<Organization> getActiveOrganizations(){
+        return client.getActiveOrganizations().getData();
+    }
+
+    public PageResponse<BcslTcdRp01Response> searchRp01(SearchRp01Request request){
+        return client.searchRp01(request).getData();
     }
 }
