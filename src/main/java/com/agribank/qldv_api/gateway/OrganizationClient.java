@@ -3,9 +3,11 @@ package com.agribank.qldv_api.gateway;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp01Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -89,4 +91,10 @@ public interface OrganizationClient {
 
     @DeleteMapping("api/v1/organization/delete-all-by-id")
     DefaultResponse<Organization> deleteAllById(@RequestBody List<String> ids);
+
+    @GetMapping("api/v1/organization/active-organizations")
+    DefaultResponse<List<Organization>> getActiveOrganizations();
+
+    @PostMapping("api/v1/organization/search-rp-01")
+    DefaultResponse<PageResponse<BcslTcdRp01Response>> searchRp01(@RequestBody SearchRp01Request request);
 }

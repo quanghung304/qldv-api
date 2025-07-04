@@ -3,9 +3,15 @@ package com.agribank.qldv_api.service.export;
 import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.export.ExportResponse;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp24Service;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp25Service;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp29Service;
+import com.agribank.qldv_api.service.dv_report.ExportDVRp34Service;
+import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp01Service;
 import com.agribank.qldv_api.service.dv_report.*;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
@@ -24,6 +30,7 @@ import static com.agribank.qldv_api.enums.EExcelColumnInfo.*;
 @RequiredArgsConstructor
 public class ExportHandlerService {
     private final TcdReportService tcdReportService;
+    private final ExportBcslTcdRp01Service exportBcslTcdRp01Service;
     private final ExportDVRp21Service exportDVRp21Service;
     private final ExportDVRp24Service exportDVRp24Service;
     private final ExportDVRp25Service exportDVRp25Service;
@@ -40,6 +47,10 @@ public class ExportHandlerService {
                 throw new CommonException("Không tìm thấy loại báo cáo");
             }
             switch (eExcelColumnInfo) {
+                case BC_01_BCSL:
+                    SearchRp01Request SearchRp01Request = gson.fromJson(paramString, SearchRp01Request.class);
+                    exportResult = exportBcslTcdRp01Service.exportDataBcsl(SearchRp01Request, BC_01_BCSL.getName(), "", BC_01_BCSL.name(), 1, BC_01_BCSL.getName());
+                    break;
                 case BC_03_04_DS:
                     OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);
                     exportResult = tcdReportService.exportExcelRp0304(paramExport);

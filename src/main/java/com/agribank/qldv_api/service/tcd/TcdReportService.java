@@ -130,7 +130,6 @@ public class TcdReportService {
         return dvService.searchRp17(request);
     }
 
-
     public ExportResponse exportExcelRp17(SearchRp17Request request) {
         try {
             return exportTcdRp17Service.exportData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.name(), 1, EExcelColumnInfo.BC_17_DSDV.getName());

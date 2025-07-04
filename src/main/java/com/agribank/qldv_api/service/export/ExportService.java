@@ -58,7 +58,7 @@ public class ExportService {
             List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex);
             try {
                 //Tao workbook
-                Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems());
+                Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), false);
                 long randomNum = ThreadLocalRandom.current().nextLong(1, 999999999999999999L);
                 exportResult.setFileName(fileName + ".xlsx");
                 exportResult.setWorkbook(workbook);
@@ -77,7 +77,70 @@ public class ExportService {
                 List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i);
                 try {
                     //Tao workbook
-                    Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems());
+                    Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), false);
+                    long randomNum = ThreadLocalRandom.current().nextLong(1, 999999999999999999L);
+                    String reportTitle = fileName + "_" + gson.toJson(randomNum);
+                    //Convert file
+                    FileInputStream fileInputStream = CommonUtils.convertWorkbookToStream(workbook, reportTitle);
+                    fileNames.add(reportTitle + ".xlsx");
+                    fileInputStreams.add(fileInputStream);
+                }
+                catch (Exception exception){
+                    System.out.println(Arrays.toString(exception.getStackTrace()));
+                    success = false;
+                    break;
+                }
+            }
+            if(!success){
+                return exportResult;
+            }
+            String zipFileUrl = zipHelper.handleZipFile(fileInputStreams, fileNames, fileName);
+            exportResult.setFileZip(new File(zipFileUrl));
+            exportResult.setFileName(fileName + ".zip");
+            return exportResult;
+        }
+    }
+
+    public ExportResponse exportDataBcsl(Object serviceParam, String title, String period, String layoutName, int numberTableHeaderRows, String titleMessage){
+        ExportResponse exportResult = new ExportResponse();
+        RecordColumnExport recordColumnExport = handleGetColumnExport(layoutName, numberTableHeaderRows);
+        ExportParam exportParam = new ExportParam();
+        exportParam.setColumnsExport(recordColumnExport.columnExport());
+        exportParam.setTitle(title);
+        exportParam.setPeriod(period);
+        exportParam.setServiceParameter(serviceParam);
+        exportParam.setNumberTableHeaderRows(numberTableHeaderRows);
+        initBeforeExport();
+        int totalRecords = handleGetTotalRecord(serviceParam);
+        int totalPage = (int) Math.ceil((double) totalRecords / MAX_ROWS_EXPORT);
+        Gson gson = new Gson();
+        String fileName = CommonUtils.removeVietnameseDiacritics(title.toUpperCase());
+        fileName = String.join("_", fileName.split(" "));
+        if(totalPage == 1){
+            int pageIndex = 0;
+            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex);
+            try {
+                //Tao workbook
+                Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), true);
+                long randomNum = ThreadLocalRandom.current().nextLong(1, 999999999999999999L);
+                exportResult.setFileName(fileName + ".xlsx");
+                exportResult.setWorkbook(workbook);
+                return exportResult;
+            }
+            catch (Exception exception){
+                System.out.println(exception.getMessage());
+                return exportResult;
+            }
+        }
+        else {
+            List<String> fileNames = new ArrayList<>();
+            List<FileInputStream> fileInputStreams = new ArrayList<>();
+            boolean success = true;
+            for(int i=0; i<totalPage; i++){
+                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i);
+                try {
+                    //Tao workbook
+                    Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), true);
                     long randomNum = ThreadLocalRandom.current().nextLong(1, 999999999999999999L);
                     String reportTitle = fileName + "_" + gson.toJson(randomNum);
                     //Convert file
@@ -173,7 +236,12 @@ public class ExportService {
     }
 
 
-    public XSSFWorkbook handleExportData(ExportParam exportParam, List<Map<String, Object>> exportData, List<ExcelColumnInfo> titleTable) {
+    public XSSFWorkbook handleExportData(ExportParam exportParam, List<Map<String, Object>> exportData, List<ExcelColumnInfo> titleTable, boolean isStatistic) {
+        List<Map<String, Object>> exportDataTotal = new ArrayList<>();
+        if (isStatistic){
+            exportDataTotal.add(exportData.get(exportData.size() - 1));
+            exportData.remove(exportData.size() - 1);
+        }
         List<ExcelColumnInfo> columnsExport = exportParam.getColumnsExport();
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet("Sheet1");
@@ -181,6 +249,7 @@ public class ExportService {
                 exportParam.getPeriod(), exportParam.getServiceParameter(), columnsExport.size());
         numberRows = initTableHeader(workbook, sheet, titleTable, columnsExport.size(), exportParam.getNumberTableHeaderRows(), numberRows);
         numberRows = createRowValue(workbook, sheet, columnsExport, numberRows, exportData);
+        numberRows = createRowTotalValue(workbook, sheet, columnsExport, numberRows, exportDataTotal);
         numberRows = createSummaryRow(workbook, sheet, columnsExport, numberRows, exportData);
         numberRows = createFooter(workbook, sheet, numberRows, columnsExport.size());
         createTextNote(workbook, sheet, numberRows, titleTable, exportParam);
@@ -450,6 +519,34 @@ public class ExportService {
                 cell.setCellStyle(style);
                 if(columnExport.getColumnField().equals("order")){
                     cell.setCellValue(i + 1);
+                }
+                else{
+                    Object value = handleGetCellValue(exportData.get(i), columnExport);
+                    if (value != null)
+                        value = handleFormatCellValue(value, columnExport.getColumnType());
+                    cell.setCellValue(value != null ? value.toString() : "");
+                }
+            }
+
+            rowNum++;
+        }
+        return rowNum;
+    }
+
+    public int createRowTotalValue(XSSFWorkbook workbook, XSSFSheet sheet, List<ExcelColumnInfo> columnsExport, int rowNum, List<Map<String, Object>> exportData){
+        for (int i=0; i<exportData.size(); i++){
+            Row row = sheet.createRow(rowNum);
+            XSSFFont font = workbook.createFont();
+            font.setFontHeight(10);
+            font.setFontName("Times New Roman");
+            for (int j=0; j<columnsExport.size(); j++){
+                ExcelColumnInfo columnExport = columnsExport.get(j);
+                Cell cell = row.createCell(j);
+                CellStyle style = handleCreateCellStyle(workbook, columnExport);
+                style.setFont(font);
+                cell.setCellStyle(style);
+                if(columnExport.getColumnField().equals("order")){
+                    cell.setCellValue("Tổng");
                 }
                 else{
                     Object value = handleGetCellValue(exportData.get(i), columnExport);
