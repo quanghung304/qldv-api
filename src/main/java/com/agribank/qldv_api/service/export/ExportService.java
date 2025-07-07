@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.export;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.export.ExportParam;
 import com.agribank.qldv_api.response.export.ExportResponse;
+import com.agribank.qldv_api.response.pdf.PDFContentResult;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
 import com.google.gson.Gson;
@@ -25,6 +26,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.agribank.qldv_api.utils.CommonUtils.isNullOrEmpty;
+
+
 @Service
 @Primary
 @RequiredArgsConstructor
@@ -32,8 +36,12 @@ public class ExportService {
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
 
+    @Value("${app.max.rows.pdf.export}")
+    private Integer MAX_ROWS_PDF_EXPORT;
+
     private final ExcelColumnInfoService excelColumnInfoService;
     private final ZipHelper zipHelper;
+    private final ExportPDFReportService exportPDFReportService;
 
     protected record RecordColumnExport(List<ExcelColumnInfo> layoutConfigItems, List<ExcelColumnInfo> columnExport) {
     }
@@ -161,6 +169,67 @@ public class ExportService {
             exportResult.setFileZip(new File(zipFileUrl));
             exportResult.setFileName(fileName + ".zip");
             return exportResult;
+        }
+    }
+
+    public PDFContentResult exportPDFData(Object serviceParam, String title, String period, String reportName, int numberTableHeaderRows, String pageType){
+        ExportParam exportParam = new ExportParam();
+        exportParam.setTitle(title);
+        exportParam.setPeriod(period);
+        exportParam.setServiceParameter(serviceParam);
+        exportParam.setNumberTableHeaderRows(numberTableHeaderRows);
+        initBeforeExport();
+        int totalRecords = handleGetTotalRecord(serviceParam);
+        int totalPage = (int) Math.ceil((double) totalRecords / MAX_ROWS_PDF_EXPORT);
+        if(totalPage == 1){
+            int pageIndex = 0;
+            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex);
+            try {
+                return exportPDFReportService.exportReportPdf(exportData, reportName, pageType);
+            }
+            catch (Exception exception){
+                System.out.println(exception.getMessage());
+                return new PDFContentResult(null, "InternalError");
+            }
+        }
+        else if (totalPage <= 100) {
+            List<byte[]> fileDatas = new ArrayList<>();
+            for(int i=0; i<totalPage; i++){
+                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i);
+                try {
+                    PDFContentResult data = exportPDFReportService.exportReportPdf(exportData, reportName, pageType);
+                    fileDatas.add(data.getPdfContent());
+                }
+                catch (Exception exception){
+                    System.out.println(Arrays.toString(exception.getStackTrace()));
+                    break;
+                }
+            }
+            if(fileDatas.isEmpty()){
+                return new PDFContentResult(null, "InternalError");
+            }
+            String zipFile = handleZipFilePdfMulti(fileDatas, reportName);
+            return new PDFContentResult(new byte[0], zipFile);
+        } else {
+            return new PDFContentResult(null, "FileOutOfSize");
+        }
+    }
+
+    private String handleZipFilePdfMulti(List<byte[]> fileResult, String reportName) {
+        List<String> fileNames = new ArrayList<>();
+        for(int i=0; i< fileResult.size(); i++){
+            long randomNum = ThreadLocalRandom.current().nextLong(1, 999999999999999999L);
+            String fileName = String.format(reportName + "_" + randomNum + ".pdf");
+            fileNames.add(fileName);
+        }
+        reportName = CommonUtils.removeAccents(reportName);
+        String fileZipName = String.join("_", reportName.split(" "));
+        String zipPath = zipHelper.handleZipFileByte(fileResult, fileNames, fileZipName);
+        if(isNullOrEmpty(zipPath)){
+            return null;
+        }
+        else{
+            return zipPath;
         }
     }
 

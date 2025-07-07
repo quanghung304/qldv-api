@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.bcsl_report.tcd;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportService;
 import com.agribank.qldv_api.service.export.ZipHelper;
+import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.response.PageResponse;
@@ -20,8 +21,8 @@ public class ExportBcslTcdRp01Service extends ExportService {
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
 
-    public ExportBcslTcdRp01Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper) {
-        super(excelColumnInfoService, zipHelper);
+    public ExportBcslTcdRp01Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
+        super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
     public int handleGetTotalRecord(Object serviceParam) {

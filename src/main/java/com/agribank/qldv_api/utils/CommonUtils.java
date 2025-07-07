@@ -10,6 +10,9 @@ import org.mis.encrypt.interfaces.IMisEncrypt;
 import org.mis.encrypt.services.CreateService;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +28,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.sql.Timestamp;
 import java.util.regex.Pattern;
+
+
 
 public class CommonUtils {
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd/MM/yyyy");
@@ -203,6 +208,16 @@ public class CommonUtils {
 
     }
 
+    public static Boolean isNullOrEmpty(String str) {
+        return str == null || str.isEmpty() || str.isBlank();
+    }
+
+    public static String removeAccents(String input) {
+        if (isNullOrEmpty(input)) return "";
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "").replaceAll("Đ", "D").replaceAll("đ", "d");
+    }
+
     public static Date parseDateString(String dateStr) {
         try {
             LocalDate localDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
@@ -211,6 +226,17 @@ public class CommonUtils {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public static String replaceSpecialCharacter(String input){
+        if(input == null){
+            return null;
+        }
+
+        return input
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
     }
 
     public static Date addOneYears(Date date){

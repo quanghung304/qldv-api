@@ -4,9 +4,9 @@ import com.agribank.qldv_api.response.dv_report.DvRp21Response;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportService;
 import com.agribank.qldv_api.service.export.ZipHelper;
+import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
-import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +21,8 @@ public class ExportDVRp21Service extends ExportService {
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
 
-    public ExportDVRp21Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper) {
-        super(excelColumnInfoService, zipHelper);
+    public ExportDVRp21Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
+        super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
     public int handleGetTotalRecord(Object serviceParam) {

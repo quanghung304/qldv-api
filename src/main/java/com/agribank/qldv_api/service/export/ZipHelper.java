@@ -1,13 +1,11 @@
 package com.agribank.qldv_api.service.export;
 
 import com.google.gson.Gson;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.zip.ZipEntry;
@@ -70,6 +68,30 @@ public class ZipHelper {
         return zipFileName;
     }
 
+    public String handleZipFileByte(List<byte[]> contents, List<String> filenames, String zipFileName) {
+        Gson gson = new Gson();
+        if(!zipFolder.endsWith("/")){
+            zipFolder += "/";
+        }
+        long randomNum = ThreadLocalRandom.current().nextLong(1, 999999999999999999L);
+        String nameResult = zipFileName + "_" + gson.toJson(randomNum) + ".zip";
+        zipFileName = zipFolder + nameResult;
+        try {
+            if (contents.size() != filenames.size()) {
+                return "";
+            }
+            ByteArrayOutputStream byteArrayOutputStream = getByteArrayOutputStream(contents, filenames);
+            byte[] zipBytes = byteArrayOutputStream.toByteArray();
+            try (FileOutputStream fos = new FileOutputStream(zipFileName)) {
+                fos.write(zipBytes);
+            }
+        }
+        catch (Exception exception){
+            return "";
+        }
+        return zipFileName;
+    }
+
     private static void addToZip(FileInputStream fis, String fileName, ZipOutputStream zipOut) throws IOException {
         // Create a new ZipEntry with the file name
         ZipEntry zipEntry = new ZipEntry(fileName);
@@ -86,5 +108,22 @@ public class ZipHelper {
 
         // Complete the entry
         zipOut.closeEntry();
+    }
+
+    @NotNull
+    private static ByteArrayOutputStream getByteArrayOutputStream(List<byte[]> contents, List<String> filenames) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(byteArrayOutputStream)) {
+            for (int i = 0; i < contents.size(); i++) {
+                byte[] fileData = contents.get(i);
+                String filename = filenames.get(i);
+
+                ZipEntry entry = new ZipEntry(filename);
+                zos.putNextEntry(entry);
+                zos.write(fileData);
+                zos.closeEntry();
+            }
+        }
+        return byteArrayOutputStream;
     }
 }
