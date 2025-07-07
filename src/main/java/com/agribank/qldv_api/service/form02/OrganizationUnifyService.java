@@ -262,7 +262,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
             for (DvOrgHistory dvOrgHistory: dvOrgHistories) {
                 DvOrgHistory dvOrgHis = dvOrgHistoriesMap.getOrDefault(dvOrgHistory.getStaffCode(), null);
                 if (Objects.nonNull(dvOrgHis)) {
-                    dvOrgHis.setId(dvOrgHistory.getId());
+                    dvOrgHistory.setId(dvOrgHis.getId());
                 }
             }
         }
