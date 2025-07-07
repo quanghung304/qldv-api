@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.tcd;
 import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
+import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldv_api.service.export.ExportService;
 import com.agribank.qldv_api.service.export.ZipHelper;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
@@ -23,8 +24,8 @@ public class ExportTcdRp17Service extends ExportService {
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
 
-    public ExportTcdRp17Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper) {
-        super(excelColumnInfoService, zipHelper);
+    public ExportTcdRp17Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
+        super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
     public int handleGetTotalRecord(Object serviceParam) {

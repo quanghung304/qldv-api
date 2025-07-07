@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.tcd;
 import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.enums.EReport01Type;
 import com.agribank.qldv_api.response.export.ExportResponse;
+import com.agribank.qldv_api.response.pdf.PDFContentResult;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
 import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.DVService;
@@ -116,6 +117,8 @@ public class TcdReportService {
         return null;
     }
 
+
+
     public ExportResponse exportExcelRp0304(OrganizationRpSearchRequest request) {
         try {
             return exportTcdReport03Service.exportData(request, EExcelColumnInfo.BC_03_04_DS.getName(), "", EExcelColumnInfo.BC_03_04_DS.name(), 1, EExcelColumnInfo.BC_03_04_DS.getName());
@@ -133,6 +136,26 @@ public class TcdReportService {
     public ExportResponse exportExcelRp17(SearchRp17Request request) {
         try {
             return exportTcdRp17Service.exportData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.name(), 1, EExcelColumnInfo.BC_17_DSDV.getName());
+        }
+        catch (Exception exception){
+            System.out.println(exception.getMessage());
+        }
+        return null;
+    }
+
+    public PDFContentResult exportPDFRp0304(OrganizationRpSearchRequest request) {
+        try {
+            return exportTcdReport03Service.exportPDFData(request, EExcelColumnInfo.BC_03_04_DS.getName(), "", EExcelColumnInfo.BC_03_04_DS.getName(), 1, EExcelColumnInfo.BC_03_04_DS.getPageType());
+        }
+        catch (Exception exception){
+            System.out.println(exception.getMessage());
+        }
+        return null;
+    }
+
+    public PDFContentResult exportPDFRp17(SearchRp17Request request) {
+        try {
+            return exportTcdRp17Service.exportPDFData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.getName(), 1, EExcelColumnInfo.BC_17_DSDV.getPageType());
         }
         catch (Exception exception){
             System.out.println(exception.getMessage());
