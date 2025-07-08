@@ -10,11 +10,13 @@ import com.agribank.qldv_api.service.dv_report.ExportDVRp29Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp34Service;
 import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp01Service;
 import com.agribank.qldv_api.service.dv_report.*;
+import com.agribank.qldv_api.service.dv_report.*;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
@@ -35,6 +37,7 @@ public class ExportHandlerService {
     private final TcdReportService tcdReportService;
     private final ExportBcslTcdRp01Service exportBcslTcdRp01Service;
     private final ExportDVRp21Service exportDVRp21Service;
+    private final ExportDVRp23Service exportDVRp23Service;
     private final ExportDVRp24Service exportDVRp24Service;
     private final ExportDVRp25Service exportDVRp25Service;
     private final ExportDVRp29Service exportDVRp29Service;
@@ -65,6 +68,10 @@ public class ExportHandlerService {
                 case BC_21_DSDV:
                     SearchRp21Request searchRp21Request = gson.fromJson(paramString, SearchRp21Request.class);
                     exportResult = exportDVRp21Service.exportData(searchRp21Request, EExcelColumnInfo.BC_21_DSDV.getName(), "", EExcelColumnInfo.BC_21_DSDV.name(), 1, EExcelColumnInfo.BC_21_DSDV.getName());
+                    break;
+                case BC_23_DSDV:
+                    SearchRp23Request searchRp23Request = gson.fromJson(paramString, SearchRp23Request.class);
+                    exportResult = exportDVRp23Service.exportData(searchRp23Request, EExcelColumnInfo.BC_23_DSDV.getName(), "", EExcelColumnInfo.BC_23_DSDV.name(), 1, EExcelColumnInfo.BC_23_DSDV.getName());
                     break;
                 case BC_24_DSDV:
                     SearchRp24Request searchRp24Request = gson.fromJson(paramString, SearchRp24Request.class);
