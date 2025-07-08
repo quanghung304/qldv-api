@@ -12,6 +12,7 @@ import com.agribank.qldv_api.response.dv_report.DvRp25Response;
 import com.agribank.qldv_api.response.dv_report.DvRp21Response;
 import com.agribank.qldv_api.service.DVRecognitionService;
 import com.agribank.qldv_api.service.DVService;
+import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
@@ -25,6 +26,7 @@ import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgri
 import com.agribank.qldvutils.entity.report26.*;
 import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,6 +50,7 @@ public class DVReportService {
     private final DeceasedService deceasedService;
     private final PartyReinstatementService partyReinstatementService;
     private final TransferOutAgribankService transferOutAgribankService;
+    private final MembershipProposalService membershipProposalService;
     private final ModelMapper modelMapper;
 
 
@@ -583,5 +586,11 @@ public class DVReportService {
         }
         response.setData(dvRp21Respons);
         return response;
+    }
+
+    public PageResponse<DvRp23Response> searchRp23(SearchRp23Request request) {
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+
+        return membershipProposalService.searchRp23(request);
     }
 }
