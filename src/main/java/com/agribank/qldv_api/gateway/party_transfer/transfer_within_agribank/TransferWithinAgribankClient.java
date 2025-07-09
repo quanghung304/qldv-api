@@ -5,9 +5,9 @@ import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_agribank.TransferWithinAgribank;
 import com.agribank.qldvutils.request.party_transfer.TransferWithinAgribankSearch;
-import com.agribank.qldvutils.request.report26.Report26SearchRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp30Request;
 import com.agribank.qldvutils.response.PageResponse;
-import com.agribank.qldvutils.response.report26.Report26DtoResponse;
+import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,5 +28,10 @@ public interface TransferWithinAgribankClient extends BaseClient<TransferWithinA
     @GetMapping("/find-by-process/{processId}")
     DefaultResponse<TransferWithinAgribank> findByProcessId(
             @PathVariable(name = "processId") String processId
+    );
+
+    @PostMapping("/search-rp-30")
+    DefaultResponse<PageResponse<DvRp30Response>> searchRp30(
+            @RequestBody SearchRp30Request request
     );
 }

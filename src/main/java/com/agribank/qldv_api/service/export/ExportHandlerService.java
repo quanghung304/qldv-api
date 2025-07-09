@@ -43,6 +43,7 @@ public class ExportHandlerService {
     private final ExportDVRp25Service exportDVRp25Service;
     private final ExportDVRp28Service exportDVRp28Service;
     private final ExportDVRp29Service exportDVRp29Service;
+    private final ExportDVRp30Service exportDVRp30Service;
     private final ExportDVRp34Service exportDVRp34Service;
 
     public ExportResponse handleExport(Object param, String type) {
@@ -90,6 +91,10 @@ public class ExportHandlerService {
                 case BC_29_DSDV:
                     SearchReport29Request searchReport29Request = gson.fromJson(paramString, SearchReport29Request.class);
                     exportResult = exportDVRp29Service.exportData(searchReport29Request, EExcelColumnInfo.BC_29_DSDV.getName(), "", EExcelColumnInfo.BC_29_DSDV.name(), 1, EExcelColumnInfo.BC_29_DSDV.getName());
+                    break;
+                case BC_30_DSDV:
+                    SearchRp30Request searchRp30Request = gson.fromJson(paramString, SearchRp30Request.class);
+                    exportResult = exportDVRp30Service.exportData(searchRp30Request, EExcelColumnInfo.BC_30_DSDV.getName(), "", EExcelColumnInfo.BC_30_DSDV.name(), 1, EExcelColumnInfo.BC_30_DSDV.getName());
                     break;
                 case BC_34_DSDV:
                     SearchRp34Request searchRp34Request = gson.fromJson(paramString, SearchRp34Request.class);

@@ -8,14 +8,12 @@
 		<version>3.4.2</version>
 		<relativePath/> <!-- lookup parent from repository  -->
 	</parent>
-
 	<groupId>com.agribank</groupId>
 	<artifactId>qldv-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>qldv-api</name>
 	<description>API for QLDV project</description>
 	<url/>
-
 	<licenses>
 		<license/>
 	</licenses>
@@ -61,7 +59,7 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api-->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>

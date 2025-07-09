@@ -19,7 +19,9 @@ import com.agribank.qldvutils.entity.party_transfer.transfer_within_agribank.Tra
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_agribank.TransferWithinAgribankDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.party_transfer.TransferWithinAgribankSearch;
+import com.agribank.qldvutils.request.report_dv.SearchRp30Request;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,6 +64,7 @@ public class TransferWithinAgribankService implements EntityHandler {
                 .committeeProposalDate(request.getCommitteeProposalDate())
                 .numberOfSubmission(request.getNumberOfSubmission())
                 .secondIntroNumber(request.getSecondIntroNumber())
+                .oldOrganizationCode(dv.getOrganizationCode())
                 .build();
         transferWithinAgribankDraft.setCreatedBy(userDetails.getId());
         transferWithinAgribankDraft = transferWithinAgribankDraftService.save(transferWithinAgribankDraft);
@@ -298,5 +301,9 @@ public class TransferWithinAgribankService implements EntityHandler {
             transfer.setReceivingOrgCCode(draft.getReceivingOrgCCode());
             transfer.setReceivingOrgCName(draft.getReceivingOrgCName());
         }
+    }
+
+    public PageResponse<DvRp30Response> search30(SearchRp30Request request){
+        return client.searchRp30(request).getData();
     }
 }
