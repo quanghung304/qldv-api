@@ -3,6 +3,7 @@ package com.agribank.qldv_api.controller;
 import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.dv_report.*;
 import com.agribank.qldv_api.service.dv_report.DVReportService;
+import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
@@ -11,6 +12,7 @@ import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
+import com.agribank.qldvutils.response.dv_report.DvRp28Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -53,5 +55,10 @@ public class DVReportController {
     @PostMapping("/search/report-23")
     public ResponseEntity<BaseResponse<PageResponse<DvRp23Response>>> search(@RequestBody @Valid SearchRp23Request request) {
         return BaseResponse.success(service.searchRp23(request));
+    }
+
+    @PostMapping("/search/report-28")
+    public ResponseEntity<BaseResponse<PageResponse<DvRp28Response>>> search(@RequestBody @Valid SearchRp28Request request) {
+        return BaseResponse.success(service.searchRp28(request));
     }
 }

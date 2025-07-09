@@ -5,17 +5,14 @@ import com.agribank.qldv_api.enums.EReport26;
 import com.agribank.qldv_api.enums.EReport29Type;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
-import com.agribank.qldv_api.response.dv_report.DvRp24Response;
-import com.agribank.qldv_api.response.dv_report.DvRp29Response;
-import com.agribank.qldv_api.response.dv_report.DvRp34Response;
-import com.agribank.qldv_api.response.dv_report.DvRp25Response;
-import com.agribank.qldv_api.response.dv_report.DvRp21Response;
+import com.agribank.qldv_api.response.dv_report.*;
 import com.agribank.qldv_api.service.DVRecognitionService;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
+import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
 import com.agribank.qldv_api.service.report26.*;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.DV;
@@ -27,6 +24,7 @@ import com.agribank.qldvutils.entity.report26.*;
 import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
+import com.agribank.qldvutils.response.dv_report.DvRp28Response;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -51,6 +49,7 @@ public class DVReportService {
     private final PartyReinstatementService partyReinstatementService;
     private final TransferOutAgribankService transferOutAgribankService;
     private final MembershipProposalService membershipProposalService;
+    private final TransferToAgribankService transferToAgribankService;
     private final ModelMapper modelMapper;
 
 
@@ -592,5 +591,27 @@ public class DVReportService {
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
 
         return membershipProposalService.searchRp23(request);
+    }
+
+    public PageResponse<DvRp28Response> searchRp28(SearchRp28Request request) {
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+
+        PageResponse<DvRp28Response> response = transferToAgribankService.searchRp28(request);
+
+        if (Objects.isNull(response.getData()) || response.getData().isEmpty()) {
+            return response;
+        }
+
+        List<DvRp28Response> dvRp28Responses = response.getData();
+        for (DvRp28Response dvRp28Response : dvRp28Responses){
+            dvRp28Response.setTransferStatus( Objects.isNull(dvRp28Response.getExpectedExpiryDate()) || Objects.isNull(dvRp28Response.getTransferDate())
+                    ? "Chưa có dữ liệu"
+                    : CommonUtils.validateDatesAfter(dvRp28Response.getTransferDate(), dvRp28Response.getExpectedExpiryDate())
+                        ? "Đúng hạn" : "Quá hạn");
+        }
+
+        response.setData(dvRp28Responses);
+
+        return response;
     }
 }
