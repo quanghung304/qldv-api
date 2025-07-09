@@ -15,7 +15,7 @@ import java.util.Objects;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrganizationTransformRequest extends BaseFormDto {
+public class OrganizationUpDownRequest extends BaseFormDto {
     String id;
     Integer type;
     String organizationCode;

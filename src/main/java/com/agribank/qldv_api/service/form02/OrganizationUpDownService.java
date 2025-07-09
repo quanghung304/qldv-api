@@ -4,20 +4,20 @@ import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
-import com.agribank.qldv_api.gateway.form02.updown.TransformationHistoryClient;
-import com.agribank.qldv_api.gateway.form02.updown.TransformationHistoryDraftClient;
+import com.agribank.qldv_api.gateway.form02.updown.OrganizationUpDownClient;
+import com.agribank.qldv_api.gateway.form02.updown.OrganizationUpDownDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.organization_transform.OrganizationTransformRequest;
+import com.agribank.qldv_api.request.organization_transform.OrganizationUpDownRequest;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.*;
-import com.agribank.qldvutils.entity.form02.updown.TransformationHistory;
-import com.agribank.qldvutils.entity.form02.updown.TransformationHistoryDraft;
+import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
+import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDownDraft;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.form02.TransformationHistoryRpRequest;
+import com.agribank.qldvutils.request.form02.OrganizationUpDownRpRequest;
 import com.agribank.qldvutils.request.form02.UpdownOrganizationFilterRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +31,10 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class TransformationHistoryService implements EntityHandler {
-    private final TransformationHistoryDraftClient historyDraftClient;
+public class OrganizationUpDownService implements EntityHandler {
+    private final OrganizationUpDownDraftClient updownDraftClient;
     private final OrganizationClient organizationClient;
-    private final TransformationHistoryClient historyClient;
+    private final OrganizationUpDownClient updownClient;
     private final RequestClient requestClient;
     private final CheckAuthorityService checkAuthorityService;
     private final OrganizationService organizationService;
@@ -43,18 +43,16 @@ public class TransformationHistoryService implements EntityHandler {
 
     private final EForm upForm = EForm.BIEU_02_UP;
     private final EForm downForm = EForm.BIEU_02_DOWN;
-    private final TransformationHistoryDraftClient transformationHistoryDraftClient;
-    private final TransformationHistoryClient transformationHistoryClient;
 
     public Map<String, String> getCombinedFieldMap() {
         Map<String, String> combinedFieldMap = new LinkedHashMap<>();
         combinedFieldMap.putAll(BaseFormEntity.BASE_FIELD_MAP);
-        combinedFieldMap.putAll(TransformationHistoryDraft.FIELD_MAP);
+        combinedFieldMap.putAll(OrganizationUpDownDraft.FIELD_MAP);
 
         return combinedFieldMap;
     }
 
-    public TransformationHistoryDraft createTransformRequest(OrganizationTransformRequest request) {
+    public OrganizationUpDownDraft createTransformRequest(OrganizationUpDownRequest request) {
         Organization organization = organizationService.findByCode(request.getOrganizationCode());
 
         if (Objects.isNull(organization)){
@@ -77,7 +75,7 @@ public class TransformationHistoryService implements EntityHandler {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        TransformationHistoryDraft draft = new TransformationHistoryDraft();
+        OrganizationUpDownDraft draft = new OrganizationUpDownDraft();
 
         draft.setOrganizationCode(request.getOrganizationCode());
         draft.setType(request.getType());
@@ -93,36 +91,36 @@ public class TransformationHistoryService implements EntityHandler {
         draft.setEffectiveDate(request.getEffectiveDate());
         draft.setCreatedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.PENDING.getId());
-        TransformationHistoryDraft transformationHistoryDraft = historyDraftClient.save(draft).getData();
+        OrganizationUpDownDraft OrganizationUpDownDraft = updownDraftClient.save(draft).getData();
 
         EForm form = Objects.equals(request.getType(), EReport01Type.UPGRADE.getId()) ? upForm : downForm;
 
-        Request transformRequest = requestService.initializeRequest(transformationHistoryDraft, null, form, getCombinedFieldMap());
+        Request transformRequest = requestService.initializeRequest(OrganizationUpDownDraft, null, form, getCombinedFieldMap());
         transformRequest.setOrganizationCode(request.getOrganizationCode());
-        transformRequest.setReferenceId(transformationHistoryDraft.getId());
+        transformRequest.setReferenceId(OrganizationUpDownDraft.getId());
         transformRequest.setCreatedBy(userDetails.getId());
         requestClient.save(transformRequest);
 
-        return transformationHistoryDraft;
+        return OrganizationUpDownDraft;
     }
 
-    public List<TransformationHistoryDraft> getDrafttList(Integer status) {
+    public List<OrganizationUpDownDraft> getDrafttList(Integer status) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        return historyDraftClient.getList(userDetails.getOrganizationCode(), status).getData();
+        return updownDraftClient.getList(userDetails.getOrganizationCode(), status).getData();
     }
 
-    public TransformationHistoryDraft getDraft(String id) {
-        return historyDraftClient.findById(id).getData()
+    public OrganizationUpDownDraft getDraft(String id) {
+        return updownDraftClient.findById(id).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
     }
 
-    public Request update(OrganizationTransformRequest request) {
+    public Request update(OrganizationUpDownRequest request) {
         if (Objects.isNull(request.getId())) {
             throw new CommonException("Không được để trống trường id");
         }
 
-        TransformationHistory history = historyClient.findById(request.getId()).getData()
+        OrganizationUpDown history = updownClient.findById(request.getId()).getData()
                 .orElseThrow(() -> new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND));
 
         Organization organization = organizationService.findByCode(request.getOrganizationCode());
@@ -135,12 +133,12 @@ public class TransformationHistoryService implements EntityHandler {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        TransformationHistoryDraft draft = modelMapper.map(request, TransformationHistoryDraft.class);
+        OrganizationUpDownDraft draft = modelMapper.map(request, OrganizationUpDownDraft.class);
         draft.setId(null);
         draft.setCreatedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.PENDING.getId());
         draft.setHistoryId(history.getId());
-        draft = historyDraftClient.save(draft).getData();
+        draft = updownDraftClient.save(draft).getData();
 
         EForm form = Objects.equals(request.getType(), EReport01Type.UPGRADE.getId()) ? upForm : downForm;
 
@@ -154,24 +152,24 @@ public class TransformationHistoryService implements EntityHandler {
 
     }
 
-    private void validateRequest(OrganizationTransformRequest request, Organization organization) {
+    private void validateRequest(OrganizationUpDownRequest request, Organization organization) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
 
-        List<TransformationHistoryDraft> draftList = historyDraftClient.findPendingDraftByCode(request.getOrganizationCode()).getData();
+        List<OrganizationUpDownDraft> draftList = updownDraftClient.findPendingDraftByCode(request.getOrganizationCode()).getData();
 
         if (!draftList.isEmpty()) {
             throw new CommonException("Đã tồn tại yêu cầu nâng/hạ cấp cho tổ chức đảng này");
         }
     }
 
-    public PageResponse<TransformationHistory> getList(UpdownOrganizationFilterRequest request) {
+    public PageResponse<OrganizationUpDown> getList(UpdownOrganizationFilterRequest request) {
         if (Objects.isNull(request.getOrganizationCode())) {
             request.setOrganizationCode(CommonUtils.getOrganizationByRequestedUser());
         }
 
-        Page<TransformationHistory> historyPage = historyClient.getList(request).getData();
+        Page<OrganizationUpDown> historyPage = updownClient.getList(request).getData();
 
-        PageResponse<TransformationHistory> response = new PageResponse<>();
+        PageResponse<OrganizationUpDown> response = new PageResponse<>();
         response.setData(historyPage.getContent());
         response.setCurrentPage(historyPage.getNumber());
         response.setTotalPages(historyPage.getTotalPages());
@@ -180,35 +178,35 @@ public class TransformationHistoryService implements EntityHandler {
         return response;
     }
 
-    public TransformationHistory getDetail(String id) {
-        return historyClient.findById(id).getData().orElse(null);
+    public OrganizationUpDown getDetail(String id) {
+        return updownClient.findById(id).getData().orElse(null);
     }
 
     @Override
     public boolean applyCreate(String draftId, UserDetailsImpl userDetails) {
-        TransformationHistoryDraft draft = historyDraftClient.findById(draftId).getData()
+        OrganizationUpDownDraft draft = updownDraftClient.findById(draftId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
 
-        TransformationHistory history = modelMapper.map(draft, TransformationHistory.class);
+        OrganizationUpDown history = modelMapper.map(draft, OrganizationUpDown.class);
 
         return approveDraftRequest(draft, history);
     }
 
     @Override
     public boolean applyUpdate(String draftId) {
-        TransformationHistoryDraft draft = historyDraftClient.findById(draftId).getData()
+        OrganizationUpDownDraft draft = updownDraftClient.findById(draftId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
 
-        TransformationHistory history = historyClient.findById(draft.getHistoryId()).getData()
+        OrganizationUpDown history = updownClient.findById(draft.getHistoryId()).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
 
-        history = modelMapper.map(draft, TransformationHistory.class);
+        history = modelMapper.map(draft, OrganizationUpDown.class);
         history.setId(draft.getHistoryId());
 
         return approveDraftRequest(draft, history);
     }
 
-    private boolean approveDraftRequest(TransformationHistoryDraft draft, TransformationHistory history) {
+    private boolean approveDraftRequest(OrganizationUpDownDraft draft, OrganizationUpDown history) {
         Organization organization = organizationClient.findByCode(history.getOrganizationCode()).getData();
         if (Objects.isNull(organization)) return false;
 
@@ -221,8 +219,8 @@ public class TransformationHistoryService implements EntityHandler {
         draft.setApprovedBy(userDetails.getId());
 
         organizationClient.save(organization);
-        historyClient.save(history);
-        historyDraftClient.save(draft);
+        updownClient.save(history);
+        updownDraftClient.save(draft);
 
         return true;
     }
@@ -234,12 +232,12 @@ public class TransformationHistoryService implements EntityHandler {
 
     @Override
     public void setDenied(String draftId) {
-        TransformationHistoryDraft draft = historyDraftClient.findById(draftId).getData()
+        OrganizationUpDownDraft draft = updownDraftClient.findById(draftId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
         draft.setStatus(EApprovalStatus.DENIED.getId());
     }
 
-    public List<TransformationHistory> findByOrganizationCodeAndDate(TransformationHistoryRpRequest request){
-        return transformationHistoryClient.findByOrganizationCodeAndDate(request).getData();
+    public List<OrganizationUpDown> findByOrganizationCodeAndDate(OrganizationUpDownRpRequest request){
+        return updownClient.findByOrganizationCodeAndDate(request).getData();
     }
 }

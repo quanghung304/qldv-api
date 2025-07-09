@@ -1,11 +1,11 @@
 package com.agribank.qldv_api.controller.form02;
 
-import com.agribank.qldv_api.request.organization_transform.OrganizationTransformRequest;
+import com.agribank.qldv_api.request.organization_transform.OrganizationUpDownRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.service.form02.TransformationHistoryService;
+import com.agribank.qldv_api.service.form02.OrganizationUpDownService;
 import com.agribank.qldvutils.entity.Request;
-import com.agribank.qldvutils.entity.form02.updown.TransformationHistory;
-import com.agribank.qldvutils.entity.form02.updown.TransformationHistoryDraft;
+import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
+import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDownDraft;
 import com.agribank.qldvutils.request.form02.UpdownOrganizationFilterRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -18,43 +18,27 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/history")
 public class UpgradeDowngradeController {
-    private final TransformationHistoryService historyService;
+    private final OrganizationUpDownService updownService;
 
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PostMapping("create")
-    public ResponseEntity<DefaultResponse<TransformationHistoryDraft>> createTransformRequest(@RequestBody @Valid OrganizationTransformRequest request) {
+    public ResponseEntity<DefaultResponse<OrganizationUpDownDraft>> createTransformRequest(@RequestBody @Valid OrganizationUpDownRequest request) {
         request.validate();
-        return DefaultResponse.success(historyService.createTransformRequest(request));
+        return DefaultResponse.success(updownService.createTransformRequest(request));
     }
 
-//    @GetMapping("get-draft")
-//    public ResponseEntity<DefaultListResponse<TransformationHistoryDraft>> getDraftList(@RequestParam Integer status) {
-//        return DefaultListResponse.success(historyService.getDrafttList(status));
-//    }
-//
-//    @GetMapping("get/{id}")
-//    public ResponseEntity<DefaultResponse<TransformationHistoryDraft>> getDraft(@PathVariable String id) {
-//        return DefaultResponse.success(historyService.getDraft(id));
-//    }
-//
-//    @PreAuthorize("hasAuthority('QLDV_APPROVER')")
-//    @PutMapping("update")
-//    public ResponseEntity<DefaultResponse<Object>> update(@RequestBody List<ApproveRequest> requestList) {
-//        return DefaultResponse.success(historyService.update(requestList));
-//    }
-
     @PostMapping("list")
-    public ResponseEntity<DefaultResponse<PageResponse<TransformationHistory>>> getList(@RequestBody UpdownOrganizationFilterRequest request) {
-        return DefaultResponse.success(historyService.getList(request));
+    public ResponseEntity<DefaultResponse<PageResponse<OrganizationUpDown>>> getList(@RequestBody UpdownOrganizationFilterRequest request) {
+        return DefaultResponse.success(updownService.getList(request));
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<DefaultResponse<TransformationHistory>> getDetail(@PathVariable String id) {
-        return DefaultResponse.success(historyService.getDetail(id));
+    public ResponseEntity<DefaultResponse<OrganizationUpDown>> getDetail(@PathVariable String id) {
+        return DefaultResponse.success(updownService.getDetail(id));
     }
 
     @PutMapping("update")
-    public ResponseEntity<DefaultResponse<Request>> update(@RequestBody @Valid OrganizationTransformRequest request) {
-        return DefaultResponse.success(historyService.update(request));
+    public ResponseEntity<DefaultResponse<Request>> update(@RequestBody @Valid OrganizationUpDownRequest request) {
+        return DefaultResponse.success(updownService.update(request));
     }
 }
