@@ -13,6 +13,7 @@ import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
+import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -60,5 +61,10 @@ public class DVReportController {
     @PostMapping("/search/report-28")
     public ResponseEntity<BaseResponse<PageResponse<DvRp28Response>>> search(@RequestBody @Valid SearchRp28Request request) {
         return BaseResponse.success(service.searchRp28(request));
+    }
+
+    @PostMapping("/search/report-30")
+    public ResponseEntity<BaseResponse<PageResponse<DvRp30Response>>> search(@RequestBody @Valid SearchRp30Request request) {
+        return BaseResponse.success(service.searchRp30(request));
     }
 }

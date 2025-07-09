@@ -13,6 +13,7 @@ import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
+import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankService;
 import com.agribank.qldv_api.service.report26.*;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.DV;
@@ -25,6 +26,7 @@ import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
+import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -50,6 +52,7 @@ public class DVReportService {
     private final TransferOutAgribankService transferOutAgribankService;
     private final MembershipProposalService membershipProposalService;
     private final TransferToAgribankService transferToAgribankService;
+    private final TransferWithinAgribankService transferWithinAgribankService;
     private final ModelMapper modelMapper;
 
 
@@ -436,7 +439,7 @@ public class DVReportService {
     }
 
     public PageResponse<DvRp29Response> search29(SearchReport29Request searchReport29Request){
-        PageResponse<TransferOutAgribank> pageResponse = new PageResponse<>();
+        PageResponse<TransferOutAgribank> pageResponse;
         SearchRp29Request request = SearchRp29Request.builder()
                 .organizationCode(searchReport29Request.getOrganizationCode())
                 .fromDate(searchReport29Request.getFromDate())
@@ -611,6 +614,24 @@ public class DVReportService {
         }
 
         response.setData(dvRp28Responses);
+
+        return response;
+    }
+
+    public PageResponse<DvRp30Response> searchRp30(SearchRp30Request request) {
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+
+        PageResponse<DvRp30Response> response = transferWithinAgribankService.search30(request);
+        if (Objects.isNull(response.getData()) || response.getData().isEmpty()) {
+            return response;
+        }
+
+        for (DvRp30Response dvRp30Response : response.getData()){
+            dvRp30Response.setTransferStatus(Objects.isNull(dvRp30Response.getExpectedExpiryDate()) || Objects.isNull(dvRp30Response.getTransferDate())
+                    ? null
+                    : CommonUtils.validateDatesAfter(dvRp30Response.getTransferDate(), dvRp30Response.getExpectedExpiryDate())
+                        ? "Đúng hạn" : "Quá hạn");
+        }
 
         return response;
     }
