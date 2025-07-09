@@ -295,16 +295,15 @@ public class ImportFileService {
 
     public Resource getFileTemplate(String type) throws IOException {
         String fileName;
-        if(type.equals(EExcelImport.USERS.name())){
+        if(type.equals(EExcelImport.USERS.name())) {
             fileName = "Template_Upload_User";
-        }else if(type.equals(EExcelImport.BIEU_1.name())){
+        } else if(type.equals(EExcelImport.BIEU_1.name())) {
             fileName = "Template_Upload_Organization";
-        }
-        else if(type.equals(EExcelImport.BIEU_12.name())){
+        } else if(type.equals(EExcelImport.BIEU_12.name())) {
             fileName = "Template_Upload_Develop_Plan";
-        }
-
-        else{
+        } else if (type.equals(EExcelImport.BIEU_15.name())) {
+            fileName = "Template_Upload_DV";
+        } else {
             return null;
         }
         ClassPathResource classPathResource = new ClassPathResource("static/templateImport/" + fileName + ".xlsx");

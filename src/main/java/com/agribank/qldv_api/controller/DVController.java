@@ -70,7 +70,7 @@ public class DVController {
 
     @PostMapping("/import")
     public ResponseEntity<BaseResponse<String>> importExcel(@RequestParam(name = "file") MultipartFile file) throws IOException {
-        BaseResponse response = importDVService.handleReadFileUpload(file, EExcelImport.DV.name());
+        BaseResponse response = importDVService.handleReadFileUpload(file, EExcelImport.BIEU_15.name());
         return BaseResponse.success(response.getMessage(), null);
     }
 }
