@@ -15,6 +15,7 @@ import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
+import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
@@ -40,6 +41,7 @@ public class ExportHandlerService {
     private final ExportDVRp23Service exportDVRp23Service;
     private final ExportDVRp24Service exportDVRp24Service;
     private final ExportDVRp25Service exportDVRp25Service;
+    private final ExportDVRp28Service exportDVRp28Service;
     private final ExportDVRp29Service exportDVRp29Service;
     private final ExportDVRp34Service exportDVRp34Service;
 
@@ -80,6 +82,10 @@ public class ExportHandlerService {
                 case BC_25_DSDV:
                     SearchRp25Request searchRp25Request = gson.fromJson(paramString, SearchRp25Request.class);
                     exportResult = exportDVRp25Service.exportData(searchRp25Request, EExcelColumnInfo.BC_25_DSDV.getName(), "", EExcelColumnInfo.BC_25_DSDV.name(), 1, EExcelColumnInfo.BC_25_DSDV.getName());
+                    break;
+                case BC_28_DSDV:
+                    SearchRp28Request searchRp28Request = gson.fromJson(paramString, SearchRp28Request.class);
+                    exportResult = exportDVRp28Service.exportData(searchRp28Request, EExcelColumnInfo.BC_28_DSDV.getName(), "", EExcelColumnInfo.BC_28_DSDV.name(), 1, EExcelColumnInfo.BC_28_DSDV.getName());
                     break;
                 case BC_29_DSDV:
                     SearchReport29Request searchReport29Request = gson.fromJson(paramString, SearchReport29Request.class);

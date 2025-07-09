@@ -19,6 +19,7 @@ public enum EExcelColumnInfo {
     BC_23_DSDV("Danh sách kết nạp Đảng lần 2", "DANH SÁCH KẾT NẠP ĐẢNG LẦN 2", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_24_DSDV("Danh sách công nhận Đảng viên chính thức", "DANH SÁCH CÔNG NHẬN ĐẢNG VIÊN CHÍNH THỨC", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_25_DSDV("Danh sách Đảng viên được khôi phục Đảng tịch", "DANH SÁCH ĐẢNG VIÊN ĐƯỢC KHÔI PHỤC ĐẢNG TỊCH", ERequestType.DANG_VIEN.getId(),"A4N"),
+    BC_28_DSDV("Danh sách Đảng viên chuyển sinh hoạt Đảng đến Đảng bộ Agribank", "DANH SÁCH ĐẢNG VIÊN CHUYỂN SINH HOẠT ĐẢNG ĐẾN ĐẢNG BỘ AGRIBANK", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_29_DSDV("Danh sách Đảng viên chuyển sinh hoạt ra ngoài Đảng bộ Agribank", "DANH SÁCH ĐẢNG VIÊN CHUYỂN SINH HOẠT RA NGOÀI ĐẢNG BỘ AGRIBANK", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_34_DSDV("Danh sách Đảng viên miễn sinh hoạt Đảng Xin ra khỏi Đảng Xóa tên Từ trần",
             "DANH SÁCH ĐẢNG VIÊN MIỄN SINH HOẠT ĐẢNG XIN RA KHỎI ĐẢNG XÓA TÊN TỪ TRẦN",

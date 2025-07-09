@@ -4,8 +4,10 @@ import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribank;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp28Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.dv_report.DvRp28Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,4 +28,7 @@ public interface TransferToAgribankClient extends BaseClient<TransferToAgribank,
 
     @GetMapping("find-by-staff-code/{staffCode}")
     BaseResponse<TransferToAgribank> findByStaffCode(@PathVariable String staffCode);
+
+    @PostMapping("/search-rp-28")
+    BaseResponse<PageResponse<DvRp28Response>> searchRp28(@RequestBody SearchRp28Request request);
 }
