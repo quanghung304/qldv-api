@@ -16,7 +16,6 @@
 	<description>API for QLDV project</description>
 	<url/>
 
-
 	<licenses>
 		<license/>
 	</licenses>
@@ -62,7 +61,7 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api-->
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>

@@ -7,11 +7,11 @@ import com.agribank.qldv_api.response.pdf.PDFContentResult;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
 import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.DVService;
-import com.agribank.qldv_api.service.form02.TransformationHistoryService;
+import com.agribank.qldv_api.service.form02.OrganizationUpDownService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.Organization;
-import com.agribank.qldvutils.entity.form02.updown.TransformationHistory;
-import com.agribank.qldvutils.request.form02.TransformationHistoryRpRequest;
+import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
+import com.agribank.qldvutils.request.form02.OrganizationUpDownRpRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
@@ -24,7 +24,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TcdReportService {
     private final OrganizationService organizationService;
-    private final TransformationHistoryService transformationHistoryService;
+    private final OrganizationUpDownService OrganizationUpDownService;
     private final ExportTcdReport03Service exportTcdReport03Service;
     private final DVService dvService;
     private final ExportTcdRp17Service exportTcdRp17Service;
@@ -55,7 +55,7 @@ public class TcdReportService {
             rp0304Responses.add(rp0304Response);
         }
 
-        List<TransformationHistory> transformationHistories = getTransformationHistories(organizations, request);
+        List<OrganizationUpDown> transformationHistories = getTransformationHistories(organizations, request);
 
         if (transformationHistories.isEmpty()) {
             response.setData(rp0304Responses);
@@ -67,51 +67,51 @@ public class TcdReportService {
         return response;
     }
 
-    private List<TransformationHistory> getTransformationHistories(List<Organization> organizations, OrganizationRpSearchRequest request){
+    private List<OrganizationUpDown> getTransformationHistories(List<Organization> organizations, OrganizationRpSearchRequest request){
         List<String> organizationCode = organizations.stream().map(Organization::getCode).toList();
-        TransformationHistoryRpRequest transformationHistoryRpRequest = TransformationHistoryRpRequest.builder()
+        OrganizationUpDownRpRequest organizationUpDownRpRequest = OrganizationUpDownRpRequest.builder()
                 .codes(organizationCode)
                 .fromDate(request.getFromDate())
                 .toDate(request.getToDate())
                 .build();
 
-        return transformationHistoryService.findByOrganizationCodeAndDate(transformationHistoryRpRequest);
+        return OrganizationUpDownService.findByOrganizationCodeAndDate(organizationUpDownRpRequest);
     }
 
-    private List<Rp0304Response> makeResponse( List<TransformationHistory> transformationHistories, List<Rp0304Response> rp0304Responses){
-        Map<String, TransformationHistory> transformationHistoryMaps = new HashMap<>();
-        for(TransformationHistory transformationHistory : transformationHistories){
-            TransformationHistory transformationMapGet = transformationHistoryMaps
-                    .getOrDefault(transformationHistory.getOrganizationCode()
-                            + "_" + transformationHistory.getType(),
+    private List<Rp0304Response> makeResponse( List<OrganizationUpDown> transformationHistories, List<Rp0304Response> rp0304Responses){
+        Map<String, OrganizationUpDown> OrganizationUpDownMaps = new HashMap<>();
+        for(OrganizationUpDown OrganizationUpDown : transformationHistories){
+            OrganizationUpDown transformationMapGet = OrganizationUpDownMaps
+                    .getOrDefault(OrganizationUpDown.getOrganizationCode()
+                            + "_" + OrganizationUpDown.getType(),
                             null);
 
             if (Objects.nonNull(transformationMapGet)
-                    && transformationHistory.getCreatedAt()
+                    && OrganizationUpDown.getCreatedAt()
                     .before(transformationMapGet.getCreatedAt())){
-                transformationHistory = transformationMapGet;
+                OrganizationUpDown = transformationMapGet;
             }
 
-            transformationHistoryMaps.put(transformationHistory.getOrganizationCode()
-                            + "_" + transformationHistory.getType(),
-                    transformationHistory);
+            OrganizationUpDownMaps.put(OrganizationUpDown.getOrganizationCode()
+                            + "_" + OrganizationUpDown.getType(),
+                    OrganizationUpDown);
         }
 
         for (Rp0304Response rp0304Response : rp0304Responses){
-            rp0304Response.setUpgradeDate(getDate(transformationHistoryMaps, rp0304Response, EReport01Type.UPGRADE.getId()));
-            rp0304Response.setDowngradeDate(getDate(transformationHistoryMaps, rp0304Response, EReport01Type.DOWNGRADE.getId()));
+            rp0304Response.setUpgradeDate(getDate(OrganizationUpDownMaps, rp0304Response, EReport01Type.UPGRADE.getId()));
+            rp0304Response.setDowngradeDate(getDate(OrganizationUpDownMaps, rp0304Response, EReport01Type.DOWNGRADE.getId()));
         }
         return rp0304Responses;
     }
 
-    private Date getDate(Map<String, TransformationHistory> transformationHistoryMaps, Rp0304Response rp0304Response, Integer type){
-        TransformationHistory transformationHistory = transformationHistoryMaps
+    private Date getDate(Map<String, OrganizationUpDown> OrganizationUpDownMaps, Rp0304Response rp0304Response, Integer type){
+        OrganizationUpDown OrganizationUpDown = OrganizationUpDownMaps
                 .getOrDefault(rp0304Response.getCode()
                                 + "_" + type,
                         null);
 
-        if (Objects.nonNull(transformationHistory)){
-            return transformationHistory.getEffectiveDate();
+        if (Objects.nonNull(OrganizationUpDown)){
+            return OrganizationUpDown.getEffectiveDate();
         }
 
         return null;
