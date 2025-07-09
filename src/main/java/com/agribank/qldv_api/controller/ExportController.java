@@ -5,6 +5,7 @@ import com.agribank.qldv_api.response.pdf.PDFContentResult;
 import com.agribank.qldv_api.service.export.ExportHandlerService;
 import com.agribank.qldv_api.service.import_file.ImportFileService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.core.io.Resource;
@@ -124,7 +125,7 @@ public class ExportController {
     }
 
     @GetMapping("/download/template")
-    public ResponseEntity<Resource> getFileTemplate(@RequestParam("fileStruct") String fileStruct) throws IOException {
+    public ResponseEntity<Resource> getFileTemplate(@RequestParam("fileStruct") @NotNull String fileStruct) throws IOException {
         Resource fileResource = importFileService.getFileTemplate(fileStruct);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
