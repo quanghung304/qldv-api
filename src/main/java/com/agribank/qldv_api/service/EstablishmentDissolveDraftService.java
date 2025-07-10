@@ -5,24 +5,20 @@ import com.agribank.qldv_api.gateway.EstablishmentDissolveClient;
 import com.agribank.qldv_api.gateway.EstablishmentDissolveDraftClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.DraftRequest;
 import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveRequest;
-import com.agribank.qldv_api.request.establishment_dissolve_draft.EDDraftSearchRequest;
-import com.agribank.qldv_api.response.DraftResponse;
-import com.agribank.qldv_api.response.establishment_dissolve_draft.EDDraftResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.*;
+import com.agribank.qldvutils.entity.form02.OrganizationHistory;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.request.form02.ApproveDissolveRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
-import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +28,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
     private final EstablishmentDissolveClient dissolveClient;
     private final RequestClient requestClient;
     private final OrganizationClient organizationClient;
+    private final OrganizationHistoryClient historyClient;
     private final OrganizationService organizationService;
     private final UserService userService;
     private final CheckAuthorityService checkAuthorityService;
@@ -102,7 +99,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
             throw new CommonException("Không tìm thấy dữ liệu");
         }
 
-        EstablishmentDissolve  dissolve =  dissolveClient.findById(request.getId()).getData();
+        EstablishmentDissolve  dissolve =  dissolveClient.findById(request.getId()).getData().orElse(null);
 
         if (Objects.isNull(dissolve)) {
             throw new CommonException("Không tìm thấy dữ liệu");
@@ -169,9 +166,22 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         draft.setStatus(EApprovalStatus.APPROVED.getId());
         draft.setApprovedBy(userDetails.getId());
 
-        organizationClient.save(organization);
-        dissolveClient.save(establishmentDissolve);
-        client.save(draft);
+        OrganizationHistory history = OrganizationHistory.builder()
+                .name(organization.getName())
+                .type(establishmentDissolve.getType())
+                .effectiveDate(establishmentDissolve.getEffectiveDate())
+                .refId(establishmentDissolve.getId())
+                .build();
+        history.setCode(organization.getCode());
+
+        ApproveDissolveRequest request = ApproveDissolveRequest.builder()
+                .organization(organization)
+                .dissolve(establishmentDissolve)
+                .draft(draft)
+                .history(history)
+                .build();
+
+        dissolveClient.saveEntities(request);
 
         return true;
     }
@@ -210,15 +220,34 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         }
 
         if (Objects.isNull(organization)) return false;
+        organization.setStatus(EOrganizationStatus.NO.getStatus());
 
         draft.setStatus(EApprovalStatus.APPROVED.getId());
         draft.setApprovedBy(userService.getUserRequested().getId());
 
-        dissolveClient.save(establishmentDissolve);
-        organization.setStatus(EOrganizationStatus.NO.getStatus());
-        organizationClient.save(organization);
+        OrganizationHistory history = historyClient.findByRefId(EReport01Type.DISSOLVE.getId(), establishmentDissolve.getId()).getData();
 
-        client.save(draft);
+        if (Objects.nonNull(history)) {
+            history.setCode(organization.getCode());
+            history.setName(organization.getName());
+            history.setEffectiveDate(establishmentDissolve.getEffectiveDate());
+        } else {
+            history = OrganizationHistory.builder()
+                    .name(organization.getName())
+                    .type(establishmentDissolve.getType())
+                    .effectiveDate(establishmentDissolve.getEffectiveDate())
+                    .refId(establishmentDissolve.getId())
+                    .build();
+            history.setCode(organization.getCode());
+        }
+        ApproveDissolveRequest request = ApproveDissolveRequest.builder()
+                .organization(organization)
+                .dissolve(establishmentDissolve)
+                .draft(draft)
+                .history(history)
+                .build();
+
+        dissolveClient.saveEntities(request);
         return true;
     }
 

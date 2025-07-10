@@ -73,6 +73,6 @@ public class EstablishmentDissolveService {
     }
 
     public EstablishmentDissolve findById(String id){
-        return client.findById(id).getData();
+        return client.findById(id).getData().orElse(null);
     }
 }
