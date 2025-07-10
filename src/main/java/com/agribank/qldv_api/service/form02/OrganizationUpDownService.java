@@ -4,6 +4,7 @@ import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.gateway.form02.updown.OrganizationUpDownClient;
 import com.agribank.qldv_api.gateway.form02.updown.OrganizationUpDownDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -14,9 +15,11 @@ import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.*;
+import com.agribank.qldvutils.entity.form02.OrganizationHistory;
 import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
 import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDownDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.form02.AprroveUpDownRequest;
 import com.agribank.qldvutils.request.form02.OrganizationUpDownRpRequest;
 import com.agribank.qldvutils.request.form02.UpdownOrganizationFilterRequest;
 import com.agribank.qldvutils.response.PageResponse;
@@ -36,6 +39,7 @@ public class OrganizationUpDownService implements EntityHandler {
     private final OrganizationClient organizationClient;
     private final OrganizationUpDownClient updownClient;
     private final RequestClient requestClient;
+    private final OrganizationHistoryClient historyClient;
     private final CheckAuthorityService checkAuthorityService;
     private final OrganizationService organizationService;
     private final RequestService requestService;
@@ -187,9 +191,9 @@ public class OrganizationUpDownService implements EntityHandler {
         OrganizationUpDownDraft draft = updownDraftClient.findById(draftId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
 
-        OrganizationUpDown history = modelMapper.map(draft, OrganizationUpDown.class);
+        OrganizationUpDown upDown = modelMapper.map(draft, OrganizationUpDown.class);
 
-        return approveDraftRequest(draft, history);
+        return approveDraftRequest(draft, upDown);
     }
 
     @Override
@@ -197,17 +201,17 @@ public class OrganizationUpDownService implements EntityHandler {
         OrganizationUpDownDraft draft = updownDraftClient.findById(draftId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
 
-        OrganizationUpDown history = updownClient.findById(draft.getHistoryId()).getData()
+        OrganizationUpDown updown = updownClient.findById(draft.getHistoryId()).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
 
-        history = modelMapper.map(draft, OrganizationUpDown.class);
-        history.setId(draft.getHistoryId());
+        updown = modelMapper.map(draft, OrganizationUpDown.class);
+        updown.setId(draft.getHistoryId());
 
-        return approveDraftRequest(draft, history);
+        return approveDraftRequest(draft, updown);
     }
 
-    private boolean approveDraftRequest(OrganizationUpDownDraft draft, OrganizationUpDown history) {
-        Organization organization = organizationClient.findByCode(history.getOrganizationCode()).getData();
+    private boolean approveDraftRequest(OrganizationUpDownDraft draft, OrganizationUpDown updown) {
+        Organization organization = organizationClient.findByCode(updown.getOrganizationCode()).getData();
         if (Objects.isNull(organization)) return false;
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -218,9 +222,34 @@ public class OrganizationUpDownService implements EntityHandler {
         draft.setStatus(EApprovalStatus.APPROVED.getId());
         draft.setApprovedBy(userDetails.getId());
 
-        organizationClient.save(organization);
-        updownClient.save(history);
-        updownDraftClient.save(draft);
+        OrganizationHistory history = null;
+
+        if (Objects.nonNull(updown.getId())) {
+            history = historyClient.findByRefId(updown.getType(), updown.getId()).getData();
+        }
+
+        if (Objects.isNull(history)) {
+            history = OrganizationHistory.builder()
+                    .name(organization.getName())
+                    .type(draft.getType())
+                    .refId(updown.getId())
+                    .effectiveDate(updown.getEffectiveDate())
+                    .build();
+            history.setCode(updown.getId());
+        } else {
+            history.setCode(organization.getCode());
+            history.setName(organization.getName());
+            history.setEffectiveDate(updown.getEffectiveDate());
+        }
+
+        AprroveUpDownRequest request = AprroveUpDownRequest.builder()
+                .organization(organization)
+                .upDown(updown)
+                .draft(draft)
+                .history(history)
+                .build();
+
+        updownClient.saveEntities(request);
 
         return true;
     }

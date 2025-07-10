@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.organization;
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
@@ -15,8 +16,10 @@ import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldvutils.entity.*;
+import com.agribank.qldvutils.entity.form02.OrganizationHistory;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
+import com.agribank.qldvutils.request.organization.ApproveOrganizationRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
@@ -40,6 +43,7 @@ import static com.agribank.qldv_api.enums.Constants.BTCDU_CODE;
 public class OrganizationService implements EntityHandler {
     private final OrganizationClient client;
     private final RequestClient requestClient;
+    private final OrganizationHistoryClient historyClient;
     private final ModelMapper modelMapper;
     private final OrganizationReferenceService organizationReferenceService;
     private final RequestService requestService;
@@ -307,8 +311,23 @@ public class OrganizationService implements EntityHandler {
 
         organizationDraft.setApprove(EApprovalStatus.APPROVED.getId());
         organizationDraft.setApprovedBy(userDetails.getId());
-        organizationDraftService.save(organizationDraft);
-        client.save(organization);
+
+        OrganizationHistory history = OrganizationHistory.builder()
+                .name(organization.getName())
+                .type(EReport01Type.ESTABLISH.getId())
+                .refId(organization.getCode())
+                .effectiveDate(organization.getEffectiveDate())
+                .build();
+        history.setCode(organization.getCode());
+
+        ApproveOrganizationRequest organizationRequest = ApproveOrganizationRequest.builder()
+                .organization(organization)
+                .draft(organizationDraft)
+                .history(history)
+                .build();
+
+        client.saveEntities(organizationRequest);
+
         return true;
     }
 
@@ -323,8 +342,31 @@ public class OrganizationService implements EntityHandler {
         UserDetailsImpl userRequested = getUserRequested();
         organizationDraft.setApprove(EApprovalStatus.APPROVED.getId());
         organizationDraft.setApprovedBy(userRequested.getId());
-        organizationDraftService.save(organizationDraft);
-        client.save(organization);
+
+        OrganizationHistory history = historyClient.findByRefId(EReport01Type.ESTABLISH.getId(), organization.getCode()).getData();
+
+        if (Objects.nonNull(history)) {
+            history.setCode(organization.getCode());
+            history.setName(organization.getName());
+            history.setEffectiveDate(organization.getEffectiveDate());
+        } else {
+            history = OrganizationHistory.builder()
+                    .name(organization.getName())
+                    .type(EReport01Type.ESTABLISH.getId())
+                    .refId(organization.getCode())
+                    .effectiveDate(organization.getEffectiveDate())
+                    .build();
+            history.setCode(organization.getCode());
+        }
+
+        ApproveOrganizationRequest organizationRequest = ApproveOrganizationRequest.builder()
+                .organization(organization)
+                .draft(organizationDraft)
+                .history(history)
+                .build();
+
+        client.saveEntities(organizationRequest);
+
         return true;
     }
 
