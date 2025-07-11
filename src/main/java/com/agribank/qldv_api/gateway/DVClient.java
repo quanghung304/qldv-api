@@ -5,13 +5,13 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.request.SearchDVRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp22Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
-import com.agribank.qldvutils.response.dv_report.DvRp23Response;
+import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 

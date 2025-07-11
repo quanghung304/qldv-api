@@ -14,8 +14,10 @@ import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.membershipProposal.MPSearchRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp22Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.membershipProposal.MembershipProposalResponse;
 import lombok.RequiredArgsConstructor;
@@ -212,5 +214,9 @@ public class MembershipProposalService implements EntityHandler {
 
     public PageResponse<DvRp23Response> searchRp23(SearchRp23Request request){
         return client.searchRp23(request).getData();
+    }
+
+    public PageResponse<DvRp22Response> searchRp22(SearchRp22Request request){
+        return client.searchRp22(request).getData();
     }
 }
