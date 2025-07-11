@@ -1,7 +1,6 @@
 package com.agribank.qldv_api.service.party_transfer;
 
 import com.agribank.qldv_api.enums.EApprovalStatus;
-import com.agribank.qldv_api.enums.EDVStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DVClient;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
-import static com.agribank.qldv_api.enums.Constants.FORM_B_NAME_LENGTH;
 
 @Service
 @RequiredArgsConstructor

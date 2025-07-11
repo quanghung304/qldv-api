@@ -16,6 +16,7 @@ public enum EExcelColumnInfo {
     BC_17_DSDV("Thông tin Đảng viên", "THÔNG TIN ĐẢNG VIÊN", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
     BC_21_DSDV("Danh sách Đảng viên dự bị danh sách Đảng viên đến hạn công nhận Đảng viên chính thức",
             "DANH SÁCH ĐẢNG VIÊN DỰ BỊ/\nDANH SÁCH ĐẢNG VIÊN ĐẾN HẠN CÔNG NHẬN ĐẢNG VIÊN CHÍNH THỨC", ERequestType.DANG_VIEN.getId(), "A4N"),
+    BC_22_DSDV("Danh sách kết nạp Đảng", "DANH SÁCH KẾT NẠP ĐẢNG", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_23_DSDV("Danh sách kết nạp Đảng lần 2", "DANH SÁCH KẾT NẠP ĐẢNG LẦN 2", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_24_DSDV("Danh sách công nhận Đảng viên chính thức", "DANH SÁCH CÔNG NHẬN ĐẢNG VIÊN CHÍNH THỨC", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_25_DSDV("Danh sách Đảng viên được khôi phục Đảng tịch", "DANH SÁCH ĐẢNG VIÊN ĐƯỢC KHÔI PHỤC ĐẢNG TỊCH", ERequestType.DANG_VIEN.getId(),"A4N"),

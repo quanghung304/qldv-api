@@ -24,6 +24,7 @@ import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgri
 import com.agribank.qldvutils.entity.report26.*;
 import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
@@ -626,6 +627,7 @@ public class DVReportService {
             return response;
         }
 
+
         for (DvRp30Response dvRp30Response : response.getData()){
             dvRp30Response.setTransferStatus(Objects.isNull(dvRp30Response.getExpectedExpiryDate()) || Objects.isNull(dvRp30Response.getTransferDate())
                     ? null
@@ -634,5 +636,11 @@ public class DVReportService {
         }
 
         return response;
+    }
+
+    public PageResponse<DvRp22Response> searchRp22(SearchRp22Request request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+
+        return membershipProposalService.searchRp22(request);
     }
 }
