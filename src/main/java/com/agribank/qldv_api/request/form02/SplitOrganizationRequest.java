@@ -28,6 +28,7 @@ public class SplitOrganizationRequest extends BaseFormRequest {
         private String newName;
         @NotNull(message = "không để trống trường hình thức tổ chức đảng mới")
         private String form;
+        private List<String> members;
     }
 
     public void validate() {

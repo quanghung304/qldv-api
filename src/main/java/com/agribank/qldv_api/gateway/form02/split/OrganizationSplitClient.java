@@ -3,11 +3,15 @@ package com.agribank.qldv_api.gateway.form02.split;
 import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplit;
+import com.agribank.qldvutils.request.form02.ApproveSplitRequest;
+import com.agribank.qldvutils.request.form02.ApproveUpdateSplitRequest;
 import com.agribank.qldvutils.request.form02.SearchOrganizationSplitRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "organizationSplitClient", url = "${qldv.database.url}" + "/api/v1/split", configuration = DatabaseFeignConfiguration.class)
@@ -16,4 +20,10 @@ public interface OrganizationSplitClient extends BaseClient<OrganizationSplit, S
     BaseResponse<PageResponse<OrganizationSplit>> search(
             @RequestBody SearchOrganizationSplitRequest request
     );
+
+    @PutMapping("/save-entities")
+    BaseResponse<Boolean> saveEntities(@RequestBody @Valid ApproveSplitRequest request);
+
+    @PutMapping("/update/save-entities")
+    BaseResponse<Boolean> updateEntities(@RequestBody @Valid ApproveUpdateSplitRequest request);
 }

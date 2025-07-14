@@ -73,4 +73,9 @@ public class DVController {
         BaseResponse response = importDVService.handleReadFileUpload(file, EExcelImport.BIEU_15.name());
         return BaseResponse.success(response.getMessage(), null);
     }
+
+    @GetMapping("/split-organization")
+    public ResponseEntity<DefaultResponse<List<DVDto>>> findActiveDVByOrganizationCode(@RequestParam(name = "organization", required = false) String organization) {
+        return DefaultResponse.success(service.findActiveDVByOrganizationCode(organization));
+    }
 }

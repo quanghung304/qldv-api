@@ -92,4 +92,9 @@ public interface DVClient {
     DefaultResponse<PageResponse<DV>> searchRp21(
             @RequestBody SearchRp21Request request
     );
+
+    @GetMapping("api/v1/dv/find-active-dv-by-organization-code")
+    DefaultResponse<List<DV>> findActiveDVByOrganizationCode(
+            @RequestParam(name = "organization") String organization
+    );
 }
