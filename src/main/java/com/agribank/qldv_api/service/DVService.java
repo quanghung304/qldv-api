@@ -401,4 +401,17 @@ public class DVService implements EntityHandler {
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         return dvClient.searchRp21(request).getData();
     }
+
+    public List<DVDto> findActiveDVByOrganizationCode(String organization) {
+        if (Objects.isNull(organization)) {
+            UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            organization = userRequested.getOrganizationCode();
+        }
+        List<DV> dvs = dvClient.findActiveDVByOrganizationCode(organization).getData();
+        if (Objects.isNull(dvs) || dvs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return dvs.stream().map(dv -> modelMapper.map(dv, DVDto.class)).toList();
+    }
 }

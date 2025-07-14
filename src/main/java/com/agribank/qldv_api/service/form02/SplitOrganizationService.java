@@ -2,8 +2,7 @@ package com.agribank.qldv_api.service.form02;
 
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.exception.ExceptionMessage;
-import com.agribank.qldv_api.gateway.OrganizationClient;
-import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.gateway.form02.split.OrganizationSplitClient;
 import com.agribank.qldv_api.gateway.form02.split.OrganizationSplitDetailClient;
 import com.agribank.qldv_api.gateway.form02.split.OrganizationSplitDetailDraftClient;
@@ -18,14 +17,14 @@ import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
-import com.agribank.qldvutils.entity.BaseFormEntity;
-import com.agribank.qldvutils.entity.Organization;
-import com.agribank.qldvutils.entity.Request;
+import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplit;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplitDetail;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplitDetailDraft;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplitDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.form02.ApproveSplitRequest;
+import com.agribank.qldvutils.request.form02.ApproveUpdateSplitRequest;
 import com.agribank.qldvutils.request.form02.SearchOrganizationSplitRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +39,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,16 +47,17 @@ import java.util.*;
 public class SplitOrganizationService implements EntityHandler {
     final ModelMapper modelMapper;
     final ObjectMapper objectMapper;
-
     final RequestClient requestClient;
     final OrganizationClient organizationClient;
     final OrganizationSplitClient organizationSplitClient;
     final OrganizationSplitDraftClient splitDraftClient;
     final OrganizationSplitDetailDraftClient splitDetailDraftClient;
     final OrganizationSplitDetailClient splitDetailClient;
-    OrganizationService organizationService;
-
+    final DVClient dvClient;
+    final DvOrgHistoryDraftClient dvOrgHistoryDraftClient;
+    final DvOrgHistoryClient dvOrgHistoryClient;
     final RequestService requestService;
+    OrganizationService organizationService;
 
     static final EForm form = EForm.BIEU_02_SPLIT;
 
@@ -88,11 +89,25 @@ public class SplitOrganizationService implements EntityHandler {
         splitDraft = splitDraftClient.save(splitDraft).getData();
 
         List<OrganizationSplitDetailDraft> detailDraftList = new ArrayList<>();
+        List<DvOrgHistoryDraft> membersDraft = new ArrayList<>();
+
         for (SplitOrganizationRequest.SplitDetailRequest detailRequest : request.getDetailRequests()) {
             OrganizationSplitDetailDraft detailDraft = modelMapper.map(detailRequest, OrganizationSplitDetailDraft.class);
             detailDraft.setSplitId(splitDraft.getId());
             detailDraftList.add(detailDraft);
+
+            List<DV> DVs = dvClient.findByStaffCodes(detailRequest.getMembers()).getData();
+
+            for (DV dv : DVs) {
+                DvOrgHistoryDraft memDraft = new DvOrgHistoryDraft();
+                memDraft.setStaffCode(dv.getStaffCode());
+                memDraft.setOldOrgCode(dv.getOrganizationCode());
+                memDraft.setNewOrgCode(detailRequest.getNewCode());
+                memDraft.setRefId(splitDraft.getId());
+                membersDraft.add(memDraft);
+            }
         }
+        dvOrgHistoryDraftClient.saveAll(membersDraft);
         splitDetailDraftClient.saveAll(detailDraftList);
 
         Request splitRequest = requestService.initializeRequest(splitDraft, null, form, getCombinedFieldMap());
@@ -150,18 +165,31 @@ public class SplitOrganizationService implements EntityHandler {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         OrganizationSplitDraft splitDraft = modelMapper.map(request, OrganizationSplitDraft.class);
-
         splitDraft.setRefId(updateSplitOrganization.getId());
         splitDraft.setOldName(updateSplitOrganization.getOldName());
         splitDraft.setCreatedBy(userDetails.getId());
         splitDraft = splitDraftClient.save(splitDraft).getData();
 
         List<OrganizationSplitDetailDraft> detailDraftList = new ArrayList<>();
+        List<DvOrgHistoryDraft> membersDraft = new ArrayList<>();
+
         for (SplitOrganizationRequest.SplitDetailRequest detailRequest : request.getDetailRequests()) {
             OrganizationSplitDetailDraft detailDraft = modelMapper.map(detailRequest, OrganizationSplitDetailDraft.class);
             detailDraft.setSplitId(splitDraft.getId());
             detailDraftList.add(detailDraft);
+
+            List<DV> DVs = dvClient.findByStaffCodes(detailRequest.getMembers()).getData();
+
+            for (DV dv : DVs) {
+                DvOrgHistoryDraft memDraft = new DvOrgHistoryDraft();
+                memDraft.setStaffCode(dv.getStaffCode());
+                memDraft.setOldOrgCode(dv.getOrganizationCode());
+                memDraft.setNewOrgCode(detailRequest.getNewCode());
+                memDraft.setRefId(splitDraft.getId());
+                membersDraft.add(memDraft);
+            }
         }
+        dvOrgHistoryDraftClient.saveAll(membersDraft);
         splitDetailDraftClient.saveAll(detailDraftList);
 
         Request splitRequest = requestService.initializeRequest(splitDraft, updateSplitOrganization, form, getCombinedFieldMap());
@@ -193,6 +221,7 @@ public class SplitOrganizationService implements EntityHandler {
         //Luu ho so ban goc
         OrganizationSplit organizationSplit = modelMapper.map(splitDraft, OrganizationSplit.class);
         organizationSplit = organizationSplitClient.save(organizationSplit).getData();
+        String organizationSplitId = organizationSplit.getId();
 
         List<Organization> newOrganizationList = new ArrayList<>();
 
@@ -201,10 +230,9 @@ public class SplitOrganizationService implements EntityHandler {
 
         for (OrganizationSplitDetailDraft detailDraft : detailDrafts) {
             OrganizationSplitDetail detail = modelMapper.map(detailDraft, OrganizationSplitDetail.class);
-            detail.setSplitId(organizationSplit.getId());
+            detail.setSplitId(organizationSplitId);
             details.add(detail);
         }
-        splitDetailClient.saveAll(details);
 
         for (OrganizationSplitDetailDraft detailDraft : detailDrafts) {
             String code = detailDraft.getNewCode();
@@ -221,15 +249,51 @@ public class SplitOrganizationService implements EntityHandler {
             newOrganizationList.add(organization);
         }
 
-        Organization oldOrganization = organizationClient.findByCode(splitDraft.getOldCode()).getData();
-        oldOrganization.setStatus(EOrganizationStatus.NO.getStatus());
-        organizationClient.save(oldOrganization);//set trang thai khong hoat dong cho To chuc Dang bi chia tach
-        organizationClient.saveAll(newOrganizationList);
+        //set trang thai khong hoat dong cho To chuc Dang bi chia tach va cac To chuc con
+        List<Organization> oldOrganizations = organizationClient.findByParent(splitDraft.getOldCode()).getData();
+
+        for (Organization oldOrganization : oldOrganizations) {
+            oldOrganization.setStatus(EOrganizationStatus.NO.getStatus());
+        }
 
         //luu trang thai draft
         splitDraft.setApprovedBy(userDetails.getId());
         splitDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        splitDraftClient.save(splitDraft);
+        //splitDraftClient.save(splitDraft);
+
+        //luu chinh thuc danh sach dang vien voi cac to chuc dang moi
+        List<DvOrgHistoryDraft> dvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(splitDraft.getId()).getData();
+        List<String> staffCodes = new ArrayList<>();
+        Map<String, String> dvOrgHistoriesMap = new HashMap<>();
+
+        List<DvOrgHistory> dvOrgHistories = dvOrgHistoryDrafts.stream().map(dv -> {
+            DvOrgHistory dvOrgHistory = modelMapper.map(dv, DvOrgHistory.class);
+            dvOrgHistory.setRefId(organizationSplitId);
+            staffCodes.add(dvOrgHistory.getStaffCode());
+            dvOrgHistoriesMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory.getNewOrgCode());
+            return dvOrgHistory;
+        }).toList();
+
+        //cap nhat lai truong organizationCode cua cac Dang vien sau chia tach
+        List<DV> newDVs = new ArrayList<>();
+        List<DV> DVs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
+
+        for (DV dv : DVs) {
+            String newOrg = dvOrgHistoriesMap.getOrDefault(dv.getStaffCode(), null);
+            dv.setOrganizationCode(newOrg);
+            newDVs.add(dv);
+        }
+
+        ApproveSplitRequest request = ApproveSplitRequest.builder()
+                .organizationSplitDetails(details)
+                .newOrganizations(newOrganizationList)
+                .oldOrganizations(oldOrganizations)
+                .splitDraft(splitDraft)
+                .dvOrgHistories(dvOrgHistories)
+                .newDVs(newDVs)
+                .build();
+
+        organizationSplitClient.saveEntities(request);
 
         return true;
     }
@@ -238,6 +302,9 @@ public class SplitOrganizationService implements EntityHandler {
     public boolean applyUpdate(String referenceId) {
         OrganizationSplitDraft organizationSplitDraft = splitDraftClient.findById(referenceId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
+
+        organizationSplitDraft.setApprovedBy(getUserRequested().getId());
+        organizationSplitDraft.setStatus(EApprovalStatus.APPROVED.getId());
 
         List<OrganizationSplitDetailDraft> detailDrafts = splitDetailDraftClient.findBySplitId(organizationSplitDraft.getId()).getData();
         if (detailDrafts.isEmpty()) {
@@ -259,7 +326,6 @@ public class SplitOrganizationService implements EntityHandler {
         organizationSplit.setDecisionNumber(organizationSplitDraft.getDecisionNumber());
         organizationSplit.setConclusionDate(organizationSplitDraft.getConclusionDate());
         organizationSplit.setConclusionNumber(organizationSplitDraft.getConclusionNumber());
-
 
         //biến lấy danh sách để xóa bảng OrganizationSplitDetail đi
         List<OrganizationSplitDetail> removeList = new ArrayList<>();
@@ -293,20 +359,45 @@ public class SplitOrganizationService implements EntityHandler {
 
             newOrganizations.add(organization);
         }
-        organizationClient.saveAll(newOrganizations);
 
-        saveUpdate(organizationSplitDraft, organizationSplit, newDetailList);
+        //xoa cac ban ghi luu danh sach dang vien o to chuc cu
+        List<DvOrgHistory> dvOldOrgHistories = dvOrgHistoryClient.findByRefId(organizationSplit.getId()).getData();
+        dvOrgHistoryClient.deleteAll(dvOldOrgHistories);
+
+        //luc chinh thuc danh sach dang vien voi cac to chuc dang moi
+        List<DvOrgHistoryDraft> dvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(organizationSplitDraft.getId()).getData();
+        List<String> staffCodes = new ArrayList<>();
+        Map<String, String> dvOrgHistoriesMap = new HashMap<>();
+
+        List<DvOrgHistory> dvOrgHistories = dvOrgHistoryDrafts.stream().map(dv -> {
+            DvOrgHistory dvOrgHistory = modelMapper.map(dv, DvOrgHistory.class);
+            dvOrgHistory.setRefId(organizationSplit.getId());
+            staffCodes.add(dvOrgHistory.getStaffCode());
+            dvOrgHistoriesMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory.getNewOrgCode());
+            return dvOrgHistory;
+        }).toList();
+
+        //cap nhat lai truong organizationCode cua cac Dang vien sau chia tach
+        List<DV> newDVs = new ArrayList<>();
+        List<DV> DVs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
+
+        for (DV dv : DVs) {
+            String newOrg = dvOrgHistoriesMap.getOrDefault(dv.getStaffCode(), null);
+            dv.setOrganizationCode(newOrg);
+            newDVs.add(dv);
+        }
+
+        ApproveUpdateSplitRequest request = ApproveUpdateSplitRequest.builder()
+                .organizationSplitDetails(newDetailList)
+                .newOrganizations(newOrganizations)
+                .organizationSplit(organizationSplit)
+                .splitDraft(organizationSplitDraft)
+                .dvOrgHistories(dvOrgHistories)
+                .newDVs(newDVs)
+                .build();
+
+        organizationSplitClient.updateEntities(request);
         return true;
-    }
-
-    private void saveUpdate(OrganizationSplitDraft organizationSplitDraft,
-                            OrganizationSplit organizationSplit,
-                            List<OrganizationSplitDetail> newDetailList) {
-        organizationSplitDraft.setApprovedBy(getUserRequested().getId());
-        organizationSplitDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        splitDraftClient.save(organizationSplitDraft);
-        splitDetailClient.saveAll(newDetailList);
-        organizationSplitClient.save(organizationSplit);
     }
 
     @Override
@@ -353,10 +444,35 @@ public class SplitOrganizationService implements EntityHandler {
         OrganizationSplitDetailResponse response = modelMapper.map(organizationSplit, OrganizationSplitDetailResponse.class);
 
         List<OrganizationSplitDetail> details = splitDetailClient.findBySplitId(id).getData();
+        List<DvOrgHistory> dvOrgHistories = dvOrgHistoryClient.findByRefId(id).getData();
+
+        Map<String, List<DvOrgHistory>> dvOrgHistoryMap = dvOrgHistories.stream()
+                .collect(Collectors.groupingBy(DvOrgHistory::getNewOrgCode));
+
+        Map<String, DV> dvOfNewOrgMap = new HashMap<>();
+        List<String> staffCodes = new ArrayList<>();
+
+        for (DvOrgHistory dvOrgHistory : dvOrgHistories) {
+            staffCodes.add(dvOrgHistory.getStaffCode());
+        }
+        List<DV> dvs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
+
+        for (DV dv : dvs) {
+            dvOfNewOrgMap.put(dv.getStaffCode(), dv);
+        }
+
         List<OrganizationSplitDetailResponse.NewOrganizationResponse> detailResponses = new ArrayList<>();
 
         for (OrganizationSplitDetail detail : details) {
             OrganizationSplitDetailResponse.NewOrganizationResponse detailResponse = modelMapper.map(detail, OrganizationSplitDetailResponse.NewOrganizationResponse.class);
+            List<DvOrgHistory> items = dvOrgHistoryMap.get(detailResponse.getCode());
+            List<DV> dvsOfNewOrg = new ArrayList<>();
+
+            for (DvOrgHistory dvOrgHistory : items) {
+                dvsOfNewOrg.add(dvOfNewOrgMap.get(dvOrgHistory.getStaffCode()));
+            }
+
+            detailResponse.setMembers(dvsOfNewOrg);
             detailResponses.add(detailResponse);
         }
 
