@@ -12,10 +12,12 @@ import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
+import com.agribank.qldv_api.service.party_transfer.TransferWithinBaseService;
 import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankService;
 import com.agribank.qldv_api.service.report26.*;
 import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.dto.Report31Dto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DVRecognition;
 import com.agribank.qldvutils.entity.Organization;
@@ -55,6 +57,7 @@ public class DVReportService {
     private final TransferToAgribankService transferToAgribankService;
     private final TransferWithinAgribankService transferWithinAgribankService;
     private final ModelMapper modelMapper;
+    private final TransferWithinBaseService transferWithinBaseService;
 
 
     public PageResponse<DvRp24Response> search24(SearchRp24Request request){
@@ -643,4 +646,11 @@ public class DVReportService {
 
         return membershipProposalService.searchRp22(request);
     }
+
+    public PageResponse<Report31Dto> search31(SearchRp31Request request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        PageResponse<Report31Dto> report31DtoPageResponse = transferWithinBaseService.search31(request);
+        return report31DtoPageResponse;
+    }
+
 }

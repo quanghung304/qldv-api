@@ -12,6 +12,7 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.party_transfer.TransferWithinBaseRequest;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
+import com.agribank.qldvutils.dto.Report31Dto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
@@ -19,6 +20,7 @@ import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.Transfe
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBaseDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp31Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,11 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+
+import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
 
 
 @Service
@@ -114,14 +120,19 @@ public class TransferWithinBaseService implements EntityHandler {
             return false;
         }
 
+        DV dv = dvClient.findByStaffCode(draft.getStaffCode()).getData();
+
         TransferWithinBase transferWithinBase = modelMapper.map(draft, TransferWithinBase.class);
+        transferWithinBase.setOldOrganizationCode(dv.getOrganizationCode());
+        transferWithinBase.setCreatedBy(draft.getCreatedBy());
+        transferWithinBase.setApprovedBy(userDetails.getId());
         transferWithinBaseClient.save(transferWithinBase);
 
         draft.setApprovedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.APPROVED.getId());
         draftClient.save(draft);
 
-        DV dv = dvClient.findByStaffCode(draft.getStaffCode()).getData();
+
         dv.setOrganizationCode(draft.getOrganizationCode());
         dvClient.save(dv);
 
@@ -190,4 +201,21 @@ public class TransferWithinBaseService implements EntityHandler {
         transfer.setOrganizationCode(draft.getOrganizationCode());
         transfer.setOrganizationName(draft.getOrganizationName());
     }
+
+    public PageResponse<Report31Dto> search31(SearchRp31Request request) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        PageResponse<Report31Dto> response = transferWithinBaseClient.search31(request).getData();
+        if (Objects.nonNull(userDetails.getOrganizationCode()) && userDetails.getOrganizationCode().equals(String.valueOf(BRANCH_CODE_HEAD_QUARTER))) {
+            return response;
+        }
+        List<Report31Dto> report31Dtos = response.getData();
+        List<Report31Dto> newReport31Dtos = report31Dtos.stream().map((x) -> {
+            x.setController(null);
+            x.setImplementationStaff(null);
+            return x;
+        }).toList();
+        response.setData(newReport31Dtos);
+        return response;
+    }
+
 }
