@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.party_transfer;
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DVClient;
+import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.party_transfer.TransferProcessClient;
@@ -14,12 +15,15 @@ import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.TransferTemporaryDto;
 import com.agribank.qldvutils.entity.DV;
+import com.agribank.qldvutils.entity.DvOrgHistory;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.entity.party_transfer.transfer_temporary.TransferTemporary;
 import com.agribank.qldvutils.entity.party_transfer.transfer_temporary.TransferTemporaryDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
+import com.agribank.qldvutils.request.party_transfer.ApproveTransferTemporaryRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferTemporaryFilterRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.AccessLevel;
@@ -44,6 +48,7 @@ public class TransferTemporaryService implements EntityHandler {
     TransferProcessClient transferProcessClient;
     RequestClient requestClient;
     DVClient dvClient;
+    DvOrgHistoryClient dvOrgHistoryClient;
 
     RequestService requestService;
 
@@ -151,6 +156,12 @@ public class TransferTemporaryService implements EntityHandler {
             return false;
         }
 
+        DV dv = dvClient.findByStaffCode(transferTemporaryDraft.getStaffCode()).getData();
+        String oldOrg = dv.getOrganizationCode();
+        if (Objects.isNull(dv)) {
+            return false;
+        }
+
         TransferProcess transferProcess = TransferProcess.builder()
                 .staffCode(transferTemporaryDraft.getStaffCode())
                 .fullName(transferTemporaryDraft.getFullName())
@@ -162,12 +173,22 @@ public class TransferTemporaryService implements EntityHandler {
 
         TransferTemporary transferTemporary = modelMapper.map(transferTemporaryDraft, TransferTemporary.class);
         transferTemporary.setProcessId(transferProcess.getId());
-
         transferTemporary = transferTemporaryClient.save(transferTemporary).getData();
+
         transferTemporaryDraft.setRefId(transferTemporary.getId());
         transferTemporaryDraft.setApprovedBy(userDetails.getId());
         transferTemporaryDraft.setStatus(EApprovalStatus.APPROVED.getId());
         transferTemporaryDraftClient.save(transferTemporaryDraft).getData();
+
+        DvOrgHistory requestHistory = DvOrgHistory.builder()
+                .staffCode(transferTemporaryDraft.getStaffCode())
+                .oldOrgCode(oldOrg)
+                .newOrgCode(transferTemporaryDraft.getReceivingOrgCode())
+                .refId(transferProcess.getId())
+                .effectiveDate(transferTemporaryDraft.getEffectiveDate())
+                .action(form.getCode())
+                .build();
+        dvOrgHistoryClient.save(requestHistory);
 
         return true;
     }
@@ -192,7 +213,6 @@ public class TransferTemporaryService implements EntityHandler {
         if (!transferProcesses.isEmpty()) {
             transferProcess = transferProcesses.get(0);
             transferProcess.setStatus(EProcessStatus.DONE.getId());
-            transferProcessClient.save(transferProcess);
         }
 
         TransferTemporary transferTemporary = transferTemporaryClient
@@ -202,15 +222,34 @@ public class TransferTemporaryService implements EntityHandler {
         String transferTemporaryId = transferTemporary.getId();
         modelMapper.map(transferTemporaryDraft, transferTemporary);
         transferTemporary.setId(transferTemporaryId);
-        transferTemporaryClient.save(transferTemporary);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         transferTemporaryDraft.setApprovedBy(userDetails.getId());
         transferTemporaryDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        transferTemporaryDraftClient.save(transferTemporaryDraft).getData();
 
         dv.setDvStatus(EDVStatus.TEMPORARY_PARTY_ACTIVITIES.getStatus());
-        dvClient.save(dv);
+
+        DvOrgHistoryRequest historyRequest = DvOrgHistoryRequest.builder()
+                .staffCode(transferTemporaryDraft.getStaffCode())
+                .refId(transferTemporary.getProcessId())
+                .build();
+        DvOrgHistory history = dvOrgHistoryClient.findByStaffCodeAndRefId(historyRequest).getData();
+
+        if (history == null) {
+            throw new CommonException("Không tìm thấy dữ liệu bản ghi!");
+        }
+
+        history.setEffectiveDate(transferTemporaryDraft.getEffectiveDate());
+        history.setNewOrgCode(transferTemporaryDraft.getReceivingOrgCode());
+
+        ApproveTransferTemporaryRequest temporaryRequest = ApproveTransferTemporaryRequest.builder()
+                .transfer(transferTemporary)
+                .draft(transferTemporaryDraft)
+                .process(transferProcess)
+                .dv(dv)
+                .history(history)
+                .build();
+        transferTemporaryClient.saveEntities(temporaryRequest);
 
         return true;
     }

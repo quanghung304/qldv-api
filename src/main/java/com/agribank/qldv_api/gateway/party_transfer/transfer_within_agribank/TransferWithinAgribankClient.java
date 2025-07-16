@@ -4,15 +4,14 @@ import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_agribank.TransferWithinAgribank;
+import com.agribank.qldvutils.request.party_transfer.ApproveTransferWithinRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferWithinAgribankSearch;
 import com.agribank.qldvutils.request.report_dv.SearchRp30Request;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(
         name = "TransferWithinAgribankClient",
@@ -34,4 +33,7 @@ public interface TransferWithinAgribankClient extends BaseClient<TransferWithinA
     DefaultResponse<PageResponse<DvRp30Response>> searchRp30(
             @RequestBody SearchRp30Request request
     );
+
+    @PutMapping("/save-entities")
+    BaseResponse<Boolean> saveEntities(@RequestBody ApproveTransferWithinRequest request);
 }

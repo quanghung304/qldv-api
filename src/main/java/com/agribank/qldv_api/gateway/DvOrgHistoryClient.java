@@ -2,6 +2,8 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldvutils.entity.DvOrgHistory;
+import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
+import com.agribank.qldvutils.response.BaseResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +32,11 @@ public interface DvOrgHistoryClient extends BaseClient<DvOrgHistory, String>{
     DefaultListResponse<DvOrgHistory> findByNewOrgCodeAndRefId(
             @RequestParam String organizationCode,
             @RequestParam String referenceId
+    );
+
+    @PostMapping("/find-by-staff-code")
+    BaseResponse<DvOrgHistory> findByStaffCodeAndRefId(
+            @RequestBody DvOrgHistoryRequest request
     );
 
     @GetMapping("/find-by-ref-id")

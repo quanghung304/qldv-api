@@ -4,6 +4,7 @@ import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DVClient;
+import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_within_base.TransferWithinBaseClient;
@@ -14,11 +15,14 @@ import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.Report31Dto;
 import com.agribank.qldvutils.entity.DV;
+import com.agribank.qldvutils.entity.DvOrgHistory;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBase;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBaseDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
+import com.agribank.qldvutils.request.party_transfer.ApproveTransferBaseRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp31Request;
 import com.agribank.qldvutils.response.PageResponse;
@@ -49,6 +53,7 @@ public class TransferWithinBaseService implements EntityHandler {
     OrganizationClient organizationClient;
 
     RequestService requestService;
+    DvOrgHistoryClient dvOrgHistoryClient;
 
     EForm form = EForm.BIEU_25_TRANSFER_WITHIN_BASE;
 
@@ -121,20 +126,33 @@ public class TransferWithinBaseService implements EntityHandler {
         }
 
         DV dv = dvClient.findByStaffCode(draft.getStaffCode()).getData();
-
         TransferWithinBase transferWithinBase = modelMapper.map(draft, TransferWithinBase.class);
         transferWithinBase.setOldOrganizationCode(dv.getOrganizationCode());
         transferWithinBase.setCreatedBy(draft.getCreatedBy());
         transferWithinBase.setApprovedBy(userDetails.getId());
-        transferWithinBaseClient.save(transferWithinBase);
+        transferWithinBase = transferWithinBaseClient.save(transferWithinBase).getData();
 
         draft.setApprovedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.APPROVED.getId());
-        draftClient.save(draft);
-
 
         dv.setOrganizationCode(draft.getOrganizationCode());
-        dvClient.save(dv);
+
+        DvOrgHistory history = DvOrgHistory.builder()
+                .staffCode(draft.getStaffCode())
+                .oldOrgCode(dv.getOrganizationCode())
+                .newOrgCode(draft.getOrganizationCode())
+                .refId(transferWithinBase.getId())
+                .effectiveDate(draft.getEffectiveDate())
+                .action(form.getCode())
+                .build();
+
+        ApproveTransferBaseRequest transferBaseRequest = ApproveTransferBaseRequest.builder()
+                .transfer(null)
+                .dv(dv)
+                .draft(draft)
+                .history(history)
+                .build();
+        transferWithinBaseClient.saveEntities(transferBaseRequest);
 
         return true;
     }
@@ -154,17 +172,36 @@ public class TransferWithinBaseService implements EntityHandler {
         }
 
         mapDraftToOfficial(draft, transfer);
-        transferWithinBaseClient.save(transfer);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         draft.setApprovedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.APPROVED.getId());
-        draftClient.save(draft);
 
         DV dv = dvClient.findByStaffCode(draft.getStaffCode()).getData();
         dv.setOrganizationCode(draft.getOrganizationCode());
-        dvClient.save(dv);
+
+        DvOrgHistoryRequest historyRequest = DvOrgHistoryRequest.builder()
+                .staffCode(draft.getStaffCode())
+                .refId(transfer.getId())
+                .build();
+        DvOrgHistory history = dvOrgHistoryClient.findByStaffCodeAndRefId(historyRequest).getData();
+
+        if (history == null) {
+            throw new CommonException("Không tìm thấy dữ liệu bản ghi!");
+        }
+
+        history.setEffectiveDate(draft.getEffectiveDate());
+        history.setOldOrgCode(dv.getOrganizationCode());
+        history.setNewOrgCode(draft.getOrganizationCode());
+
+        ApproveTransferBaseRequest transferBaseRequest = ApproveTransferBaseRequest.builder()
+                .transfer(transfer)
+                .dv(dv)
+                .draft(draft)
+                .history(history)
+                .build();
+        transferWithinBaseClient.saveEntities(transferBaseRequest);
 
         return true;
     }
