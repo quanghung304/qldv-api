@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.controller;
+package com.agribank.qldv_api.controller.report;
 
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
 import com.agribank.qldv_api.response.tcd.Rp17Response;

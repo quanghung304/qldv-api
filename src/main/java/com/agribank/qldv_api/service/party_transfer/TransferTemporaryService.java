@@ -71,6 +71,14 @@ public class TransferTemporaryService implements EntityHandler {
 
         TransferTemporaryDraft transferTemporaryDraft = modelMapper.map(request, TransferTemporaryDraft.class);
         transferTemporaryDraft.setCreatedBy(userDetails.getId());
+
+        Organization organization = organizationClient.findByCode(dv.getOrganizationCode()).getData();
+
+        if (Objects.nonNull(organization)) {
+            transferTemporaryDraft.setOrganizationCode(organization.getCode());
+            transferTemporaryDraft.setOrganizationName(organization.getName());
+        }
+
         transferTemporaryDraft = transferTemporaryDraftClient.save(transferTemporaryDraft).getData();
 
         Request transferTemporaryRequest = requestService.initializeRequest(transferTemporaryDraft, null, form, TransferTemporaryDraft.FIELD_MAP);
@@ -136,6 +144,14 @@ public class TransferTemporaryService implements EntityHandler {
         }
         transferTemporaryDraft.setCreatedBy(userDetails.getId());
         transferTemporaryDraft.setRefId(transferTemporary.getId());
+
+        Organization organization = organizationClient.findByCode(dv.getOrganizationCode()).getData();
+
+        if (Objects.nonNull(organization)) {
+            transferTemporaryDraft.setOrganizationCode(organization.getCode());
+            transferTemporaryDraft.setOrganizationName(organization.getName());
+        }
+
         transferTemporaryDraft = transferTemporaryDraftClient.save(transferTemporaryDraft).getData();
 
         Request transferTemporaryRequest = requestService.initializeRequest(transferTemporaryDraft, transferTemporary, form, TransferTemporaryDraft.FIELD_MAP);

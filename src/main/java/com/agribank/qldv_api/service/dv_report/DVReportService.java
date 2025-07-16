@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.dv_report;
 import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.enums.EReport26;
 import com.agribank.qldv_api.enums.EReport29Type;
+import com.agribank.qldv_api.gateway.party_transfer.transfer_temporary.TransferTemporaryClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.dv_report.*;
@@ -18,6 +19,7 @@ import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankServic
 import com.agribank.qldv_api.service.report26.*;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.Report31Dto;
+import com.agribank.qldvutils.dto.SearchRp33Dto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DVRecognition;
 import com.agribank.qldvutils.entity.Organization;
@@ -56,8 +58,9 @@ public class DVReportService {
     private final MembershipProposalService membershipProposalService;
     private final TransferToAgribankService transferToAgribankService;
     private final TransferWithinAgribankService transferWithinAgribankService;
-    private final ModelMapper modelMapper;
     private final TransferWithinBaseService transferWithinBaseService;
+    private final TransferTemporaryClient transferTemporaryClient;
+    private final ModelMapper modelMapper;
 
 
     public PageResponse<DvRp24Response> search24(SearchRp24Request request){
@@ -653,4 +656,10 @@ public class DVReportService {
         return report31DtoPageResponse;
     }
 
+
+    public PageResponse<SearchRp33Dto> search33(SearchRp33Request request) {
+        String organizationCode = Objects.nonNull(request.getOrganizationCode()) ? request.getOrganizationCode() : CommonUtils.getOrganizationByRequestedUser();
+        request.setOrganizationCode(organizationCode);
+        return transferTemporaryClient.searchRp33(request).getData();
+    }
 }
