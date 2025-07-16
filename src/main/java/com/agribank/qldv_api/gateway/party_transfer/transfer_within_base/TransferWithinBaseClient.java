@@ -4,13 +4,14 @@ import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.dto.Report31Dto;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBase;
+import com.agribank.qldvutils.request.party_transfer.ApproveTransferBaseRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp31Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
@@ -21,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface TransferWithinBaseClient extends BaseClient<TransferWithinBase, String> {
     @PostMapping("list")
     BaseResponse<PageResponse<TransferWithinBase>> getList(@RequestBody TransferToFilterRequest request);
+
+    @PutMapping("/save-entities")
+    BaseResponse<Boolean> saveEntities(@RequestBody ApproveTransferBaseRequest request);
 
     @PostMapping("/search/report-31")
     BaseResponse<PageResponse<Report31Dto>> search31(@RequestBody SearchRp31Request request);

@@ -14,7 +14,7 @@ import java.util.List;
 
 @FeignClient(name = "establishmentDissolve", url = "${qldv.database.url}" + "/api/v1/establishment-dissolve", configuration = DatabaseFeignConfiguration.class)
 public interface EstablishmentDissolveClient extends BaseClient<EstablishmentDissolve, String> {
-    @PostMapping("api/v1/establishment-dissolve/search")
+    @PostMapping("/search")
     DefaultResponse<PageResponse<EstablishmentDissolve>> search(
             @RequestBody EstablishmentDissolveSearchRequest request
     );

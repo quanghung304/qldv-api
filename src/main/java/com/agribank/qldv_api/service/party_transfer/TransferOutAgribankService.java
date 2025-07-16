@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.party_transfer;
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DVClient;
+import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.party_transfer.TransferProcessClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_out.TransferOutAgribankClient;
@@ -12,13 +13,14 @@ import com.agribank.qldv_api.request.party_transfer.TransferOutAgribankRequest;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.entity.DV;
+import com.agribank.qldvutils.entity.DvOrgHistory;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribankDraft;
-import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribank;
-import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribankDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
+import com.agribank.qldvutils.request.party_transfer.ApproveTransferOutRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp29Request;
 import com.agribank.qldvutils.response.PageResponse;
@@ -43,6 +45,7 @@ public class TransferOutAgribankService implements EntityHandler {
     TransferOutAgribankDraftClient draftOutClient;
     RequestClient requestClient;
     DVClient dvClient;
+    DvOrgHistoryClient dvOrgHistoryClient;
 
     RequestService requestService;
 
@@ -142,15 +145,31 @@ public class TransferOutAgribankService implements EntityHandler {
 
         TransferOutAgribank transfer = modelMapper.map(draft, TransferOutAgribank.class);
         transfer.setProcessId(process.getId());
-        outAgribankClient.save(transfer);
 
         draft.setApprovedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.APPROVED.getId());
-        draftOutClient.save(draft);
 
         DV dv = dvClient.findByStaffCode(draft.getStaffCode()).getData();
+        String oldOrg = dv.getOrganizationCode();
         dv.setDvStatus(EDVStatus.WAITING_FOR_PARTY_ACTIVITIES_TRANSFER.getStatus());
-        dvClient.save(dv);
+
+        DvOrgHistory history = DvOrgHistory.builder()
+                .staffCode(draft.getStaffCode())
+                .oldOrgCode(oldOrg)
+                .newOrgCode(null)
+                .refId(process.getId())
+                .effectiveDate(draft.getEffectiveDate())
+                .action(form.getCode())
+                .build();
+
+        ApproveTransferOutRequest transferOutRequest = ApproveTransferOutRequest.builder()
+                .transfer(transfer)
+                .process(null)
+                .dv(dv)
+                .draft(draft)
+                .history(history)
+                .build();
+        outAgribankClient.saveEntities(transferOutRequest);
 
         return true;
     }
@@ -166,6 +185,7 @@ public class TransferOutAgribankService implements EntityHandler {
         TransferProcess transferProcess = null;
         List<TransferProcess> transferProcesses = transferProcessClient.findProcessingTransfer(draft.getStaffCode(), ETransferType.TRANSFER_OUT_AGRIBANK.getId())
                 .getData();
+        DV dv = dvClient.findByStaffCode(draft.getStaffCode()).getData();
 
         if (
                 !transferProcesses.isEmpty() &&
@@ -175,23 +195,38 @@ public class TransferOutAgribankService implements EntityHandler {
                         Objects.nonNull(draft.getReceivedOrganization())
                 )
         ) {
-            DV dv = dvClient.findByStaffCode(draft.getStaffCode()).getData();
             dv.setDvStatus(EDVStatus.OUTSIDE_AGRIBANK.getStatus());
-            dvClient.save(dv);
-
             transferProcess = transferProcesses.get(0);
             transferProcess.setStatus(EProcessStatus.DONE.getId());
-            transferProcessClient.save(transferProcess);
         }
 
         TransferOutAgribank transfer = outAgribankClient.findByStaffCode(draft.getStaffCode()).getData();
         mapDraftToOfficial(transfer, draft);
-        outAgribankClient.save(transfer);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         draft.setApprovedBy(userDetails.getId());
         draft.setStatus(EApprovalStatus.APPROVED.getId());
-        draftOutClient.save(draft);
+
+        DvOrgHistoryRequest historyRequest = DvOrgHistoryRequest.builder()
+                .staffCode(draft.getStaffCode())
+                .refId(transfer.getProcessId())
+                .build();
+        DvOrgHistory history = dvOrgHistoryClient.findByStaffCodeAndRefId(historyRequest).getData();
+
+        if (history == null) {
+            throw new CommonException("Không tìm thấy dữ liệu bản ghi!");
+        }
+
+        history.setEffectiveDate(draft.getEffectiveDate());
+
+        ApproveTransferOutRequest transferOutRequest = ApproveTransferOutRequest.builder()
+                .transfer(transfer)
+                .process(transferProcess)
+                .dv(dv)
+                .draft(draft)
+                .history(history)
+                .build();
+        outAgribankClient.saveEntities(transferOutRequest);
 
         return true;
     }
