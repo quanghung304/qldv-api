@@ -268,7 +268,7 @@ public class TransferWithinAgribankService implements EntityHandler {
 
         history.setEffectiveDate(transferWithinAgribankDraft.getEffectiveDate());
         history.setOldOrgCode(transferWithinAgribankDraft.getOldOrganizationCode());
-        history.setNewOrgCode(transferWithinAgribankDraft.getReceivingOrgBCode());
+        history.setNewOrgCode(transferWithinAgribankDraft.getReceivingOrgCCode());
 
         ApproveTransferWithinRequest transferWithinRequest = ApproveTransferWithinRequest.builder()
                 .transfer(transferWithinAgribank)

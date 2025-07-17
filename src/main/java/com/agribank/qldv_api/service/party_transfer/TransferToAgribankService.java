@@ -229,7 +229,7 @@ public class TransferToAgribankService implements EntityHandler {
         }
 
         history.setEffectiveDate(transferToAgribankDraft.getEffectiveDate());
-        history.setNewOrgCode(transferToAgribankDraft.getReceivingOrgBCode());
+        history.setNewOrgCode(transferToAgribankDraft.getReceivingOrgCCode());
 
         ApproveTransferToRequest transferToRequest = ApproveTransferToRequest.builder()
                 .transfer(transferToAgribank)

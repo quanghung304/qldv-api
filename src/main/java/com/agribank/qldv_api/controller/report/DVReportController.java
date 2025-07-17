@@ -9,6 +9,7 @@ import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp33Request;
@@ -18,6 +19,7 @@ import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
+import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +78,11 @@ public class DVReportController {
     @PostMapping("/search/report-22")
     public ResponseEntity<BaseResponse<PageResponse<DvRp22Response>>> search(@RequestBody @Valid SearchRp22Request request) {
         return BaseResponse.success(service.searchRp22(request));
+    }
+
+    @PostMapping("/search/report-07")
+    public ResponseEntity<BaseResponse<PageResponse<Report07DtoResponse>>> search(@RequestBody @Valid SearchRp07Request request) {
+        return BaseResponse.success(service.search07(request));
     }
 
     @PostMapping("/search/report-31")
