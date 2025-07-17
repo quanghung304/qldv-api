@@ -4,7 +4,6 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.party_transfer.TransferProcessService;
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.request.party_transfer.TransferProcessRequest;
-import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

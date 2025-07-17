@@ -31,6 +31,7 @@ import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
+import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -661,5 +662,23 @@ public class DVReportService {
         String organizationCode = Objects.nonNull(request.getOrganizationCode()) ? request.getOrganizationCode() : CommonUtils.getOrganizationByRequestedUser();
         request.setOrganizationCode(organizationCode);
         return transferTemporaryClient.searchRp33(request).getData();
+    }
+
+    public PageResponse<Report07DtoResponse> search07(SearchRp07Request request){
+        PageResponse<Report07DtoResponse> data = dvService.searchRp07(request);
+
+        SearchRp07Request totalRequest = SearchRp07Request.builder()
+                .organizationCode(request.getOrganizationCode())
+                .form(request.getForm())
+                .type(request.getType())
+                .toDate(request.getToDate())
+                .build();
+        Report07DtoResponse total = dvService.getTotalRp07(totalRequest);
+
+        List<Report07DtoResponse> listResponse = data.getData();
+        listResponse.add(total);
+        data.setData(listResponse);
+
+        return data;
     }
 }

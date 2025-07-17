@@ -24,10 +24,12 @@ import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
+import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -413,5 +415,14 @@ public class DVService implements EntityHandler {
         }
 
         return dvs.stream().map(dv -> modelMapper.map(dv, DVDto.class)).toList();
+    }
+
+    public PageResponse<Report07DtoResponse> searchRp07(SearchRp07Request request){
+        authorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+        return dvClient.searchRp07(request).getData();
+    }
+
+    public Report07DtoResponse getTotalRp07(SearchRp07Request request){
+        return dvClient.getTotalRp07(request).getData();
     }
 }

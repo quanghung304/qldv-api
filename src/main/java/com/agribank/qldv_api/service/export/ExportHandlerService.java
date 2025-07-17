@@ -48,6 +48,7 @@ public class ExportHandlerService {
     ExportDVRp33Service exportDVRp33Service;
     ExportDVRp34Service exportDVRp34Service;
     ExportDVRp31Service exportDVRp31Service;
+    ExportDVRp07Service exportDVRp07Service;
 
     public ExportResponse handleExport(Object param, String type) {
         ExportResponse exportResult = new ExportResponse();
@@ -66,6 +67,10 @@ public class ExportHandlerService {
                 case BC_03_04_DS:
                     OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);
                     exportResult = tcdReportService.exportExcelRp0304(paramExport);
+                    break;
+                case BC_07_DSDV:
+                    SearchRp07Request searchRp07Request = gson.fromJson(paramString, SearchRp07Request.class);
+                    exportResult = exportDVRp07Service.exportData(searchRp07Request, BC_07_DSDV.getName(), "", BC_07_DSDV.name(), 1, BC_07_DSDV.getName());
                     break;
                 case BC_17_DSDV:
                     SearchRp17Request searchRp17Request = gson.fromJson(paramString, SearchRp17Request.class);
@@ -126,8 +131,7 @@ public class ExportHandlerService {
         return exportResult;
     }
 
-    public
-    PDFContentResult handleExportPDF(Object param, String type) {
+    public PDFContentResult handleExportPDF(Object param, String type) {
         PDFContentResult exportResult = new PDFContentResult();
         Gson gson = new Gson();
         String paramString = gson.toJson(param);
