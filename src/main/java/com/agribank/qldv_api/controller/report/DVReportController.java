@@ -16,6 +16,7 @@ import com.agribank.qldvutils.request.report_dv.SearchRp33Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.Report32Response;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
@@ -94,5 +95,10 @@ public class DVReportController {
     @PostMapping("/search/report-33")
     public ResponseEntity<BaseResponse<PageResponse<SearchRp33Dto>>> search(@RequestBody @Valid SearchRp33Request request) {
         return BaseResponse.success(service.search33(request));
+    }
+
+    @PostMapping("/search/report-32")
+    public ResponseEntity<BaseResponse<PageResponse<Report32Response>>> search(@RequestBody @Valid SearchRp32Request request) {
+        return BaseResponse.success(service.searchRp32(request));
     }
 }

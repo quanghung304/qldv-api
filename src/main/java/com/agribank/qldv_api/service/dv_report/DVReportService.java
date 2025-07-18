@@ -13,6 +13,7 @@ import com.agribank.qldv_api.service.MembershipProposalService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
+import com.agribank.qldv_api.service.party_transfer.TransferProcessService;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinBaseService;
 import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankService;
@@ -33,6 +34,7 @@ import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
+import com.agribank.qldvutils.response.Report32Response;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -61,6 +63,7 @@ public class DVReportService {
     private final TransferWithinAgribankService transferWithinAgribankService;
     private final TransferWithinBaseService transferWithinBaseService;
     private final TransferTemporaryClient transferTemporaryClient;
+    private final TransferProcessService transferProcessService;
     private final ModelMapper modelMapper;
 
 
@@ -680,5 +683,9 @@ public class DVReportService {
         data.setData(listResponse);
 
         return data;
+    }
+
+    public PageResponse<Report32Response> searchRp32(SearchRp32Request request) {
+        return transferProcessService.searchRp32(request);
     }
 }

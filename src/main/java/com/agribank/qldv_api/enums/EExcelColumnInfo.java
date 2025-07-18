@@ -25,6 +25,7 @@ public enum EExcelColumnInfo {
     BC_29_DSDV("Danh sách Đảng viên chuyển sinh hoạt ra ngoài Đảng bộ Agribank", "DANH SÁCH ĐẢNG VIÊN CHUYỂN SINH HOẠT RA NGOÀI ĐẢNG BỘ AGRIBANK", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_30_DSDV("Danh sách Đảng viên chuyển sinh hoạt trong Đảng bộ Agribank", "DANH SÁCH ĐẢNG VIÊN CHUYỂN SINH HOẠT TRONG ĐẢNG BỘ AGRIBANK", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_31_DSDV("DANH SÁCH ĐẢNG VIÊN CHUYỂN SINH HOẠT TRONG ĐẢNG BỘ CƠ SỞ", "DANH SÁCH ĐẢNG VIÊN CHUYỂN SINH HOẠT TRONG ĐẢNG BỘ CƠ SỞ", ERequestType.DANG_VIEN.getId(), "A4N"),
+    BC_32_DSDV("Danh sách Đảng viên chờ chuyển sinh hoạt Đảng", "DANH SÁCH ĐẢNG VIÊN CHỜ CHUYỂN SINH HOẠT ĐẢNG", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_33_DSDV("Danh sách đảng viên chuyển sinh hoạt đảng tạm thời", "DANH SÁCH ĐẢNG VIÊN CHUYỂN SINH HOẠT ĐẢNG TẠM THỜI", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_34_DSDV("Danh sách Đảng viên miễn sinh hoạt Đảng Xin ra khỏi Đảng Xóa tên Từ trần", "DANH SÁCH ĐẢNG VIÊN MIỄN SINH HOẠT ĐẢNG XIN RA KHỎI ĐẢNG XÓA TÊN TỪ TRẦN", ERequestType.DANG_VIEN.getId(), "A4N");
     String name;

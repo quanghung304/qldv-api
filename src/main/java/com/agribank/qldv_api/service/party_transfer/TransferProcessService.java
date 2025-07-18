@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.party_transfer;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EProcessStatus;
 import com.agribank.qldv_api.enums.ETransferType;
 import com.agribank.qldv_api.gateway.party_transfer.TransferProcessClient;
@@ -7,10 +8,15 @@ import com.agribank.qldv_api.gateway.party_transfer.transfer_out.TransferOutAgri
 import com.agribank.qldv_api.gateway.party_transfer.transfer_temporary.TransferTemporaryClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_to.TransferToAgribankClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_within_agribank.TransferWithinAgribankClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.service.CheckAuthorityService;
+import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.party_transfer.TransferProcessRequest;
+import com.agribank.qldvutils.request.report_dv.SearchRp32Request;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.Report32Response;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +34,8 @@ public class TransferProcessService {
     TransferOutAgribankClient transferOutAgribankClient;
     private final TransferTemporaryClient transferTemporaryClient;
     TransferWithinAgribankClient transferWithinAgribankClient;
+    private final UserService userService;
+    private final CheckAuthorityService checkAuthorityService;
 
     public PageResponse<TransferProcess> getList(TransferProcessRequest request) {
         return transferProcessClient.getList(request).getData();
@@ -65,5 +73,10 @@ public class TransferProcessService {
 
     public List<TransferProcess> findProcessingTransfer(String staffCode, Integer type){
         return transferProcessClient.findProcessingTransfer(staffCode, type).getData();
+    }
+
+    public PageResponse<Report32Response> searchRp32(SearchRp32Request request){
+        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+        return transferProcessClient.searchRp32(request).getData();
     }
 }
