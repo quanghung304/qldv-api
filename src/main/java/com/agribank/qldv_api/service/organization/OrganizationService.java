@@ -106,7 +106,10 @@ public class OrganizationService implements EntityHandler {
         Organization organizationDb = getByParentCodeMax(organizationRequest.getParentCode());
 
         //set giá trị mã tcd nếu nó chưa có thằng con thì + 01
-        if (Objects.isNull(organizationDb)){
+        if (
+                Objects.isNull(organizationDb) ||
+                (Objects.nonNull(organizationDb.getCode()) && Constants.FORM_B_NAME_LENGTH.equals(organizationDb.getCode().length()))
+        ){
             organizationRequest.setCode(organizationRequest.getParentCode()+"01");
             return;
         }
