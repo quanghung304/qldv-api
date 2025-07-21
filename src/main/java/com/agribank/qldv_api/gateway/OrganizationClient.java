@@ -85,4 +85,9 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
 
     @PutMapping("/save-entities")
     BaseResponse<Boolean> saveEntities(@RequestBody ApproveOrganizationRequest request);
+
+    @GetMapping("/children-max")
+    BaseResponse<Organization> getChildrenMax(@RequestParam(name = "code") String code,
+                                              @RequestParam(name = "form") String form);
+
 }

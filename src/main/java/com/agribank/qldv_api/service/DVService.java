@@ -404,17 +404,29 @@ public class DVService implements EntityHandler {
         return dvClient.searchRp21(request).getData();
     }
 
+    public List<DV> saveAll(List<DV> dvs){
+        return dvClient.saveAll(dvs).getData();
+    }
+
+    public List<DV> findByOrganizationCodeActiveIn(List<String> organizationCodes){
+        return dvClient.findByOrganizationCodeActiveIn(organizationCodes).getData();
+    }
+
     public List<DVDto> findActiveDVByOrganizationCode(String organization) {
         if (Objects.isNull(organization)) {
             UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             organization = userRequested.getOrganizationCode();
         }
-        List<DV> dvs = dvClient.findActiveDVByOrganizationCode(organization).getData();
+        List<DV> dvs = getActiveDVByOrganizationCode(organization);
         if (Objects.isNull(dvs) || dvs.isEmpty()) {
             return new ArrayList<>();
         }
 
         return dvs.stream().map(dv -> modelMapper.map(dv, DVDto.class)).toList();
+    }
+
+    public List<DV> getActiveDVByOrganizationCode(String organizationCode){
+        return dvClient.findActiveDVByOrganizationCode(organizationCode).getData();
     }
 
     public PageResponse<Report07DtoResponse> searchRp07(SearchRp07Request request){

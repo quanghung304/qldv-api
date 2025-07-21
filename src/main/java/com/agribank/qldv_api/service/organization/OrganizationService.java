@@ -503,4 +503,8 @@ public class OrganizationService implements EntityHandler {
     public PageResponse<BcslTcdRp01Response> searchRp01(SearchRp01Request request){
         return client.searchRp01(request).getData();
     }
+
+    public Organization getOrganizationChildMax(String code, String form){
+        return client.getChildrenMax(code, form).getData();
+    }
 }

@@ -2,15 +2,14 @@ package com.agribank.qldv_api.utils;
 
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldvutils.exception.CommonException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.mis.encrypt.interfaces.ICreateService;
 import org.mis.encrypt.interfaces.IMisEncrypt;
 import org.mis.encrypt.services.CreateService;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.io.ClassPathResource;
@@ -258,5 +257,30 @@ public class CommonUtils {
         }
 
         return userDetails.getOrganizationCode().substring(0, Constants.FORM_B_NAME_LENGTH);
+    }
+
+    public static String createJsonData(Object object, List<?> organizationMergeDetails, Map<String, String> detailFieldMap, Map<String, String> getCombinedFieldMap) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> draftDataMap = CommonUtils.createFilteredDataMap(object, getCombinedFieldMap);
+            int i = 1;
+
+            for (Object mergedOrganization : organizationMergeDetails) {
+                BeanWrapper wrapper = new BeanWrapperImpl(mergedOrganization);
+
+                // Iterate over fieldMap keys (entity fields)
+                for (String fieldName : detailFieldMap.keySet()) {
+                    if (wrapper.isReadableProperty(fieldName)) {
+                        Object value = wrapper.getPropertyValue(fieldName);
+                        draftDataMap.put(detailFieldMap.get(fieldName) + " " + i, value);
+                    }
+                }
+                i++;
+            }
+
+            return objectMapper.writeValueAsString(draftDataMap);
+        } catch (Exception e) {
+            throw new CommonException(e.getMessage());
+        }
     }
 }

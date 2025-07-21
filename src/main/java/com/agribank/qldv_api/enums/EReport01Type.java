@@ -11,16 +11,19 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum EReport01Type {
-    ESTABLISH(0),
-    UPGRADE(1),
-    DOWNGRADE(2),
-    DECOMPOSE(3),
-    MERGE(4),
-    UNION(5),
-    DISSOLVE(6),
-    DISBAND(7);
+    ESTABLISH(0, "Thành lập"),
+    UPGRADE(1, "Nâng cấp"),
+    DOWNGRADE(2, "Hạ cấp"),
+    DECOMPOSE(3, "Chia tách"),
+    MERGE(4, "Sáp nhập"),
+    UNION(5, "Hợp nhất"),
+    DISSOLVE(6, "Giải thể"),
+    DISBAND(7, "Giải tán"),
+    TRANSFER(8, "Chuyển giao"),
+    RENAME(9, "Đổi tên");
 
     int id;
+    String name;
 
     public static int getValue(Integer value) {
         for (EReport01Type e : EReport01Type.values()) {
