@@ -107,13 +107,25 @@ public class CommonUtils {
     }
 
     public static boolean validateDatesAfter(Date fromDate, Date toDate){
-        LocalDate fromLocalDate = fromDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate toLocalDate = toDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-        if (toLocalDate.isBefore(fromLocalDate)) {
+        if (Objects.isNull(fromDate) || Objects.isNull(toDate)) {
             return false;
         }
-        return true;
+
+        LocalDate fromLocalDate = convertToLocalDate(fromDate);
+        LocalDate toLocalDate = convertToLocalDate(toDate);
+
+        return !toLocalDate.isBefore(fromLocalDate);
+    }
+
+    //sửa lỗi date dạng "2025-07-16T03:41:23.731Z"
+    private static LocalDate convertToLocalDate(Date date) {
+        if (date instanceof java.sql.Date) {
+            return ((java.sql.Date) date).toLocalDate();
+        } else {
+            return date.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+        }
     }
 
     public static Map<String, Object> createFilteredDataMap(Object object, Map<String, String> fieldMap) {
