@@ -19,6 +19,7 @@ public enum EForm {
     BIEU_02_MERGE("B02_MERGE", "SÁP NHẬP CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
     BIEU_02_UNION("B02_UNION", "HỢP NHẤT CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
     BIEU_02_TRANSFER("BIEU_02_TRANSFER", "CHUYỂN GIAO", ERequestType.TO_CHUC_DANG.getId()),
+    BIEU_02_RENAME("B02_RENAME", "ĐỔI TÊN CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
     BIEU_12("B12", "KẾ HOẠCH PHÁT TRIỂN ĐẢNG VIÊN", ERequestType.DANG_VIEN.getId()),
     BIEU_15("B15", "THÔNG TIN CHUNG VỀ QUẦN CHÚNG/ĐẢNG VIÊN", ERequestType.DANG_VIEN.getId()),
     BIEU_20("B20", "Đề nghị kết nạp Đảng", ERequestType.DANG_VIEN.getId()),
