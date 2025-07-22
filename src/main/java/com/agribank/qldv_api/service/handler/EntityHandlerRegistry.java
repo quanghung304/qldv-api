@@ -7,10 +7,9 @@ import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
 import com.agribank.qldv_api.service.form02.OrganizationMergeService;
 import com.agribank.qldv_api.service.form02.OrganizationUnifyService;
 import com.agribank.qldv_api.service.form02.PartyOrganizationTransferService;
+import com.agribank.qldv_api.service.form02.*;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.MembershipProposalService;
-import com.agribank.qldv_api.service.form02.OrganizationUpDownService;
-import com.agribank.qldv_api.service.form02.SplitOrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
 import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
 import com.agribank.qldv_api.service.party_transfer.TransferTemporaryService;
@@ -54,6 +53,7 @@ public class EntityHandlerRegistry {
             TransferWithinBaseService transferWithinBaseService,
             TransferTemporaryService transferTemporaryService,
             OrganizationUnifyService organizationUnifyService,
+            OrganizationRenameService organizationRenameService,
             PartyOrganizationTransferService partyOrganizationTransferService
     ) {
         this.handlers = Map.ofEntries(
@@ -64,7 +64,6 @@ public class EntityHandlerRegistry {
                 entry(EForm.BIEU_02_SPLIT.getCode(), splitOrganizationService),
                 entry(EForm.BIEU_02_MERGE.getCode(), organizationMergeService),
                 entry(EForm.BIEU_02_UNION.getCode(), organizationUnifyService),
-                entry(EForm.BIEU_02_TRANSFER.getCode(), partyOrganizationTransferService),
                 entry(EForm.BIEU_12.getCode(), developPlanDetailService),
                 entry(EForm.BIEU_15.getCode(), dvService),
                 entry(EForm.BIEU_20.getCode(), membershipProposalService),
