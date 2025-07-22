@@ -20,12 +20,11 @@ public class PartyOrgTransferRequest extends BaseFormRequest {
     @NotNull(message = "Chi Đảng bộ tiếp nhận không được để trống")
     @NotBlank(message = "Chi Đảng bộ tiếp nhận không được để trống")
     String receivingOrgCode;
-    @NotNull(message = "Cấp ủy quyết định không được để trống")
-    @NotBlank(message = "Cấp ủy quyết định không được để trống")
-    String decisionCommittee;
     List<String> partyOrgTransfers;
 
+    @Override
     public void validate() {
+        super.validate();
         if (Objects.isNull(partyOrgTransfers) || partyOrgTransfers.isEmpty()) {
             throw new CommonException("Chưa chọn chi, đảng bộ được chuyển giao");
         }

@@ -85,6 +85,7 @@ public class PartyOrganizationTransferService implements EntityHandler {
     }
 
     private PartyOrganizationTransferDraft getPartyOrganizationTransferDraft(PartyOrgTransferRequest request, List<PartyOrgTransferDetailDraft> partyOrgTransferDetailDrafts){
+        request.validate();
         Organization receivingOrg = getOrganization(request.getReceivingOrgCode(), "Không tồn tại Chi đảng bộ: " + request.getReceivingOrgCode());
 
         getOrganization(request.getDecisionCommittee(), "Không tồn tại cấp ủy quyết định này");
@@ -101,6 +102,11 @@ public class PartyOrganizationTransferService implements EntityHandler {
                 .receivingOrgName(receivingOrg.getName())
                 .build();
         partyOrganizationTransferDraft.setDecisionCommittee(request.getDecisionCommittee());
+        partyOrganizationTransferDraft.setConclusionNumber(request.getConclusionNumber());
+        partyOrganizationTransferDraft.setConclusionDate(request.getConclusionDate());
+        partyOrganizationTransferDraft.setDecisionDate(request.getDecisionDate());
+        partyOrganizationTransferDraft.setDecisionNumber(request.getDecisionNumber());
+        partyOrganizationTransferDraft.setEffectiveDate(request.getEffectiveDate());
 
         if (request.getPartyOrgTransfers().isEmpty()){
             return partyOrganizationTransferDraft;
@@ -361,17 +367,14 @@ public class PartyOrganizationTransferService implements EntityHandler {
     }
 
     private void mapPartyOrganizationTransfer(PartyOrganizationTransferDraft partyOrganizationTransferDraft, PartyOrganizationTransfer partyOrganizationTransfer){
-        if (Objects.nonNull(partyOrganizationTransferDraft.getDecisionCommittee())){
-            partyOrganizationTransfer.setDecisionCommittee(partyOrganizationTransferDraft.getDecisionCommittee());
-        }
-
-        if(Objects.nonNull(partyOrganizationTransferDraft.getReceivingOrgCode())){
-            partyOrganizationTransfer.setReceivingOrgCode(partyOrganizationTransferDraft.getReceivingOrgCode());
-        }
-
-        if (Objects.nonNull(partyOrganizationTransferDraft.getReceivingOrgName())){
-            partyOrganizationTransfer.setReceivingOrgName(partyOrganizationTransferDraft.getReceivingOrgName());
-        }
+        partyOrganizationTransfer.setDecisionCommittee(partyOrganizationTransferDraft.getDecisionCommittee());
+        partyOrganizationTransfer.setReceivingOrgCode(partyOrganizationTransferDraft.getReceivingOrgCode());
+        partyOrganizationTransfer.setReceivingOrgName(partyOrganizationTransferDraft.getReceivingOrgName());
+        partyOrganizationTransfer.setConclusionNumber(partyOrganizationTransferDraft.getConclusionNumber());
+        partyOrganizationTransfer.setConclusionDate(partyOrganizationTransferDraft.getConclusionDate());
+        partyOrganizationTransfer.setEffectiveDate(partyOrganizationTransferDraft.getEffectiveDate());
+        partyOrganizationTransfer.setDecisionNumber(partyOrganizationTransferDraft.getDecisionNumber());
+        partyOrganizationTransfer.setDecisionDate(partyOrganizationTransferDraft.getDecisionDate());
     }
 
     @Override
@@ -533,6 +536,11 @@ public class PartyOrganizationTransferService implements EntityHandler {
                 .receivingOrgName(partyOrganizationTransfer.getReceivingOrgName())
                 .receivingOrgCode(partyOrganizationTransfer.getReceivingOrgCode())
                 .decisionCommittee(partyOrganizationTransfer.getDecisionCommittee())
+                .conclusionNumber(partyOrganizationTransfer.getConclusionNumber())
+                .conclusionDate(partyOrganizationTransfer.getConclusionDate())
+                .decisionDate(partyOrganizationTransfer.getDecisionDate())
+                .decisionNumber(partyOrganizationTransfer.getDecisionNumber())
+                .effectiveDate(partyOrganizationTransfer.getEffectiveDate())
                 .build();
 
         Organization organizationReference = organizationService.findByCode(response.getDecisionCommittee());
