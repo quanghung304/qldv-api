@@ -1,20 +1,25 @@
 package com.agribank.qldv_api.service.bcsl_report.tcd;
 
 import com.agribank.qldv_api.enums.EOrganizationReference;
+import com.agribank.qldv_api.gateway.DVClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
+import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp01Response;
+import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp09Response;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class BcslTcdReportService {
+    private final DVClient dvClient;
     private final OrganizationService organizationService;
 
     public PageResponse<BcslTcdRp01Response> searchRp01(SearchRp01Request request) {
@@ -124,5 +129,18 @@ public class BcslTcdReportService {
             bcslRp01Response.setD(d);
         }
         return bcslRp01Response;
+    }
+
+    public PageResponse<BcslTcdRp09Response> searchRp09(SearchRp09Request request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(),getUserRequested()));
+        if (Objects.isNull(request.getOrderBy())){
+            request.setOrderBy("code");
+        }
+
+        return dvClient.searchRp09(request).getData();
+    }
+
+    public UserDetailsImpl getUserRequested(){
+        return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

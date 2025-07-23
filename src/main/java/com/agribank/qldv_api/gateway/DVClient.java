@@ -8,9 +8,11 @@ import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
+import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp09Response;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -107,4 +109,7 @@ public interface DVClient {
     DefaultResponse<Report07DtoResponse> getTotalRp07(
             @RequestBody SearchRp07Request request
     );
+
+    @PostMapping("api/v1/dv/search-rp-09")
+    DefaultResponse<PageResponse<BcslTcdRp09Response>> searchRp09(@RequestBody SearchRp09Request request);
 }
