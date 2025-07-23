@@ -64,6 +64,7 @@ public class EntityHandlerRegistry {
                 entry(EForm.BIEU_02_SPLIT.getCode(), splitOrganizationService),
                 entry(EForm.BIEU_02_MERGE.getCode(), organizationMergeService),
                 entry(EForm.BIEU_02_UNION.getCode(), organizationUnifyService),
+                entry(EForm.BIEU_02_RENAME.getCode(), organizationRenameService),
                 entry(EForm.BIEU_12.getCode(), developPlanDetailService),
                 entry(EForm.BIEU_15.getCode(), dvService),
                 entry(EForm.BIEU_20.getCode(), membershipProposalService),
