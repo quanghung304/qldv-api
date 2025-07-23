@@ -69,7 +69,7 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
 
     @GetMapping("/all-parent")
     DefaultResponse<List<Organization>> getOrganizationAllParent(@RequestParam(name = "code") String code);
-    
+
 
     @GetMapping("/form-b")
     DefaultResponse<List<Organization>> getOrganizationFormB();

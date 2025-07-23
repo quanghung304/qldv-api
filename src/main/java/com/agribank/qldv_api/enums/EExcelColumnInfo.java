@@ -12,6 +12,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum EExcelColumnInfo {
     BC_01_BCSL("Thống kê số lượng Chi, Đảng bộ", "THỐNG KÊ SỐ LƯỢNG CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
+    BC_09_BCSL("Thống kê số lượng Đảng viên theo tình hình kết nạp Đảng", "THỐNG KÊ SỐ LƯỢNG ĐẢNG VIÊN THEO TÌNH HÌNH KẾT NẠP ĐẢNG", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
     BC_03_04_DS("Danh sách chi, Đảng bộ", "DANH SÁCH CHI ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId(), "A4"),
     BC_07_DSDV("Thống kê Đảng viên theo thành phần gia đình", "THỐNG KÊ ĐẢNG VIÊN THEO THÀNH PHẦN GIA ĐÌNH", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_17_DSDV("Thông tin Đảng viên", "THÔNG TIN ĐẢNG VIÊN", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
