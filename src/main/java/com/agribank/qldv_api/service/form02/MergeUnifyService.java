@@ -6,6 +6,7 @@ import com.agribank.qldv_api.gateway.DVClient;
 import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDetailClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDetailDraftClient;
@@ -56,7 +57,8 @@ public abstract class MergeUnifyService {
     OrganizationMergeDetailDraftClient mergeDetailDraftClient;
     RequestClient requestClient;
     DvOrgHistoryClient dvOrgHistoryClient;
-
+    OrganizationMergeDetailClient organizationMergeDetailClient;
+    OrganizationHistoryClient organizationHistoryClient;
 
     RequestService requestService;
     OrganizationService organizationService;
