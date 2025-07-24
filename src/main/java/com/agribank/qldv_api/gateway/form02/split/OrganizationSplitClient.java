@@ -24,6 +24,6 @@ public interface OrganizationSplitClient extends BaseClient<OrganizationSplit, S
     @PutMapping("/save-entities")
     BaseResponse<Boolean> saveEntities(@RequestBody @Valid ApproveSplitRequest request);
 
-    @PutMapping("/update/save-entities")
+    @PutMapping("/update-entities")
     BaseResponse<Boolean> updateEntities(@RequestBody @Valid ApproveUpdateSplitRequest request);
 }

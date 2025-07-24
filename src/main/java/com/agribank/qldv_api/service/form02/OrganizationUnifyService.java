@@ -5,6 +5,7 @@ import com.agribank.qldv_api.gateway.DVClient;
 import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
+import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDetailClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDetailDraftClient;
@@ -20,11 +21,14 @@ import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.*;
+import com.agribank.qldvutils.entity.form02.OrganizationHistory;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMerge;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetailDraft;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.form02.ApproveUnifyRequest;
+import com.agribank.qldvutils.request.form02.ApproveUpdateUnifyRequest;
 import com.agribank.qldvutils.request.form02.SearchOrganizationUnionRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +54,8 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
             OrganizationMergeDetailDraftClient mergeDetailDraftClient,
             RequestClient requestClient,
             DvOrgHistoryClient dvOrgHistoryClient,
+            OrganizationMergeDetailClient organizationMergeDetailClient,
+            OrganizationHistoryClient organizationHistoryClient,
             RequestService requestService,
             OrganizationService organizationService,
             DvOrgService dvOrgService,
@@ -57,7 +63,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
     ) {
         super(
                 objectMapper, modelMapper, dvClient, organizationClient, mergeClient, mergeDetailClient, mergeDraftClient,
-                mergeDetailDraftClient, requestClient, dvOrgHistoryClient, requestService, organizationService, dvOrgService,
+                mergeDetailDraftClient, requestClient, dvOrgHistoryClient, organizationMergeDetailClient, organizationHistoryClient, requestService, organizationService, dvOrgService,
                 checkAuthorityService
         );
     }
@@ -81,7 +87,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         organizationUnify = mergeDraftClient.save(organizationUnify).getData();
 
         List<OrganizationMergeDetailDraft> unifyDetails = new ArrayList<>();
-        for (Organization organization: unifiedOrganizations) {
+        for (Organization organization : unifiedOrganizations) {
             OrganizationMergeDetailDraft detail = OrganizationMergeDetailDraft.builder()
                     .referenceId(organizationUnify.getId())
                     .oldCode(organization.getCode())
@@ -124,7 +130,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         return search(request);
     }
 
-    public RequestResponse update(UnifyOrgUpdateRequest request){
+    public RequestResponse update(UnifyOrgUpdateRequest request) {
         OrganizationMerge oldUnify = mergeClient.findById(request.getId()).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu. Vui lòng kiểm tra lại"));
 
@@ -149,7 +155,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         organizationUnify = mergeDraftClient.save(organizationUnify).getData();
 
         List<OrganizationMergeDetailDraft> unifyDetails = new ArrayList<>();
-        for (Organization organization: unifiedOrganizations) {
+        for (Organization organization : unifiedOrganizations) {
             OrganizationMergeDetailDraft detail = OrganizationMergeDetailDraft.builder()
                     .referenceId(organizationUnify.getId())
                     .oldCode(organization.getCode())
@@ -198,68 +204,58 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         List<OrganizationMergeDetail> details = new ArrayList<>();
         List<String> unifiedCodes = new ArrayList<>();
 
-        for (OrganizationMergeDetailDraft detailDraft: detailDrafts) {
+        for (OrganizationMergeDetailDraft detailDraft : detailDrafts) {
             OrganizationMergeDetail detail = modelMapper.map(detailDraft, OrganizationMergeDetail.class);
             detail.setReferenceId(organizationUnify.getId());
             details.add(detail);
             unifiedCodes.add(detailDraft.getOldCode());
         }
-        mergeDetailClient.saveAll(details);
 
-        Organization organization = new Organization();
+        Organization newOrganization = new Organization();
         String newOrganizationCode = organizationUnify.getOrganizationCode();
-        organization.setCode(newOrganizationCode);
-        organization.setName(organizationUnify.getOrganizationName());
-        organization.setForm(organizationUnify.getForm());
-        if (newOrganizationCode.length() == Constants.FORM_B_NAME_LENGTH) {
-            organization.setParentCode(Constants.DANG_UY_AGRIBANK_CODE);
-        }
-        else{
-            organization.setParentCode(newOrganizationCode.substring(0, newOrganizationCode.length() - 2));
-        }
+        newOrganization.setCode(newOrganizationCode);
+        newOrganization.setName(organizationUnify.getOrganizationName());
+        newOrganization.setForm(organizationUnify.getForm());
 
-        organizationClient.save(organization);
+        if (newOrganizationCode.length() == Constants.FORM_B_NAME_LENGTH) {
+            newOrganization.setParentCode(Constants.DANG_UY_AGRIBANK_CODE);
+        } else {
+            newOrganization.setParentCode(newOrganizationCode.substring(0, newOrganizationCode.length() - 2));
+        }
 
         //chuyen cac dang vien tu TCD bi sap nhap/hop nhat sang TCD nhan sap nhap/hop nhat
-        unifyOrganization(unifiedCodes, organizationUnify.getOrganizationCode());
-
-        //luu trang thai draft
-        draft.setApprovedBy(userDetails.getStaffCode());
-        draft.setStatus(EApprovalStatus.APPROVED.getId());
-        mergeDraftClient.save(draft);
-        return true;
-    }
-
-    private void unifyOrganization(List<String> unifiedCodes, String unifyingCode) {
         List<Organization> unifiedOrganizations = organizationClient.findAllByCode(unifiedCodes).getData();
 
-        for(Organization organization: unifiedOrganizations) {
+        for (Organization organization : unifiedOrganizations) {
             organization.setStatus(EOrganizationStatus.NO.getStatus());
         }
 
         List<DV> unifiedMembers = dvClient.findByOrganizationCodeActiveIn(unifiedCodes).getData();
         List<DvOrgHistory> dvOrgHistories = new ArrayList<>();
         List<String> staffCodes = new ArrayList<>();
-        for (DV member: unifiedMembers) {
+
+        for (DV member : unifiedMembers) {
             DvOrgHistory dvOrgHistory = DvOrgHistory.builder()
                     .oldOrgCode(member.getOrganizationCode())
-                    .newOrgCode(unifyingCode)
+                    .newOrgCode(organizationUnify.getOrganizationCode())
                     .staffCode(member.getStaffCode())
                     .build();
 
             dvOrgHistories.add(dvOrgHistory);
             staffCodes.add(member.getStaffCode());
-            member.setOrganizationCode(unifyingCode);
+            member.setOrganizationCode(organizationUnify.getOrganizationCode());
         }
 
         List<DvOrgHistory> dvOrgHistoryListInDb = dvOrgService.findByStaffCodes(staffCodes);
+
         if (!dvOrgHistoryListInDb.isEmpty()) {
             Map<String, DvOrgHistory> dvOrgHistoriesMap = new HashMap<>();
-            for (DvOrgHistory dvOrgHistory: dvOrgHistoryListInDb) {
+
+            for (DvOrgHistory dvOrgHistory : dvOrgHistoryListInDb) {
                 dvOrgHistoriesMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory);
             }
 
-            for (DvOrgHistory dvOrgHistory: dvOrgHistories) {
+            for (DvOrgHistory dvOrgHistory : dvOrgHistories) {
                 DvOrgHistory dvOrgHis = dvOrgHistoriesMap.getOrDefault(dvOrgHistory.getStaffCode(), null);
                 if (Objects.nonNull(dvOrgHis)) {
                     dvOrgHistory.setId(dvOrgHis.getId());
@@ -267,12 +263,42 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
             }
         }
 
-        organizationClient.saveAll(unifiedOrganizations);
-        dvClient.saveAll(unifiedMembers);
+        //luu trang thai draft
+        draft.setApprovedBy(userDetails.getStaffCode());
+        draft.setStatus(EApprovalStatus.APPROVED.getId());
 
-        if (!dvOrgHistories.isEmpty()) {
-            dvOrgService.saveAll(dvOrgHistories);
+        List<OrganizationHistory> organizationHistories = new ArrayList<>();
+
+        OrganizationHistory organizationHistory = new OrganizationHistory();
+        organizationHistory.setCode(organizationUnify.getOrganizationCode());
+        organizationHistory.setName(organizationUnify.getOrganizationName());
+        organizationHistory.setRefId(organizationUnify.getId());
+        organizationHistory.setEffectiveDate(organizationUnify.getEffectiveDate());
+        organizationHistory.setType(EReport01Type.UNION.getId());
+        organizationHistories.add(organizationHistory);
+
+        for (OrganizationMergeDetail organizationMergeDetail : details) {
+            OrganizationHistory organizationHistoryUnified = new OrganizationHistory();
+            organizationHistoryUnified.setCode(organizationMergeDetail.getOldCode());
+            organizationHistoryUnified.setName(organizationMergeDetail.getOldName());
+            organizationHistoryUnified.setRefId(organizationMergeDetail.getId());
+            organizationHistoryUnified.setEffectiveDate(organizationUnify.getEffectiveDate());
+            organizationHistoryUnified.setType(EReport01Type.UNION.getId());
+            organizationHistories.add(organizationHistoryUnified);
         }
+
+        ApproveUnifyRequest request = ApproveUnifyRequest.builder()
+                .organizationMergeDetails(details)
+                .mergedOrganizations(unifiedOrganizations)
+                .mergeDraft(draft)
+                .dvOrgHistories(dvOrgHistories)
+                .mergedMembers(unifiedMembers)
+                .organizationHistories(organizationHistories)
+                .newOrganization(newOrganization)
+                .build();
+
+        mergeClient.saveUnifyEntities(request);
+        return true;
     }
 
     @Override
@@ -280,157 +306,170 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         OrganizationMergeDraft organizationMergeDraft = mergeDraftClient.findById(referenceId).getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
 
+        organizationMergeDraft.setApprovedBy(getUserRequested().getId());
+        organizationMergeDraft.setStatus(EApprovalStatus.APPROVED.getId());
+
         List<OrganizationMergeDetailDraft> detailDrafts = mergeDetailDraftClient.findByRefId(organizationMergeDraft.getId()).getData();
         if (detailDrafts.isEmpty()) {
             return false;
         }
 
-        OrganizationMerge organizationMerge = mergeClient.findById(organizationMergeDraft.getRefId())
+        OrganizationMerge organizationUnify = mergeClient.findById(organizationMergeDraft.getRefId())
                 .getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
 
-        List<OrganizationMergeDetail> organizationMergeDetails = mergeDetailClient.findByRefId(organizationMerge.getId()).getData();
+        List<OrganizationMergeDetail> organizationMergeDetails = mergeDetailClient.findByRefId(organizationUnify.getId()).getData();
         if (organizationMergeDetails.isEmpty()) {
             return false;
         }
 
-        organizationMerge.setForm(organizationMergeDraft.getForm());
-        organizationMerge.setOrganizationCode(organizationMergeDraft.getOrganizationCode());
-        organizationMerge.setOrganizationName(organizationMergeDraft.getOrganizationName());
-        organizationMerge.setEffectiveDate(organizationMergeDraft.getEffectiveDate());
-        organizationMerge.setDecisionCommittee(organizationMergeDraft.getDecisionCommittee());
-        organizationMerge.setDecisionDate(organizationMergeDraft.getDecisionDate());
-        organizationMerge.setDecisionNumber(organizationMergeDraft.getDecisionNumber());
-        organizationMerge.setConclusionDate(organizationMergeDraft.getConclusionDate());
-        organizationMerge.setConclusionNumber(organizationMergeDraft.getConclusionNumber());
+        String newOrganizationCode = organizationMergeDraft.getOrganizationCode();
 
-        Map<String, OrganizationMergeDetailDraft> organizationMergeDetailDraftMap = new HashMap<>();
-        for (OrganizationMergeDetailDraft detailDraft: detailDrafts) {
-            organizationMergeDetailDraftMap.put(detailDraft.getOldCode(), detailDraft);
-        }
-        //biến lấy danh sách để xóa bảng organizationMergeDetail đi
-        List<OrganizationMergeDetail> removeList = new ArrayList<>();
-        //Lấy danh sách organizationMergeDetail mới
-        List<OrganizationMergeDetail> newDetailList = new ArrayList<>();
-        //Lấy mã TCD bị nhầm nhằm khôi phục lại TCD đã set trạng thái ngừng hoặt động
-        //và set dv khôi phục lại tCD cũ
-        List<String> orgCodeSetActive = new ArrayList<>();
+        Organization newOrganization = new Organization();
+        newOrganization.setCode(newOrganizationCode);
+        newOrganization.setName(organizationMergeDraft.getOrganizationName());
+        newOrganization.setForm(organizationMergeDraft.getForm());
 
-        Map<String, OrganizationMergeDetail> organizationMergeDetailMap = new HashMap<>();
-        for (OrganizationMergeDetail detail: organizationMergeDetails) {
-            OrganizationMergeDetailDraft detailDraft = organizationMergeDetailDraftMap.getOrDefault(detail.getOldCode(), null);
-            if (Objects.isNull(detailDraft)) {
-                removeList.add(detail);
-                orgCodeSetActive.add(detail.getOldCode());
-            }else {
-                newDetailList.add(detail);
-                organizationMergeDetailMap.put(detail.getOldCode(), detail);
-            }
-        }
-
-        List<String> unifiedCodes = new ArrayList<>();
-        for (OrganizationMergeDetailDraft detail: detailDrafts) {
-            OrganizationMergeDetail detailMer = organizationMergeDetailMap.getOrDefault(detail.getOldCode(), null);
-            if (Objects.isNull(detailMer)) {
-                detailMer = OrganizationMergeDetail.builder()
-                        .oldCode(detail.getOldCode())
-                        .oldName(detail.getOldName())
-                        .referenceId(organizationMerge.getId())
-                        .build();
-
-                newDetailList.add(detailMer);
-                unifiedCodes.add(detail.getOldCode());
-            }
-        }
-
-        //reset những user hợp nhất nhầm khôi phục về tcd cũ
-        resetOrgDv(removeList, orgCodeSetActive);
-
-        //set lại trạng thái hoạt động cho TCD
-        setStatusActiveOrg(orgCodeSetActive);
-
-        Organization oldOrganization = organizationService.findByCode(organizationMerge.getOrganizationCode());
-
-        String newOrganizationCode = organizationMerge.getOrganizationCode();
-        if (Objects.equals(oldOrganization.getCode(), newOrganizationCode)) {
-            oldOrganization.setName(organizationMerge.getOrganizationName());
-
-            organizationService.save(oldOrganization);
-            //chuyen cac dang vien tu TCD bi sap nhap/hop nhat sang TCD nhan sap nhap/hop nhat
-            unifyOrganization(unifiedCodes, organizationMerge.getOrganizationCode());
-            saveUpdate(organizationMergeDraft, organizationMerge, newDetailList);
-            return true;
-        }
-
-        Organization organization = new Organization();
-        organization.setCode(newOrganizationCode);
-        organization.setName(organizationMerge.getOrganizationName());
-        organization.setForm(organizationMerge.getForm());
         if (newOrganizationCode.length() == Constants.FORM_B_NAME_LENGTH) {
-            organization.setParentCode(Constants.DANG_UY_AGRIBANK_CODE);
+            newOrganization.setParentCode(Constants.DANG_UY_AGRIBANK_CODE);
+        } else {
+            newOrganization.setParentCode(newOrganizationCode.substring(0, newOrganizationCode.length() - 2));
         }
-        else{
-            organization.setParentCode(newOrganizationCode.substring(0, newOrganizationCode.length() - 2));
+
+        newOrganization.setStatus(EOrganizationStatus.YES.getStatus());
+
+        Organization oldOrganization = organizationService.findByCode(organizationUnify.getOrganizationCode());
+
+        //Lấy danh sách OrganizationMergeDetail mới
+        List<String> newMergedCodes = new ArrayList<>();
+        List<OrganizationMergeDetail> newDetailList = new ArrayList<>();
+
+        for (OrganizationMergeDetailDraft detailDraft : detailDrafts) {
+            OrganizationMergeDetail organizationMergeDetail = modelMapper.map(detailDraft, OrganizationMergeDetail.class);
+            organizationMergeDetail.setReferenceId(organizationUnify.getId());
+            newDetailList.add(organizationMergeDetail);
+            newMergedCodes.add(detailDraft.getOldCode());
         }
-        organization.setStatus(EOrganizationStatus.YES.getStatus());
 
-        //Lưu mã TCD mới và xóa mã TCD bị nhầm
-        organizationClient.save(organization);
-        organizationClient.deleteById(oldOrganization.getCode());
+        List<OrganizationMergeDetail> oldMergeDetails = mergeDetailClient.findByRefId(organizationUnify.getId()).getData();
+        List<String> oldMergedCodes = new ArrayList<>();
 
-        //chuyen cac dang vien tu TCD bi sap nhap/hop nhat sang TCD nhan sap nhap/hop nhat
-        unifyOrganization(unifiedCodes, organizationMerge.getOrganizationCode());
-        saveUpdate(organizationMergeDraft, organizationMerge, newDetailList);
+        for (OrganizationMergeDetail detail : oldMergeDetails) {
+            oldMergedCodes.add(detail.getOldCode());
+        }
+
+        List<Organization> oldMergedOrganizations = organizationClient.findAllByCode(oldMergedCodes).getData();
+
+        for (Organization organization : oldMergedOrganizations) {
+            organization.setStatus(EOrganizationStatus.YES.getStatus());
+        }
+
+        //lay danh sach cac dang vien luu OrganizationCode truoc khi update
+        List<DvOrgHistory> oldDvOrgHistories = dvOrgHistoryClient.findByNewOrgCodeAndRefId(organizationUnify.getOrganizationCode(), organizationUnify.getId()).getData();
+        Map<String, DvOrgHistory> dvOrgHistoryMap = new HashMap<>();
+        List<String> staffCodes = new ArrayList<>();
+
+        for (DvOrgHistory dvOrgHistory : oldDvOrgHistories) {
+            dvOrgHistoryMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory);
+            staffCodes.add(dvOrgHistory.getStaffCode());
+        }
+
+        List<DV> oldDVs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
+
+        for (DV dv : oldDVs) {
+            if (Objects.equals(dv.getOrganizationCode(), organizationUnify.getOrganizationCode())) {
+                String oldCode = dvOrgHistoryMap.get(dv.getStaffCode()).getOldOrgCode();
+                dv.setOrganizationCode(oldCode);
+            }
+        }
+
+        //lay danh sach cac dang vien luu OrganizationCode sau khi update
+        List<Organization> newMergedOrganizations = organizationClient.findAllByCode(newMergedCodes).getData();
+
+        for (Organization organization : newMergedOrganizations) {
+            organization.setStatus(EOrganizationStatus.NO.getStatus());
+        }
+
+        List<DvOrgHistory> newDvOrgHistories = new ArrayList<>();
+        List<DV> newDVs = dvClient.findByOrganizationCodes(newMergedCodes).getData();
+
+        for (DV member : newDVs) {
+
+            if (oldDVs.contains(member)) {
+                String oldCode = dvOrgHistoryMap.get(member.getStaffCode()).getOldOrgCode();
+
+                DvOrgHistory dvOrgHistory = DvOrgHistory.builder()
+                        .staffCode(member.getStaffCode())
+                        .oldOrgCode(oldCode)
+                        .newOrgCode(organizationMergeDraft.getOrganizationCode())
+                        .refId(organizationUnify.getId())
+                        .build();
+                newDvOrgHistories.add(dvOrgHistory);
+            } else {
+                DvOrgHistory dvOrgHistory = DvOrgHistory.builder()
+                        .staffCode(member.getStaffCode())
+                        .oldOrgCode(member.getOrganizationCode())
+                        .newOrgCode(organizationMergeDraft.getOrganizationCode())
+                        .refId(organizationUnify.getId())
+                        .build();
+                newDvOrgHistories.add(dvOrgHistory);
+            }
+
+            member.setOrganizationCode(organizationMergeDraft.getOrganizationCode());
+        }
+
+        //update lai EffectiveDate bang OrganizationHistory
+        List<OrganizationHistory> newOrganizationHistories = new ArrayList<>();
+        OrganizationHistory organizationHistory = organizationHistoryClient.findByRefId(EReport01Type.UNION.getId(), organizationUnify.getId()).getData();
+        organizationHistory.setEffectiveDate(organizationMergeDraft.getEffectiveDate());
+        newOrganizationHistories.add(organizationHistory);
+
+        for (OrganizationMergeDetail organizationMergeDetail : newDetailList) {
+            OrganizationHistory organizationHistoryUnified = new OrganizationHistory();
+            organizationHistoryUnified.setCode(organizationMergeDetail.getOldCode());
+            organizationHistoryUnified.setName(organizationMergeDetail.getOldName());
+            organizationHistoryUnified.setRefId(organizationMergeDetail.getId());
+            organizationHistoryUnified.setEffectiveDate(organizationUnify.getEffectiveDate());
+            organizationHistoryUnified.setType(EReport01Type.UNION.getId());
+            newOrganizationHistories.add(organizationHistoryUnified);
+        }
+
+        List<OrganizationHistory> oldOrganizationHistories = new ArrayList<>();
+
+        for (OrganizationMergeDetail organizationMergeDetail : oldMergeDetails) {
+            OrganizationHistory oldOrganizationHistory = organizationHistoryClient.findByRefId(EReport01Type.UNION.getId(), organizationMergeDetail.getId()).getData();
+            oldOrganizationHistories.add(oldOrganizationHistory);
+        }
+
+        organizationUnify.setForm(organizationMergeDraft.getForm());
+        organizationUnify.setOrganizationCode(organizationMergeDraft.getOrganizationCode());
+        organizationUnify.setOrganizationName(organizationMergeDraft.getOrganizationName());
+        organizationUnify.setEffectiveDate(organizationMergeDraft.getEffectiveDate());
+        organizationUnify.setDecisionCommittee(organizationMergeDraft.getDecisionCommittee());
+        organizationUnify.setDecisionDate(organizationMergeDraft.getDecisionDate());
+        organizationUnify.setDecisionNumber(organizationMergeDraft.getDecisionNumber());
+        organizationUnify.setConclusionDate(organizationMergeDraft.getConclusionDate());
+        organizationUnify.setConclusionNumber(organizationMergeDraft.getConclusionNumber());
+
+        ApproveUpdateUnifyRequest request = ApproveUpdateUnifyRequest.builder()
+                .newOrganizationMergeDetails(newDetailList)
+                .oldOrganizationMergeDetails(oldMergeDetails)
+                .oldMergedOrganizations(oldMergedOrganizations)
+                .newMergedOrganizations(newMergedOrganizations)
+                .organizationMerge(organizationUnify)
+                .mergeDraft(organizationMergeDraft)
+                .oldDvOrgHistories(oldDvOrgHistories)
+                .newDvOrgHistories(newDvOrgHistories)
+                .newOrganizationHistories(newOrganizationHistories)
+                .oldOrganizationHistories(oldOrganizationHistories)
+                .oldDVs(oldDVs)
+                .newDVs(newDVs)
+                .newOrganization(newOrganization)
+                .oldOrganization(oldOrganization)
+                .build();
+
+        mergeClient.updateUnifyEntities(request);
         return true;
-    }
-
-    private void resetOrgDv(List<OrganizationMergeDetail> removeList, List<String> orgCodeSetActive) {
-        List<DvOrgHistory> dvOrgHistoryList = new ArrayList<>();
-        if (!removeList.isEmpty()) {
-            dvOrgHistoryList = dvOrgService.findByOldOrgCodeIn(orgCodeSetActive);
-            mergeDetailClient.deleteAll(removeList);
-        }
-
-        if (!dvOrgHistoryList.isEmpty()) {
-            List<String> staffCodes = dvOrgHistoryList.stream().map(DvOrgHistory::getStaffCode).toList();
-            List<DV> dvs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
-            Map<String, DvOrgHistory> dvOrgHistoryMap = new HashMap<>();
-
-            for (DvOrgHistory dvOrgHistory : dvOrgHistoryList) {
-                dvOrgHistoryMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory);
-            }
-
-            for (DV dv : dvs) {
-                DvOrgHistory dvOrgHistory = dvOrgHistoryMap.getOrDefault(dv.getStaffCode(), null);
-                if (Objects.nonNull(dvOrgHistory)) {
-                    dv.setOrganizationCode(dvOrgHistory.getOldOrgCode());
-                }
-            }
-
-            dvClient.saveAll(dvs);
-        }
-    }
-
-    private void saveUpdate(OrganizationMergeDraft organizationMergeDraft,
-                            OrganizationMerge organizationMerge,
-                            List<OrganizationMergeDetail> newDetailList){
-        organizationMergeDraft.setApprovedBy(getUserRequested().getId());
-        organizationMergeDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        mergeDraftClient.save(organizationMergeDraft);
-        mergeDetailClient.saveAll(newDetailList);
-        mergeClient.save(organizationMerge);
-    }
-
-    //set lại trạng thái TCD hoạt động
-    private void setStatusActiveOrg(List<String> orgCodeSetActive){
-        if (!orgCodeSetActive.isEmpty()) {
-            List<Organization> organizationList = organizationClient.findAllByCode(orgCodeSetActive).getData();
-            for (Organization organization: organizationList) {
-                organization.setStatus(EOrganizationStatus.YES.getStatus());
-            }
-
-            organizationClient.saveAll(organizationList);
-        }
     }
 
     @Override

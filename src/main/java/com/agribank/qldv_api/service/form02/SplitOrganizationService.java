@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service.form02;
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.*;
+import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.gateway.form02.split.OrganizationSplitClient;
 import com.agribank.qldv_api.gateway.form02.split.OrganizationSplitDetailClient;
 import com.agribank.qldv_api.gateway.form02.split.OrganizationSplitDetailDraftClient;
@@ -18,6 +19,7 @@ import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.*;
+import com.agribank.qldvutils.entity.form02.OrganizationHistory;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplit;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplitDetail;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplitDetailDraft;
@@ -56,6 +58,7 @@ public class SplitOrganizationService implements EntityHandler {
     final DVClient dvClient;
     final DvOrgHistoryDraftClient dvOrgHistoryDraftClient;
     final DvOrgHistoryClient dvOrgHistoryClient;
+    final OrganizationHistoryClient organizationHistoryClient;
     final RequestService requestService;
     OrganizationService organizationService;
 
@@ -223,9 +226,8 @@ public class SplitOrganizationService implements EntityHandler {
         organizationSplit = organizationSplitClient.save(organizationSplit).getData();
         String organizationSplitId = organizationSplit.getId();
 
-        List<Organization> newOrganizationList = new ArrayList<>();
-
         //luu danh sach to chuc Dang sau chia tach
+        List<Organization> newOrganizationList = new ArrayList<>();
         List<OrganizationSplitDetail> details = new ArrayList<>();
 
         for (OrganizationSplitDetailDraft detailDraft : detailDrafts) {
@@ -259,7 +261,6 @@ public class SplitOrganizationService implements EntityHandler {
         //luu trang thai draft
         splitDraft.setApprovedBy(userDetails.getId());
         splitDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        //splitDraftClient.save(splitDraft);
 
         //luu chinh thuc danh sach dang vien voi cac to chuc dang moi
         List<DvOrgHistoryDraft> dvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(splitDraft.getId()).getData();
@@ -284,6 +285,26 @@ public class SplitOrganizationService implements EntityHandler {
             newDVs.add(dv);
         }
 
+        List<OrganizationHistory> organizationHistories = new ArrayList<>();
+
+        OrganizationHistory organizationHistory = new OrganizationHistory();
+        organizationHistory.setCode(organizationSplit.getOldCode());
+        organizationHistory.setName(organizationSplit.getOldName());
+        organizationHistory.setRefId(organizationSplit.getId());
+        organizationHistory.setEffectiveDate(organizationSplit.getEffectiveDate());
+        organizationHistory.setType(EReport01Type.DECOMPOSE.getId());
+        organizationHistories.add(organizationHistory);
+
+        for (OrganizationSplitDetail organizationSplitDetail : details) {
+            OrganizationHistory organizationHistorySplited = new OrganizationHistory();
+            organizationHistorySplited.setCode(organizationSplitDetail.getNewCode());
+            organizationHistorySplited.setName(organizationSplitDetail.getNewName());
+            organizationHistorySplited.setRefId(organizationSplitDetail.getId());
+            organizationHistorySplited.setEffectiveDate(organizationSplit.getEffectiveDate());
+            organizationHistorySplited.setType(EReport01Type.DECOMPOSE.getId());
+            organizationHistories.add(organizationHistorySplited);
+        }
+
         ApproveSplitRequest request = ApproveSplitRequest.builder()
                 .organizationSplitDetails(details)
                 .newOrganizations(newOrganizationList)
@@ -291,6 +312,7 @@ public class SplitOrganizationService implements EntityHandler {
                 .splitDraft(splitDraft)
                 .dvOrgHistories(dvOrgHistories)
                 .newDVs(newDVs)
+                .organizationHistories(organizationHistories)
                 .build();
 
         organizationSplitClient.saveEntities(request);
@@ -315,8 +337,8 @@ public class SplitOrganizationService implements EntityHandler {
                 .getData()
                 .orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
 
-        List<OrganizationSplitDetail> organizationSplitDetails = splitDetailClient.findBySplitId(organizationSplit.getId()).getData();
-        if (organizationSplitDetails.isEmpty()) {
+        List<OrganizationSplitDetail> oldOrganizationSplitDetails = splitDetailClient.findBySplitId(organizationSplit.getId()).getData();
+        if (oldOrganizationSplitDetails.isEmpty()) {
             return false;
         }
 
@@ -327,12 +349,10 @@ public class SplitOrganizationService implements EntityHandler {
         organizationSplit.setConclusionDate(organizationSplitDraft.getConclusionDate());
         organizationSplit.setConclusionNumber(organizationSplitDraft.getConclusionNumber());
 
-        //biến lấy danh sách để xóa bảng OrganizationSplitDetail đi
-        List<OrganizationSplitDetail> removeList = new ArrayList<>();
         //Lấy danh sách OrganizationSplitDetail mới
         List<OrganizationSplitDetail> newDetailList = new ArrayList<>();
         //biến lấy danh sách để xóa cac to chuc cu trong bảng Organization
-        List<String> idsOldOrganization = new ArrayList<>();
+        List<String> idOldOrganizations = new ArrayList<>();
         //Lấy danh sách them cac to chuc moi trong bảng Organization
         List<Organization> newOrganizations = new ArrayList<>();
 
@@ -342,12 +362,9 @@ public class SplitOrganizationService implements EntityHandler {
             newDetailList.add(organizationSplitDetail);
         }
 
-        for (OrganizationSplitDetail detail : organizationSplitDetails) {
-            removeList.add(detail);
-            idsOldOrganization.add(detail.getNewCode());
+        for (OrganizationSplitDetail detail : oldOrganizationSplitDetails) {
+            idOldOrganizations.add(detail.getNewCode());
         }
-        organizationClient.deleteAllById(idsOldOrganization);
-        splitDetailClient.deleteAll(removeList);
 
         for (OrganizationSplitDetailDraft detailDraft : detailDrafts) {
             Organization organization = new Organization();
@@ -361,15 +378,14 @@ public class SplitOrganizationService implements EntityHandler {
         }
 
         //xoa cac ban ghi luu danh sach dang vien o to chuc cu
-        List<DvOrgHistory> dvOldOrgHistories = dvOrgHistoryClient.findByRefId(organizationSplit.getId()).getData();
-        dvOrgHistoryClient.deleteAll(dvOldOrgHistories);
+        List<DvOrgHistory> oldDvOrgHistories = dvOrgHistoryClient.findByRefId(organizationSplit.getId()).getData();
 
         //luc chinh thuc danh sach dang vien voi cac to chuc dang moi
         List<DvOrgHistoryDraft> dvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(organizationSplitDraft.getId()).getData();
         List<String> staffCodes = new ArrayList<>();
         Map<String, String> dvOrgHistoriesMap = new HashMap<>();
 
-        List<DvOrgHistory> dvOrgHistories = dvOrgHistoryDrafts.stream().map(dv -> {
+        List<DvOrgHistory> newDvOrgHistories = dvOrgHistoryDrafts.stream().map(dv -> {
             DvOrgHistory dvOrgHistory = modelMapper.map(dv, DvOrgHistory.class);
             dvOrgHistory.setRefId(organizationSplit.getId());
             staffCodes.add(dvOrgHistory.getStaffCode());
@@ -387,13 +403,40 @@ public class SplitOrganizationService implements EntityHandler {
             newDVs.add(dv);
         }
 
+        List<OrganizationHistory> newOrganizationHistories = new ArrayList<>();
+        OrganizationHistory organizationHistory = organizationHistoryClient.findByRefId(EReport01Type.DECOMPOSE.getId(), organizationSplit.getId()).getData();
+        organizationHistory.setEffectiveDate(organizationSplitDraft.getEffectiveDate());
+        newOrganizationHistories.add(organizationHistory);
+
+        for (OrganizationSplitDetail organizationSplitDetail : newDetailList) {
+            OrganizationHistory organizationHistorySplited = new OrganizationHistory();
+            organizationHistorySplited.setCode(organizationSplitDetail.getNewCode());
+            organizationHistorySplited.setName(organizationSplitDetail.getNewName());
+            organizationHistorySplited.setRefId(organizationSplitDetail.getId());
+            organizationHistorySplited.setEffectiveDate(organizationSplit.getEffectiveDate());
+            organizationHistorySplited.setType(EReport01Type.DECOMPOSE.getId());
+            newOrganizationHistories.add(organizationHistorySplited);
+        }
+
+        List<OrganizationHistory> oldOrganizationHistories = new ArrayList<>();
+
+        for (OrganizationSplitDetail organizationSplitDetail : oldOrganizationSplitDetails) {
+            OrganizationHistory oldOrganizationHistory = organizationHistoryClient.findByRefId(EReport01Type.DECOMPOSE.getId(), organizationSplitDetail.getId()).getData();
+            oldOrganizationHistories.add(oldOrganizationHistory);
+        }
+
         ApproveUpdateSplitRequest request = ApproveUpdateSplitRequest.builder()
-                .organizationSplitDetails(newDetailList)
+                .newOrganizationSplitDetails(newDetailList)
+                .oldOrganizationSplitDetails(oldOrganizationSplitDetails)
                 .newOrganizations(newOrganizations)
+                .idOldOrganizations(idOldOrganizations)
                 .organizationSplit(organizationSplit)
                 .splitDraft(organizationSplitDraft)
-                .dvOrgHistories(dvOrgHistories)
+                .oldDvOrgHistories(oldDvOrgHistories)
+                .newDvOrgHistories(newDvOrgHistories)
                 .newDVs(newDVs)
+                .newOrganizationHistories(newOrganizationHistories)
+                .oldOrganizationHistories(oldOrganizationHistories)
                 .build();
 
         organizationSplitClient.updateEntities(request);
@@ -438,7 +481,7 @@ public class SplitOrganizationService implements EntityHandler {
         OrganizationSplit organizationSplit = organizationSplitClient.findById(id).getData().orElse(null);
 
         if (Objects.isNull(organizationSplit)) {
-            throw new CommonException("Không tìm thấy yêu cầu hợp nhất");
+            throw new CommonException("Không tìm thấy yêu cầu chia tách");
         }
 
         OrganizationSplitDetailResponse response = modelMapper.map(organizationSplit, OrganizationSplitDetailResponse.class);
@@ -448,6 +491,10 @@ public class SplitOrganizationService implements EntityHandler {
 
         Map<String, List<DvOrgHistory>> dvOrgHistoryMap = dvOrgHistories.stream()
                 .collect(Collectors.groupingBy(DvOrgHistory::getNewOrgCode));
+
+        if (dvOrgHistoryMap.isEmpty()) {
+            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
+        }
 
         Map<String, DV> dvOfNewOrgMap = new HashMap<>();
         List<String> staffCodes = new ArrayList<>();
@@ -468,8 +515,10 @@ public class SplitOrganizationService implements EntityHandler {
             List<DvOrgHistory> items = dvOrgHistoryMap.get(detailResponse.getCode());
             List<DV> dvsOfNewOrg = new ArrayList<>();
 
-            for (DvOrgHistory dvOrgHistory : items) {
-                dvsOfNewOrg.add(dvOfNewOrgMap.get(dvOrgHistory.getStaffCode()));
+            if (!Objects.isNull(items)) {
+                for (DvOrgHistory dvOrgHistory : items) {
+                    dvsOfNewOrg.add(dvOfNewOrgMap.get(dvOrgHistory.getStaffCode()));
+                }
             }
 
             detailResponse.setMembers(dvsOfNewOrg);
