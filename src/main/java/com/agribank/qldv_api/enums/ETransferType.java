@@ -29,4 +29,14 @@ public enum ETransferType {
 
         return null;
     }
+
+    public static String getTransferName(int i) {
+        for (ETransferType type: ETransferType.values()) {
+            if (Objects.equals(i, type.id)) {
+                return type.getName();
+            }
+        }
+
+        return null;
+    }
 }
