@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.dv_report;
 
+import com.agribank.qldv_api.enums.ETransferType;
 import com.agribank.qldv_api.response.dv_report.DvRp34Response;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportPDFReportService;
@@ -30,7 +31,7 @@ public class ExportDVRp32Service extends ExportService {
         SearchRp32Request requestParam = (SearchRp32Request) serviceParam;
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<Report32Response> dataDto = dvReportService.searchRp32(requestParam);
-        if(dataDto == null){
+        if (dataDto == null) {
             return 0;
         }
         return Integer.parseInt(String.valueOf(dataDto.getTotalItems()));
@@ -42,13 +43,13 @@ public class ExportDVRp32Service extends ExportService {
         requestParam.setPage(pageIndex);
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<Report32Response> dvRp32ResponsePageResponse = dvReportService.searchRp32(requestParam);
-        if(Objects.isNull(dvRp32ResponsePageResponse)){
+        if (Objects.isNull(dvRp32ResponsePageResponse)) {
             return new ArrayList<>();
         }
 
         List<Report32Response> dvRp32Responses = dvRp32ResponsePageResponse.getData();
         List<Map<String, Object>> exportData = new ArrayList<>();
-        for(Report32Response rp32Response : dvRp32Responses){
+        for (Report32Response rp32Response : dvRp32Responses) {
             Map<String, Object> item = new HashMap<>();
             item.put("organizationCode", rp32Response.getOrganizationCode());
             item.put("name", rp32Response.getName());
@@ -62,7 +63,7 @@ public class ExportDVRp32Service extends ExportService {
             item.put("reason", rp32Response.getReason());
             item.put("transferDate", rp32Response.getTransferDate());
             item.put("expectedExpiryDate", rp32Response.getExpectedExpiryDate());
-            item.put("transferType", rp32Response.getTransferType());
+            item.put("transferType", ETransferType.getTransferName(rp32Response.getTransferType()));
             exportData.add(item);
         }
         return exportData;
