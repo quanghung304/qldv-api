@@ -16,4 +16,6 @@ public class OrganizationRenameRequest extends BaseFormRequest {
     @NotNull(message = "không được để trống trường tên tổ chức đảng")
     private String organizationName;
 
+    private String oldOrganizationName;
+
 }
