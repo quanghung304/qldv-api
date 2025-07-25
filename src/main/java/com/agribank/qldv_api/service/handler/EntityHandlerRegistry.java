@@ -53,8 +53,8 @@ public class EntityHandlerRegistry {
             TransferWithinBaseService transferWithinBaseService,
             TransferTemporaryService transferTemporaryService,
             OrganizationUnifyService organizationUnifyService,
-            OrganizationRenameService organizationRenameService,
-            PartyOrganizationTransferService partyOrganizationTransferService
+            PartyOrganizationTransferService partyOrganizationTransferService,
+            OrganizationRenameService organizationRenameService
     ) {
         this.handlers = Map.ofEntries(
                 entry(EForm.BIEU_01.getCode(), organizationService),
@@ -65,6 +65,7 @@ public class EntityHandlerRegistry {
                 entry(EForm.BIEU_02_MERGE.getCode(), organizationMergeService),
                 entry(EForm.BIEU_02_UNION.getCode(), organizationUnifyService),
                 entry(EForm.BIEU_02_RENAME.getCode(), organizationRenameService),
+                entry(EForm.BIEU_02_TRANSFER.getCode(), partyOrganizationTransferService),
                 entry(EForm.BIEU_12.getCode(), developPlanDetailService),
                 entry(EForm.BIEU_15.getCode(), dvService),
                 entry(EForm.BIEU_20.getCode(), membershipProposalService),
