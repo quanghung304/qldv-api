@@ -26,7 +26,7 @@ import com.agribank.qldvutils.entity.form02.transfer.PartyOrganizationTransfer;
 import com.agribank.qldvutils.entity.form02.transfer.PartyOrganizationTransferDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.dv_org_history.DvOrgHisListRequest;
-import com.agribank.qldvutils.request.dv_org_history.DvOrgHisRequest;
+import com.agribank.qldvutils.request.dv_org_history.DvOrganizationHisRequest;
 import com.agribank.qldvutils.request.form02.SearchPartyOrgTransferRequest;
 import com.agribank.qldvutils.request.form02.transfer.PartyOrgTranDraftRequest;
 import com.agribank.qldvutils.request.form02.transfer.PartyOrgTranEntityCreateRequest;
@@ -479,7 +479,7 @@ public class PartyOrganizationTransferService implements EntityHandler {
             return;
         }
         //Khôi phục Đảng viên về tcd cũ
-        List<DvOrgHistory> dvOrgHistories = dvOrgService.getOrgHis(DvOrgHisRequest.builder()
+        List<DvOrgHistory> dvOrgHistories = dvOrgService.getOrgHis(DvOrganizationHisRequest.builder()
                 .newOrgCodes(orgCodes)
                 .refId(partyOrg.getId())
                 .action(EReport01Type.TRANSFER.getId()+"")
