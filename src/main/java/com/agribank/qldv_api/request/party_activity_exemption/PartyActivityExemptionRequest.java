@@ -22,31 +22,31 @@ public class PartyActivityExemptionRequest {
     String reason;
 
     public void validate() {
-        if (Objects.isNull(organizationCode)) {
-            throw new CommonException("Organization code is required");
+        if (Objects.isNull(organizationCode) || organizationCode.isBlank()) {
+            throw new CommonException("Chưa chọn Tổ chức Đảng");
         }
 
-        if (Objects.isNull(staffCode)) {
-            throw new CommonException("Staff code is required");
+        if (Objects.isNull(staffCode) || staffCode.isBlank()) {
+            throw new CommonException("Kiểm tra lại Đảng viên");
         }
-        if (Objects.isNull(committeeDecision)) {
-            throw new CommonException("Committee decision is required");
+        if (Objects.isNull(committeeDecision) || committeeDecision.isBlank()) {
+            throw new CommonException("Chưa chọn cấp ủy quyết định");
         }
 
-        if (Objects.isNull(decisionNumber)) {
-            throw new CommonException("Decision number is required");
+        if (Objects.isNull(decisionNumber) || decisionNumber.isBlank()) {
+            throw new CommonException("Chưa nhập số QĐ");
         }
 
         if (Objects.isNull(decisionDate)) {
-            throw new CommonException("Issue date is required");
+            throw new CommonException("Chưa chọn ngày ban hành QĐ");
         }
 
         if (Objects.isNull(effectiveDate)) {
-            throw new CommonException("Effective date is required");
+            throw new CommonException("Chưa chọn ngày hiệu lực");
         }
 
-        if (Objects.isNull(reason)) {
-            throw new CommonException("Reason is required");
+        if (Objects.isNull(reason) || reason.isBlank()) {
+            throw new CommonException("Chưa nhập lý do miễn sinh hoạt Đảng");
         }
 
         if (!CommonUtils.validateDatesAfter(decisionDate, effectiveDate)){

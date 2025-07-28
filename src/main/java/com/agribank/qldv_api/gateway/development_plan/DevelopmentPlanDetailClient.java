@@ -7,10 +7,7 @@ import com.agribank.qldvutils.entity.development_plan.DevelopmentPlanDetail;
 import com.agribank.qldvutils.request.development_plan.DevelopDetailRefIdRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopPlanUpdateRequest;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,5 +28,12 @@ public interface DevelopmentPlanDetailClient extends BaseClient<DevelopmentPlanD
     @PostMapping("/find-by-ref-id-and-year")
     DefaultResponse<List<DevelopmentPlanDetail>> findByRefIdAndYearIn(
             @RequestBody DevelopDetailRefIdRequest request
+    );
+
+    @GetMapping("/find-by-ref-id&start&end")
+    DefaultResponse<List<DevelopmentPlanDetail>> findByRefIdAndStartAndYear(
+            @RequestParam(name = "refId") String refId,
+            @RequestParam(name = "start") Integer start,
+            @RequestParam(name = "end") Integer end
     );
 }

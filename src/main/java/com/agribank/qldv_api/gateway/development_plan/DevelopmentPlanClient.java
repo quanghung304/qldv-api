@@ -40,8 +40,10 @@ public interface DevelopmentPlanClient extends BaseClient<DevelopmentPlan, Strin
             @RequestParam(name = "organizationCode") String organizationCode
     );
 
-    @GetMapping("/find-by-organization-code")
-    DefaultListResponse<DevelopmentPlan> findByOrganizationCodeIn(
-            @RequestBody List<String> organizationCodes
+    @GetMapping("/find-by-organization-code&start&end")
+    DefaultResponse<DevelopmentPlan> findByCodeAndStartAndEnd(
+            @RequestParam(name = "organizationCode") String organizationCode,
+            @RequestParam(name = "start") Integer start,
+            @RequestParam(name = "end") Integer end
     );
 }

@@ -20,10 +20,11 @@ import static com.agribank.qldv_api.response.DefaultResponse.success;
 public class DevelopmentPlanDetailController {
     private final DevelopPlanDetailService developPlanDetailService;
 
-    @PostMapping("/get-detail")
-    public ResponseEntity<DefaultListResponse<DevelopPlanDetailResponse>> getPlanDetail(@RequestBody GetDevelopmentPlanRequest request) {
-        request.validate();
-        return com.agribank.qldv_api.response.DefaultListResponse.success(developPlanDetailService.getPlanDetail(request));
+    @GetMapping("/get-detail")
+    public ResponseEntity<DefaultListResponse<DevelopPlanDetailResponse>> getPlanDetail(@RequestParam(name = "organizationCode") String organizationCode,
+                                                                                        @RequestParam(name = "start") Integer start,
+                                                                                        @RequestParam(name = "end") Integer end) {
+        return com.agribank.qldv_api.response.DefaultListResponse.success(developPlanDetailService.getPlanDetail(organizationCode, start, end));
     }
 
     @PostMapping("/add")
