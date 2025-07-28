@@ -24,32 +24,32 @@ public class LeavePartyRequest {
     Date effectiveDate;
 
     public void validate() {
-        if (Objects.isNull(organizationCode)) {
-            throw new CommonException("Organization code is required");
+        if (Objects.isNull(organizationCode) || organizationCode.isBlank()) {
+            throw new CommonException("Chưa chọn Tổ chức Đảng");
         }
-        if (Objects.isNull(staffCode)) {
-            throw new CommonException("Staff code is required");
+        if (Objects.isNull(staffCode) || staffCode.isBlank()) {
+            throw new CommonException("Kiểm tra lại Đảng viên");
         }
-        if (Objects.isNull(committeeDecision)) {
-            throw new CommonException("Committee decision is required");
+        if (Objects.isNull(committeeDecision) || committeeDecision.isBlank()) {
+            throw new CommonException("Chưa chọn cấp ủy quyết định");
         }
-        if (Objects.isNull(resolutionNumber)) {
-            throw new CommonException("Resolution number is required");
+        if (Objects.isNull(resolutionNumber) || resolutionNumber.isBlank()) {
+            throw new CommonException("Chưa nhập Số KL/NQ");
         }
         if (Objects.isNull(resolutionDate)) {
-            throw new CommonException("Resolution date is required");
+            throw new CommonException("Chưa chọn Ngày ban hành KL/NQ");
         }
-        if (Objects.isNull(reason)) {
-            throw new CommonException("Reason is required");
+        if (Objects.isNull(reason) || reason.isBlank()) {
+            throw new CommonException("Chưa nhập lý do");
         }
         if (Objects.isNull(decisionNumber)) {
-            throw new CommonException("Decision number is required");
+            throw new CommonException("Chưa nhập Số QĐ");
         }
         if (Objects.isNull(decisionDate)) {
-            throw new CommonException("Decision date is required");
+            throw new CommonException("Chưa chọn ngày ban hành QĐ");
         }
         if (Objects.isNull(effectiveDate)) {
-            throw new CommonException("Effective date is required");
+            throw new CommonException("Chưa chọn Ngày hiệu lực");
         }
 
         if (!CommonUtils.validateDatesAfter(decisionDate, effectiveDate)){

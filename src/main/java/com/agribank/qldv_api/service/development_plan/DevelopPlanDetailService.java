@@ -8,9 +8,7 @@ import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.development_plan.DevelopmentPlanDetailClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.develop_plan.*;
-import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.develop_plan.DevelopPlanDetailResponse;
-import com.agribank.qldv_api.response.develop_plan.DevelopPlanResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
@@ -26,7 +24,6 @@ import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.development_plan.DevelopDetailRefIdRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopPrntBrcdRequest;
 import com.agribank.qldvutils.response.BaseResponse;
-import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -37,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,25 +61,18 @@ public class DevelopPlanDetailService implements EntityHandler {
         return new LinkedHashMap<>(DevelopmentPlanDetailDraft.BASE_FIELD_MAP);
     }
 
-    public List<DevelopPlanDetailResponse> getPlanDetail(GetDevelopmentPlanRequest request) {
-        try {
-            PageResponse<DevelopPlanResponse> planPageResponse = developPlanService.getPlan(request);
-            if (planPageResponse.getData().isEmpty()) {
-                return null;
-            }
-            DefaultResponse<List<DevelopmentPlanDetail>> response = developmentPlanDetailClient.getByRefId(planPageResponse.getData().get(0).getId());
-            if (!response.getSuccess()) {
-                return null;
-            }
-            if (response.getData().isEmpty()) {
-                return null;
-            }
-            return response.getData().stream()
-                    .map(role -> modelMapper.map(role, DevelopPlanDetailResponse.class))
-                    .toList();
-        } catch (Exception e) {
-            throw new CommonException(e.getMessage());
+    public List<DevelopPlanDetailResponse> getPlanDetail(String organizationCode, Integer start, Integer end) {
+        DevelopmentPlan developmentPlan = developPlanService.findByCodeAndStartAndEnd(organizationCode, start, end);
+        if (Objects.isNull(developmentPlan)) {
+            return null;
         }
+
+        List<DevelopmentPlanDetail> developmentPlanDetails = developmentPlanDetailClient.findByRefIdAndStartAndYear(developmentPlan.getId(), start, end).getData();
+        if (developmentPlanDetails.isEmpty()) {
+            return null;
+        }
+
+        return developmentPlanDetails.stream().map(d -> modelMapper.map(d, DevelopPlanDetailResponse.class)).collect(Collectors.toList());
     }
 
     public String addDevelopPlanDetail(DevelopPlanDataRequest dataRequest) {

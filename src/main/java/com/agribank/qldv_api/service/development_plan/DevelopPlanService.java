@@ -83,4 +83,8 @@ public class DevelopPlanService {
     public DevelopmentPlan findByOrganizationCode(String organizationCode) {
         return developmentPlanClient.findByOrganizationCode(organizationCode).getData();
     }
+
+    public DevelopmentPlan findByCodeAndStartAndEnd(String organizationCode, Integer start, Integer end) {
+        return developmentPlanClient.findByCodeAndStartAndEnd(organizationCode, start, end).getData();
+    }
 }
