@@ -17,18 +17,17 @@ import com.agribank.qldv_api.service.log.DVLogService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
-import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.DvDraft;
-import com.agribank.qldvutils.entity.Organization;
-import com.agribank.qldvutils.entity.Request;
+import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.bcsl_report.dv.DvRp18Response;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -51,6 +50,7 @@ public class DVService implements EntityHandler {
     private final RequestService requestService;
     private final ModelMapper modelMapper;
     private final OrganizationService organizationService;
+    private final DvOrgService dvOrgService;
 
     private static final EForm form = EForm.BIEU_15;
 
@@ -218,6 +218,14 @@ public class DVService implements EntityHandler {
 
     public void mapDVDraftToDV(DV dv, DvDraft dvDraft) {
         dv.setStaffCode(dvDraft.getStaffCode());
+        if (Objects.nonNull(dvDraft.getOrganizationCode()) && !Objects.equals(dvDraft.getOrganizationCode(), dv.getOrganizationCode())) {
+            DvOrgHistory dvOrgHistory = DvOrgHistory.builder()
+                    .oldOrgCode(dv.getOrganizationCode())
+                    .newOrgCode(dvDraft.getOrganizationCode())
+                    .build();
+
+            dvOrgService.save(dvOrgHistory);
+        }
         dv.setOrganizationCode(dvDraft.getOrganizationCode());
         dv.setResumeNumber(dvDraft.getResumeNumber());
         dv.setPartyCardNumber(dvDraft.getPartyCardNumber());
@@ -436,5 +444,8 @@ public class DVService implements EntityHandler {
 
     public Report07DtoResponse getTotalRp07(SearchRp07Request request){
         return dvClient.getTotalRp07(request).getData();
+    }
+    public PageResponse<DvRp18Response> searchRp18(SearchRp18Request request){
+        return dvClient.searchRp18(request).getData();
     }
 }
