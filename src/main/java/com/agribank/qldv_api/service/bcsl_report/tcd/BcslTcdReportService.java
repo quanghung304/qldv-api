@@ -28,11 +28,13 @@ public class BcslTcdReportService {
         }
         PageResponse<BcslTcdRp01Response> response = organizationService.searchRp01(request);
 
-        if (Objects.nonNull(response.getData()) && !response.getData().isEmpty()) {
-            List<BcslTcdRp01Response> data = response.getData();
-            data.add(countTotal(data));
-            response.setData(data);
+        if (Objects.isNull(response.getData()) || response.getData().isEmpty()) {
+            return response;
         }
+
+        List<BcslTcdRp01Response> data = response.getData();
+        data.add(countTotal(data));
+        response.setData(data);
 
         if (!EOrganizationReference.GROUP_A.getCode().contains(request.getForm())) {
             return response;
