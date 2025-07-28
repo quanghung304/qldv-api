@@ -3,13 +3,17 @@ package com.agribank.qldv_api.service.bcsl_report.tcd;
 import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.gateway.DVClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp01Response;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp09Response;
+import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp02Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,7 @@ import java.util.*;
 public class BcslTcdReportService {
     private final DVClient dvClient;
     private final OrganizationService organizationService;
+    private final OrganizationClient organizationClient;
 
     public PageResponse<BcslTcdRp01Response> searchRp01(SearchRp01Request request) {
         if (Objects.isNull(request.getOrderBy())) {
@@ -144,5 +149,11 @@ public class BcslTcdReportService {
 
     public UserDetailsImpl getUserRequested(){
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    public PageResponse<BcslTcdRp02Response> searchRp02(SearchRequest request) {
+        String organizationCode = Objects.nonNull(request.getCode()) ? request.getCode() : CommonUtils.getOrganizationByRequestedUser();
+        request.setCode(organizationCode);
+        return organizationClient.searchRp02(request).getData();
     }
 }

@@ -29,9 +29,11 @@ public class ExportController {
     public void exportExcel(HttpServletResponse response, @RequestBody Object param, @RequestParam String type) throws IOException {
         try {
             ExportResponse exportResult = exportHandlerService.handleExport(param, type);
+
             if(Objects.isNull(exportResult)){
                 throw new IOException();
             }
+
             if(Objects.nonNull(exportResult.getWorkbook()) ){
                 Workbook workbook = exportResult.getWorkbook();
                 response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -40,8 +42,7 @@ public class ExportController {
                 workbook.write(response.getOutputStream());
                 workbook.close();
                 response.getOutputStream().flush();
-            }
-            else{
+            } else {
                 File file = exportResult.getFileZip();
                 if (!file.exists() || file.isDirectory()) {
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -62,7 +63,7 @@ public class ExportController {
                 }
                 response.getOutputStream().flush();
             }
-        }catch (Exception exception){
+        } catch (Exception exception) {
             throw new IOException();
         }
     }
