@@ -4,6 +4,7 @@ import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
+import com.agribank.qldv_api.response.organization.OrganizationHierarchyResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldv_api.service.organization.OrganizationService;
@@ -87,7 +88,7 @@ public class OrganizationController {
     }
 
     @GetMapping("/get/all")
-    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getAll() {
+    public ResponseEntity<BaseResponse<List<OrganizationHierarchyResponse>>> getAll() {
         return BaseResponse.success(service.getAll());
     }
 

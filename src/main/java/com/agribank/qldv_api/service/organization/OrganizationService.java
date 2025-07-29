@@ -9,6 +9,7 @@ import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.organization.OrganizationHierarchyResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.RequestService;
@@ -437,7 +438,7 @@ public class OrganizationService implements EntityHandler {
         return client.searchRp(request).getData();
     }
 
-    public List<OrganizationResponse> getAll(){
+    public List<OrganizationHierarchyResponse> getAll(){
         UserDetailsImpl userRequested = getUserRequested();
         String code = getOrganizationCode(null, userRequested);
         List<Organization> organizations = client.getOrganizationAllParent(code).getData();
@@ -445,7 +446,24 @@ public class OrganizationService implements EntityHandler {
             return new ArrayList<>();
         }
 
-        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+        List<OrganizationHierarchyResponse> response = organizations.stream().map(
+                o -> modelMapper.map(o, OrganizationHierarchyResponse.class)
+        ).toList();
+
+        Map<String, List<OrganizationHierarchyResponse>> groupedByParent = response.stream()
+                .filter(o -> (!Objects.equals(o.getParentCode(), o.getCode()) && !Objects.equals(o.getParentCode(), Constants.DANG_UY_AGRIBANK_CODE)))
+                .collect(Collectors.groupingBy(OrganizationHierarchyResponse::getParentCode));
+
+        for (OrganizationHierarchyResponse org : response) {
+            List<OrganizationHierarchyResponse> children = groupedByParent.get(org.getCode());
+            if (children != null) {
+                org.setChilds(children);
+            }
+        }
+
+        return response.stream()
+                .filter(o -> Objects.equals(o.getParentCode(), o.getCode()))
+                .toList();
     }
 
     public List<Organization> findAll(){
