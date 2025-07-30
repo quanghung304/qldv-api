@@ -14,7 +14,8 @@ import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp09Service;
 import com.agribank.qldv_api.service.bcsl_report.dv.ExportBcslDvRp18Service;
 import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp02Service;
 import com.agribank.qldv_api.service.dv_report.*;
-import com.agribank.qldv_api.service.tcd.TcdReportService;
+import com.agribank.qldv_api.service.tcd_report.ExportTcdRp05Service;
+import com.agribank.qldv_api.service.tcd_report.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
@@ -30,6 +31,7 @@ import com.agribank.qldvutils.request.report_dv.SearchRp31Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp33Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
+import com.agribank.qldvutils.request.report_tcd.SearchBCDSRequest;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -66,6 +68,7 @@ public class ExportHandlerService {
     ExportDVRp33Service exportDVRp33Service;
     ExportDVRp34Service exportDVRp34Service;
     ExportDVRp07Service exportDVRp07Service;
+    ExportTcdRp05Service exportTcdRp05Service;
 
     public ExportResponse handleExport(Object param, String type) {
         ExportResponse exportResult = new ExportResponse();
@@ -103,6 +106,10 @@ public class ExportHandlerService {
                 case BC_03_04_DS:
                     OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);
                     exportResult = tcdReportService.exportExcelRp0304(paramExport);
+                    break;
+                case BC_05_DSTCD:
+                    SearchBCDSRequest searchRp15Request = gson.fromJson(paramString, SearchBCDSRequest.class);
+                    exportResult = exportTcdRp05Service.exportData(searchRp15Request, BC_05_DSTCD.getName(), "", BC_05_DSTCD.name(), 1, BC_05_DSTCD.getName());
                     break;
                 case BC_07_DSDV:
                     SearchRp07Request searchRp07Request = gson.fromJson(paramString, SearchRp07Request.class);

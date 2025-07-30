@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.service.tcd;
+package com.agribank.qldv_api.service.tcd_report;
 
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
