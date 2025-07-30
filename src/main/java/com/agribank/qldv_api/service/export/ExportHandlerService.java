@@ -4,19 +4,21 @@ import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.response.pdf.PDFContentResult;
-import com.agribank.qldv_api.service.bcsl_report.dv.ExportBcslDvRp18Service;
-import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp02Service;
+import com.agribank.qldv_api.service.bcsl_report.dv.ExportBcslDvRp10Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp24Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp25Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp29Service;
 import com.agribank.qldv_api.service.dv_report.ExportDVRp34Service;
 import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp01Service;
 import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp09Service;
+import com.agribank.qldv_api.service.bcsl_report.dv.ExportBcslDvRp18Service;
+import com.agribank.qldv_api.service.bcsl_report.tcd.ExportBcslTcdRp02Service;
 import com.agribank.qldv_api.service.dv_report.*;
 import com.agribank.qldv_api.service.tcd.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.request.report_dv.*;
@@ -50,6 +52,7 @@ public class ExportHandlerService {
     ExportBcslTcdRp02Service exportBcslTcdRp02Service;
     ExportBcslDvRp18Service exportBcslDvRp18Service;
     ExportBcslTcdRp09Service exportBcslTcdRp09Service;
+    ExportBcslDvRp10Service exportBcslDvRp10Service;
     ExportDVRp21Service exportDVRp21Service;
     ExportDVRp22Service exportDVRp22Service;
     ExportDVRp23Service exportDVRp23Service;
@@ -86,6 +89,17 @@ public class ExportHandlerService {
                     SearchRp09Request searchRp09Request = gson.fromJson(paramString, SearchRp09Request.class);
                     exportResult = exportBcslTcdRp09Service.exportDataBcsl(searchRp09Request, BC_09_BCSL.getName(), "", BC_09_BCSL.name(), 1, BC_09_BCSL.getName());
                     break;
+                case BC_10_BCSL:
+                    SearchRp10Request searchRp10Request = gson.fromJson(paramString, SearchRp10Request.class);
+                    exportResult = exportBcslDvRp10Service.exportData(searchRp10Request, BC_10_BCSL.getName(), "", BC_10_BCSL.name(), 1, BC_10_BCSL.getName());
+                    break;
+                case BC_18_BCSL:
+                    SearchRp18Request searchRp18Request = gson.fromJson(paramString, SearchRp18Request.class);
+                    if (Objects.isNull(searchRp18Request.getDate())) {
+                        throw new CommonException("Vui lòng chọn ngày");
+                    }
+                    exportResult = exportBcslDvRp18Service.exportDataBcsl(searchRp18Request, BC_18_BCSL.getName(), "", EExcelColumnInfo.BC_18_BCSL.name(), 1, EExcelColumnInfo.BC_18_BCSL.getName());
+                    break;
                 case BC_03_04_DS:
                     OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);
                     exportResult = tcdReportService.exportExcelRp0304(paramExport);
@@ -97,13 +111,6 @@ public class ExportHandlerService {
                 case BC_17_DSDV:
                     SearchRp17Request searchRp17Request = gson.fromJson(paramString, SearchRp17Request.class);
                     exportResult = tcdReportService.exportExcelRp17(searchRp17Request);
-                    break;
-                case BC_18_BCSL:
-                    SearchRp18Request searchRp18Request = gson.fromJson(paramString, SearchRp18Request.class);
-                    if (Objects.isNull(searchRp18Request.getDate())) {
-                        throw new CommonException("Vui lòng chọn ngày");
-                    }
-                    exportResult = exportBcslDvRp18Service.exportDataBcsl(searchRp18Request, BC_18_BCSL.getName(), "", EExcelColumnInfo.BC_18_BCSL.name(), 1, EExcelColumnInfo.BC_18_BCSL.getName());
                     break;
                 case BC_21_DSDV:
                     SearchRp21Request searchRp21Request = gson.fromJson(paramString, SearchRp21Request.class);
@@ -181,6 +188,10 @@ public class ExportHandlerService {
                 case BC_09_BCSL:
                     SearchRp09Request searchRp09Request = gson.fromJson(paramString, SearchRp09Request.class);
                     exportResult = exportBcslTcdRp09Service.exportPDFData(searchRp09Request, BC_09_BCSL.getName(), "", BC_09_BCSL.getName(), 1, BC_09_BCSL.getPageType());
+                    break;
+                case BC_10_BCSL:
+                    SearchRp10Request searchRp10Request = gson.fromJson(paramString, SearchRp10Request.class);
+                    exportResult = exportBcslDvRp10Service.exportPDFData(searchRp10Request, BC_10_BCSL.getName(), "", BC_10_BCSL.getName(), 1, BC_10_BCSL.getPageType());
                     break;
                 case BC_03_04_DS:
                     OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);

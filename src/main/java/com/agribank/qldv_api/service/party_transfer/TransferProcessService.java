@@ -1,6 +1,5 @@
 package com.agribank.qldv_api.service.party_transfer;
 
-import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EProcessStatus;
 import com.agribank.qldv_api.enums.ETransferType;
 import com.agribank.qldv_api.gateway.party_transfer.TransferProcessClient;
@@ -8,14 +7,15 @@ import com.agribank.qldv_api.gateway.party_transfer.transfer_out.TransferOutAgri
 import com.agribank.qldv_api.gateway.party_transfer.transfer_temporary.TransferTemporaryClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_to.TransferToAgribankClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_within_agribank.TransferWithinAgribankClient;
-import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferProcessRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp32Request;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.agribank.qldvutils.response.Report32Response;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -78,5 +78,9 @@ public class TransferProcessService {
     public PageResponse<Report32Response> searchRp32(SearchRp32Request request){
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
         return transferProcessClient.searchRp32(request).getData();
+    }
+
+    public List<BcslDvRp10Response> searchRp10(SearchRp10DataRequest request){
+        return transferProcessClient.searchRp10(request).getData();
     }
 }

@@ -17,17 +17,15 @@ import com.agribank.qldvutils.dto.RequestDto;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.FilterRequest;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
 import com.agribank.qldvutils.response.PageResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -289,6 +287,10 @@ public class RequestService {
 
     public void saveAll(List<Request> requests) {
         requestClient.saveAll(requests);
+    }
+
+    public List<BcslDvRp10Response> searchRp10(SearchRp10DataRequest request){
+        return requestClient.searchRp10(request).getData();
     }
 }
 

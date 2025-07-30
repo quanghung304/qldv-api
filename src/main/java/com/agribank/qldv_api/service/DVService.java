@@ -21,6 +21,7 @@ import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
@@ -28,6 +29,7 @@ import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.dv.DvRp18Response;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -447,5 +449,9 @@ public class DVService implements EntityHandler {
     }
     public PageResponse<DvRp18Response> searchRp18(SearchRp18Request request){
         return dvClient.searchRp18(request).getData();
+    }
+
+    public PageResponse<BcslDvRp10Response> searchRp10(SearchRp10Request request){
+        return organizationClient.searchRp10(request).getData();
     }
 }

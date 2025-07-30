@@ -6,8 +6,8 @@ import com.agribank.qldv_api.service.dv_report.DVReportService;
 import com.agribank.qldvutils.dto.Report31Dto;
 import com.agribank.qldvutils.dto.SearchRp33Dto;
 import com.agribank.qldvutils.request.report_dv.*;
-import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
 import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
@@ -20,6 +20,7 @@ import com.agribank.qldvutils.response.Report32Response;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import jakarta.validation.Valid;
@@ -100,5 +101,10 @@ public class DVReportController {
     @PostMapping("/search/report-32")
     public ResponseEntity<BaseResponse<PageResponse<Report32Response>>> search(@RequestBody @Valid SearchRp32Request request) {
         return BaseResponse.success(service.searchRp32(request));
+    }
+
+    @PostMapping("/search/report-10")
+    public ResponseEntity<BaseResponse<PageResponse<BcslDvRp10Response>>> search(@RequestBody @Valid SearchRp10Request request) {
+        return BaseResponse.success(service.searchRp10(request));
     }
 }
