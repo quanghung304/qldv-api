@@ -1,7 +1,8 @@
-package com.agribank.qldv_api.service.tcd;
+package com.agribank.qldv_api.service.tcd_report;
 
 import com.agribank.qldv_api.enums.EExcelColumnInfo;
 import com.agribank.qldv_api.enums.EReport01Type;
+import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.response.pdf.PDFContentResult;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
@@ -9,10 +10,13 @@ import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.form02.OrganizationUpDownService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldv_api.utils.CommonUtils;
+import com.agribank.qldvutils.dto.Report05BcdsDto;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
 import com.agribank.qldvutils.request.form02.OrganizationUpDownRpRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
+import com.agribank.qldvutils.request.report_tcd.SearchBCDSRequest;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,7 @@ public class TcdReportService {
     private final ExportTcdReport03Service exportTcdReport03Service;
     private final DVService dvService;
     private final ExportTcdRp17Service exportTcdRp17Service;
+    private final OrganizationHistoryClient historyClient;
 
     public PageResponse<Rp0304Response> search0304(OrganizationRpSearchRequest request){
         PageResponse<Rp0304Response> response = new PageResponse<>();
@@ -161,5 +166,11 @@ public class TcdReportService {
             System.out.println(exception.getMessage());
         }
         return null;
+    }
+
+    public PageResponse<Report05BcdsDto> searchRp05(SearchBCDSRequest request) {
+        String organizationCode = Objects.nonNull(request.getCode()) ? request.getCode() : CommonUtils.getOrganizationByRequestedUser();
+        request.setCode(organizationCode);
+        return historyClient.searchRp05(request).getData();
     }
 }
