@@ -21,9 +21,11 @@ import com.agribank.qldvutils.entity.development_plan.DevelopmentPlanDetail;
 import com.agribank.qldvutils.entity.development_plan.DevelopmentPlanDetailDraft;
 import com.agribank.qldvutils.entity.development_plan.DevelopmentPlanDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopDetailRefIdRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopPrntBrcdRequest;
 import com.agribank.qldvutils.response.BaseResponse;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -509,5 +511,9 @@ public class DevelopPlanDetailService implements EntityHandler {
             organizationMap.put(organization.getCode(), organization);
         }
         return organizationMap;
+    }
+
+    public List<BcslDvRp10Response> searchRp10(SearchRp10DataRequest request){
+        return developmentPlanDetailClient.searchRp10(request).getData();
     }
 }

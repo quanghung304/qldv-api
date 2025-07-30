@@ -115,6 +115,7 @@ public interface DVClient {
     @PostMapping("api/v1/dv/search-rp-09")
     DefaultResponse<PageResponse<BcslTcdRp09Response>> searchRp09(@RequestBody SearchRp09Request request);
 
+
     @PostMapping("api/v1/dv/report-18")
     DefaultResponse<PageResponse<DvRp18Response>> searchRp18(
             @RequestBody SearchRp18Request request

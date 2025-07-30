@@ -7,16 +7,11 @@ import com.agribank.qldv_api.gateway.party_transfer.transfer_temporary.TransferT
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.dv_report.*;
-import com.agribank.qldv_api.service.DVRecognitionService;
-import com.agribank.qldv_api.service.DVService;
-import com.agribank.qldv_api.service.MembershipProposalService;
+import com.agribank.qldv_api.service.*;
+import com.agribank.qldv_api.service.development_plan.DevelopPlanDetailService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.party_reinstatement.PartyReinstatementService;
-import com.agribank.qldv_api.service.party_transfer.TransferOutAgribankService;
-import com.agribank.qldv_api.service.party_transfer.TransferProcessService;
-import com.agribank.qldv_api.service.party_transfer.TransferWithinBaseService;
-import com.agribank.qldv_api.service.party_transfer.TransferToAgribankService;
-import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankService;
+import com.agribank.qldv_api.service.party_transfer.*;
 import com.agribank.qldv_api.service.report26.*;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.Report31Dto;
@@ -27,11 +22,14 @@ import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
 import com.agribank.qldvutils.entity.report26.*;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
 import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import com.agribank.qldvutils.response.Report32Response;
@@ -49,6 +47,8 @@ import static com.agribank.qldv_api.enums.Constants.*;
 @RequiredArgsConstructor
 public class DVReportService {
     private final DVService dvService;
+    private final RequestService requestService;
+    private final DevelopPlanDetailService developPlanDetailService;
     private final OrganizationService organizationService;
     private final DVRecognitionService dvRecognitionService;
     private final Report26Service report26Service;
@@ -65,6 +65,7 @@ public class DVReportService {
     private final TransferTemporaryClient transferTemporaryClient;
     private final TransferProcessService transferProcessService;
     private final ModelMapper modelMapper;
+    private final CheckAuthorityService checkAuthorityService;
 
 
     public PageResponse<DvRp24Response> search24(SearchRp24Request request){
@@ -637,7 +638,6 @@ public class DVReportService {
             return response;
         }
 
-
         for (DvRp30Response dvRp30Response : response.getData()){
             dvRp30Response.setTransferStatus(Objects.isNull(dvRp30Response.getExpectedExpiryDate()) || Objects.isNull(dvRp30Response.getTransferDate())
                     ? null
@@ -687,5 +687,170 @@ public class DVReportService {
 
     public PageResponse<Report32Response> searchRp32(SearchRp32Request request) {
         return transferProcessService.searchRp32(request);
+    }
+
+    public PageResponse<BcslDvRp10Response> searchRp10(SearchRp10Request request) {
+        PageResponse<BcslDvRp10Response> searchCount = new PageResponse<>();
+
+        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+
+        PageResponse<BcslDvRp10Response> dvCount = dvService.searchRp10(request);
+        List<String> organizationLists = dvCount.getData().stream().map(BcslDvRp10Response::getOrganizationCode).toList();
+        List<BcslDvRp10Response> dvCountList = dvCount.getData();
+
+        SearchRp10DataRequest countRequest = SearchRp10DataRequest.builder()
+                .organizationCodes(organizationLists)
+                .form(request.getForm())
+                .fromDate(request.getFromDate())
+                .toDate(request.getToDate())
+                .build();
+
+        List<BcslDvRp10Response> developCount = requestService.searchRp10(countRequest);
+
+        List<BcslDvRp10Response> planCount = developPlanDetailService.searchRp10(countRequest);
+
+        List<BcslDvRp10Response> transferCount = transferProcessService.searchRp10(countRequest);
+
+        dvCountList.addAll(developCount);
+        dvCountList.addAll(planCount);
+        dvCountList.addAll(transferCount);
+
+        Map<String, BcslDvRp10Response> mergedMap = new HashMap<>();
+
+        for (BcslDvRp10Response count : dvCountList) {
+            if (!mergedMap.containsKey(count.getOrganizationCode())) {
+                mergedMap.put(count.getOrganizationCode(), count);
+            } else {
+                mergedMap.get(count.getOrganizationCode()).merge(count);
+            }
+        }
+        List<BcslDvRp10Response> listFormat = new ArrayList<>(formatData(new ArrayList<>(mergedMap.values())));
+        listFormat.sort(Comparator.comparing(obj -> Integer.parseInt(obj.getOrganizationCode())));
+        listFormat.add(getTotalCount(listFormat));
+
+        searchCount.setData(listFormat);
+        searchCount.setTotalItems(dvCount.getTotalItems());
+        searchCount.setTotalPages(dvCount.getTotalPages());
+        searchCount.setCurrentPage(dvCount.getCurrentPage());
+
+        return searchCount;
+    }
+
+    private List<BcslDvRp10Response> formatData(List<BcslDvRp10Response> listSearch) {
+        return listSearch.stream().map(data -> new BcslDvRp10Response(
+                data.getOrganizationCode(),
+                data.getOrganizationName(),
+                data.getTotalBefore() != null ? data.getTotalBefore() : 0,
+                data.getDevelopPlan() != null ? data.getDevelopPlan() : 0,
+                (data.getAdmissionCount() != null ? data.getAdmissionCount() : 0) + (data.getTransferToAgribank() != null ? data.getTransferToAgribank() : 0),
+                data.getAdmissionCount() != null ? data.getAdmissionCount() : 0,
+                data.getTransferToAgribank() != null ? data.getTransferToAgribank() : 0,
+                data.getMembershipRestore() != null ? data.getMembershipRestore() : 0,
+                (data.getLeaveCount() != null ? data.getLeaveCount() : 0) + (data.getRemoveCount() != null ? data.getRemoveCount() : 0) +
+                        (data.getDisciplineCount() != null ? data.getDisciplineCount() : 0) + (data.getTransferOutAgribank() != null ? data.getTransferOutAgribank() : 0) +
+                        (data.getDecreasedCount() != null ? data.getDecreasedCount() : 0),
+                data.getLeaveCount() != null ? data.getLeaveCount() : 0,
+                data.getRemoveCount() != null ? data.getRemoveCount() : 0,
+                data.getDisciplineCount() != null ? data.getDisciplineCount() : 0,
+                data.getTransferOutAgribank() != null ? data.getTransferOutAgribank() : 0,
+                data.getDecreasedCount() != null ? data.getDecreasedCount() : 0,
+                data.getRecognizeCount() != null ? data.getRecognizeCount() : 0,
+                data.getWaitRecognize() != null ? data.getWaitRecognize() : 0,
+                data.getTransferWithinAgribank() != null ? data.getTransferWithinAgribank() : 0,
+                data.getTransferTemporary() != null ? data.getTransferTemporary() : 0,
+                data.getTransferProcessing() != null ? data.getTransferProcessing() : 0,
+                data.getExemptionCount() != null ? data.getExemptionCount() : 0,
+                data.getTotalAfter() != null ? data.getTotalAfter() : 0,
+                (data.getDevelopPlan() == null || data.getDevelopPlan() == 0 || data.getAdmissionCount() == null || data.getAdmissionCount() == 0) ?
+                        0 : (data.getAdmissionCount().doubleValue() / data.getDevelopPlan().doubleValue()) * 100
+        )).toList();
+    }
+
+    private BcslDvRp10Response getTotalCount(List<BcslDvRp10Response> list) {
+        BcslDvRp10Response bcslRp10Response = BcslDvRp10Response.builder()
+                .organizationName("Tổng cộng: ")
+                .totalBefore(0)
+                .developPlan(0)
+                .totalIncrease(0)
+                .admissionCount(0)
+                .transferToAgribank(0)
+                .membershipRestore(0)
+                .totalDecrease(0)
+                .leaveCount(0)
+                .removeCount(0)
+                .disciplineCount(0)
+                .transferOutAgribank(0)
+                .decreasedCount(0)
+                .recognizeCount(0)
+                .waitRecognize(0)
+                .transferWithinAgribank(0)
+                .transferTemporary(0)
+                .transferProcessing(0)
+                .exemptionCount(0)
+                .totalAfter(0)
+                .build();
+        for (BcslDvRp10Response data : list){
+            Integer totalBefore = bcslRp10Response.getTotalBefore() + data.getTotalBefore();
+            bcslRp10Response.setTotalBefore(totalBefore);
+
+            Integer developPlan = bcslRp10Response.getDevelopPlan() + data.getDevelopPlan();
+            bcslRp10Response.setDevelopPlan(developPlan);
+
+            Integer totalIncrease = bcslRp10Response.getTotalIncrease() + data.getTotalIncrease();
+            bcslRp10Response.setTotalIncrease(totalIncrease);
+
+            Integer admissionCount = bcslRp10Response.getAdmissionCount() + data.getAdmissionCount();
+            bcslRp10Response.setAdmissionCount(admissionCount);
+
+            Integer transferToAgribank = bcslRp10Response.getTransferToAgribank() + data.getTransferToAgribank();
+            bcslRp10Response.setTransferToAgribank(transferToAgribank);
+
+            Integer membershipRestore = bcslRp10Response.getMembershipRestore() + data.getMembershipRestore();
+            bcslRp10Response.setMembershipRestore(membershipRestore);
+
+            Integer totalDecrease = bcslRp10Response.getTotalDecrease() + data.getTotalDecrease();
+            bcslRp10Response.setTotalDecrease(totalDecrease);
+
+            Integer leaveCount = bcslRp10Response.getLeaveCount() + data.getLeaveCount();
+            bcslRp10Response.setLeaveCount(leaveCount);
+
+            Integer removeCount = bcslRp10Response.getRemoveCount() + data.getRemoveCount();
+            bcslRp10Response.setRemoveCount(removeCount);
+
+            Integer disciplineCount = bcslRp10Response.getDisciplineCount() + data.getDisciplineCount();
+            bcslRp10Response.setDisciplineCount(disciplineCount);
+
+            Integer transferOutAgribank = bcslRp10Response.getTransferOutAgribank() + data.getTransferOutAgribank();
+            bcslRp10Response.setTransferOutAgribank(transferOutAgribank);
+
+            Integer decreasedCount = bcslRp10Response.getDecreasedCount() + data.getDecreasedCount();
+            bcslRp10Response.setDecreasedCount(decreasedCount);
+
+            Integer recognizeCount = bcslRp10Response.getRecognizeCount() + data.getRecognizeCount();
+            bcslRp10Response.setRecognizeCount(recognizeCount);
+
+            Integer waitRecognize = bcslRp10Response.getWaitRecognize() + data.getWaitRecognize();
+            bcslRp10Response.setWaitRecognize(waitRecognize);
+
+            Integer transferWithinAgribank = bcslRp10Response.getTransferWithinAgribank() + data.getTransferWithinAgribank();
+            bcslRp10Response.setTransferWithinAgribank(transferWithinAgribank);
+
+            Integer transferTemporary = bcslRp10Response.getTransferTemporary() + data.getTransferTemporary();
+            bcslRp10Response.setTransferTemporary(transferTemporary);
+
+            Integer transferProcessing = bcslRp10Response.getTransferProcessing() + data.getTransferProcessing();
+            bcslRp10Response.setTransferProcessing(transferProcessing);
+
+            Integer exemptionCount = bcslRp10Response.getExemptionCount() + data.getExemptionCount();
+            bcslRp10Response.setExemptionCount(exemptionCount);
+
+            Integer totalAfter = bcslRp10Response.getTotalAfter() + data.getTotalAfter();
+            bcslRp10Response.setTotalAfter(totalAfter);
+        }
+
+        Double admissionPercent = (bcslRp10Response.getDevelopPlan() == 0 || bcslRp10Response.getAdmissionCount() == 0) ?
+                0 : (bcslRp10Response.getAdmissionCount().doubleValue() / bcslRp10Response.getDevelopPlan().doubleValue()) * 100;
+        bcslRp10Response.setAdmissionPercent(admissionPercent);
+        return bcslRp10Response;
     }
 }

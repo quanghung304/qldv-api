@@ -4,8 +4,11 @@ import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.development_plan.DevelopmentPlanDetail;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopDetailRefIdRequest;
 import com.agribank.qldvutils.request.development_plan.DevelopPlanUpdateRequest;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +31,11 @@ public interface DevelopmentPlanDetailClient extends BaseClient<DevelopmentPlanD
     @PostMapping("/find-by-ref-id-and-year")
     DefaultResponse<List<DevelopmentPlanDetail>> findByRefIdAndYearIn(
             @RequestBody DevelopDetailRefIdRequest request
+    );
+
+    @PostMapping("search-report-10/count-plan")
+    DefaultResponse<List<BcslDvRp10Response>> searchRp10(
+            @RequestBody SearchRp10DataRequest request
     );
 
     @GetMapping("/find-by-ref-id&start&end")

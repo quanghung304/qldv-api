@@ -3,12 +3,14 @@ package com.agribank.qldv_api.gateway;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.organization.ApproveOrganizationRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp01Response;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp02Response;
 import jakarta.validation.Valid;
@@ -96,4 +98,9 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
 
     @PostMapping("/search-rp-02")
     BaseResponse<PageResponse<BcslTcdRp02Response>> searchRp02(@RequestBody @Valid SearchRequest request);
+
+    @PostMapping("/search-report-10/count-dv")
+    DefaultResponse<PageResponse<BcslDvRp10Response>> searchRp10(
+            @RequestBody SearchRp10Request request
+    );
 }
