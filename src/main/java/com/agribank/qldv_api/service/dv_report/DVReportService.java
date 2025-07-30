@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.dv_report;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EOrganizationReference;
 import com.agribank.qldv_api.enums.EReport26;
 import com.agribank.qldv_api.enums.EReport29Type;
@@ -698,9 +699,13 @@ public class DVReportService {
         List<String> organizationLists = dvCount.getData().stream().map(BcslDvRp10Response::getOrganizationCode).toList();
         List<BcslDvRp10Response> dvCountList = dvCount.getData();
 
+        Integer form = (Objects.equals(request.getOrganizationCode(), Constants.DANG_UY_AGRIBANK_CODE) ||
+                Objects.equals(request.getOrganizationCode(), Constants.BTCDU_CODE)) ? 4 :
+                request.getOrganizationCode().length() + 2;
+
         SearchRp10DataRequest countRequest = SearchRp10DataRequest.builder()
                 .organizationCodes(organizationLists)
-                .form(request.getForm())
+                .form(form)
                 .fromDate(request.getFromDate())
                 .toDate(request.getToDate())
                 .build();
