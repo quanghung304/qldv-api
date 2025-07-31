@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.request.establishment_dissolve;
+package com.agribank.qldv_api.request.form02;
 
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EReport01Type;
@@ -13,7 +13,7 @@ import java.util.Objects;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EstablishmentDissolveRequest extends BaseFormDto {
+public class DissolveDisbandRequest extends BaseFormDto {
     String id;
     String organizationCode;
     String name;
@@ -31,7 +31,10 @@ public class EstablishmentDissolveRequest extends BaseFormDto {
             throw new CommonException("Khong duoc giai the to chuc dang cap A");
         }
 
-        if (EReport01Type.getValue(type) != EReport01Type.DISSOLVE.getId()) {
+        if (
+                EReport01Type.getValue(type) != EReport01Type.DISSOLVE.getId()
+                || EReport01Type.getValue(type) != EReport01Type.DISBAND.getId()
+        ) {
             throw new CommonException("Type is invalid");
         }
     }

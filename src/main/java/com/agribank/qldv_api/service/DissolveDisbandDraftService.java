@@ -1,19 +1,21 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.*;
-import com.agribank.qldv_api.gateway.EstablishmentDissolveClient;
-import com.agribank.qldv_api.gateway.EstablishmentDissolveDraftClient;
+import com.agribank.qldv_api.gateway.form02.dissolve.DissolveDisbandClient;
+import com.agribank.qldv_api.gateway.form02.dissolve.DissolveDisbandDraftClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.establishment_dissolve.EstablishmentDissolveRequest;
+import com.agribank.qldv_api.request.form02.DissolveDisbandRequest;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.entity.form02.OrganizationHistory;
+import com.agribank.qldvutils.entity.form02.dissolve.DissolveDisband;
+import com.agribank.qldvutils.entity.form02.dissolve.DissolveDisbandDraft;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.form02.ApproveDissolveRequest;
+import com.agribank.qldvutils.request.form02.dissolve.ApproveDissolveRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -22,31 +24,31 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class EstablishmentDissolveDraftService implements EntityHandler {
+public class DissolveDisbandDraftService implements EntityHandler {
     private final ModelMapper modelMapper;
-    private final EstablishmentDissolveDraftClient client;
-    private final EstablishmentDissolveClient dissolveClient;
+    private final DissolveDisbandDraftClient client;
+    private final DissolveDisbandClient dissolveClient;
     private final RequestClient requestClient;
     private final OrganizationClient organizationClient;
     private final OrganizationHistoryClient historyClient;
     private final OrganizationService organizationService;
     private final UserService userService;
     private final CheckAuthorityService checkAuthorityService;
-    private final EstablishmentDissolveService establishmentDissolveService;
+    private final DissolveDisbandService DissolveDisbandService;
     private final RequestService requestService;
 
-    private final EForm form = EForm.BIEU_02_ESTA;
+    private final EForm form = EForm.BIEU_02_DIS;
 
     public Map<String, String> getCombinedFieldMap() {
         Map<String, String> combinedFieldMap = new LinkedHashMap<>();
         combinedFieldMap.putAll(BaseFormEntity.BASE_FIELD_MAP);
-        combinedFieldMap.putAll(EstablishmentDissolveDraft.FIELD_MAP);
+        combinedFieldMap.putAll(DissolveDisbandDraft.FIELD_MAP);
 
         return combinedFieldMap;
     }
 
-    public EstablishmentDissolveDraft createOrUpdate(EstablishmentDissolveRequest request) {
-        List<EstablishmentDissolveDraft> draftList = client.findPendingDraftByCode(request.getOrganizationCode()).getData();
+    public DissolveDisbandDraft createOrUpdate(DissolveDisbandRequest request) {
+        List<DissolveDisbandDraft> draftList = client.findPendingDraftByCode(request.getOrganizationCode()).getData();
 
         if (!draftList.isEmpty()) {
             throw new CommonException("Đã tồn tại yêu cầu với tổ chức đảng này");
@@ -54,19 +56,19 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
         Organization organization = organizationService.findByCode(request.getOrganizationCode());
 
-        if (Objects.equals(request.getType(), EReport01Type.DISSOLVE.getId()) && Objects.isNull(organization)) {
+        if (Objects.isNull(organization)) {
             throw new CommonException("Tổ chức đảng không tồn tại");
         }
 
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
 
-        EstablishmentDissolveDraft establishmentDissolve = null;
+        DissolveDisbandDraft establishmentDissolve = null;
         if (Objects.nonNull(request.getId())) {
             establishmentDissolve = client.findById(request.getId()).getData();
         }
 
         if (Objects.isNull(establishmentDissolve)){
-            establishmentDissolve = new EstablishmentDissolveDraft();
+            establishmentDissolve = new DissolveDisbandDraft();
         }
 
         UserDetailsImpl userRequested = userService.getUserRequested();
@@ -94,12 +96,12 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         return establishmentDissolve;
     }
 
-    public EstablishmentDissolveDraft update(EstablishmentDissolveRequest request) {
+    public DissolveDisbandDraft update(DissolveDisbandRequest request) {
         if (Objects.isNull(request.getId())) {
             throw new CommonException("Không tìm thấy dữ liệu");
         }
 
-        EstablishmentDissolve  dissolve =  dissolveClient.findById(request.getId()).getData().orElse(null);
+        DissolveDisband  dissolve =  dissolveClient.findById(request.getId()).getData().orElse(null);
 
         if (Objects.isNull(dissolve)) {
             throw new CommonException("Không tìm thấy dữ liệu");
@@ -111,7 +113,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
         }
 
         UserDetailsImpl userRequested = userService.getUserRequested();
-        EstablishmentDissolveDraft dissolveDraft = EstablishmentDissolveDraft.builder()
+        DissolveDisbandDraft dissolveDraft = DissolveDisbandDraft.builder()
                 .organizationCode(request.getOrganizationCode())
                 .name(request.getName())
                 .form(request.getForm())
@@ -138,7 +140,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
 
     public String delete(String id){
-        EstablishmentDissolveDraft establishmentDissolveDraft = client.findById(id).getData();
+        DissolveDisbandDraft establishmentDissolveDraft = client.findById(id).getData();
         if (Objects.isNull(establishmentDissolveDraft)) {
             throw new CommonException("Không xóa được yêu cầu! Vui lòng kiểm tra lại sau");
         }
@@ -153,11 +155,11 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
     @Override
     public boolean applyCreate(String draftId, UserDetailsImpl userDetails) {
-        EstablishmentDissolveDraft draft = client.findById(draftId).getData();
+        DissolveDisbandDraft draft = client.findById(draftId).getData();
 
         if (Objects.isNull(draft)) return false;
 
-        EstablishmentDissolve establishmentDissolve = modelMapper.map(draft, EstablishmentDissolve.class);
+        DissolveDisband establishmentDissolve = modelMapper.map(draft, DissolveDisband.class);
         Organization organization = organizationClient.findByCode(establishmentDissolve.getOrganizationCode()).getData();
         if (Objects.isNull(organization)) return false;
 
@@ -188,11 +190,11 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
     @Override
     public boolean applyUpdate(String referenceId) {
-        EstablishmentDissolveDraft draft = client.findById(referenceId).getData();
+        DissolveDisbandDraft draft = client.findById(referenceId).getData();
 
         if (Objects.isNull(draft)) return false;
 
-        EstablishmentDissolve establishmentDissolve = establishmentDissolveService.findById(draft.getRefId());
+        DissolveDisband establishmentDissolve = DissolveDisbandService.findById(draft.getRefId());
         if (Objects.isNull(establishmentDissolve)) return false;
 
         establishmentDissolve.setName(draft.getName());
@@ -258,7 +260,7 @@ public class EstablishmentDissolveDraftService implements EntityHandler {
 
     @Override
     public void setDenied(String draftId) {
-        EstablishmentDissolveDraft draft = client.findById(draftId).getData();
+        DissolveDisbandDraft draft = client.findById(draftId).getData();
 
         if (Objects.isNull(draft)) return;
         draft.setStatus(EApprovalStatus.DENIED.getId());
