@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.response.establishment_dissolve;
+package com.agribank.qldv_api.response.form02;
 
 import com.agribank.qldv_api.response.BaseFormDto;
 import lombok.AccessLevel;
@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EstablishmentDissolveResponse extends BaseFormDto {
+public class DissolveDisbandResponse extends BaseFormDto {
     String id;
     String organizationCode;
     String name;

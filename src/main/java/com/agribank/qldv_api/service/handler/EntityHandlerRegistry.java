@@ -3,7 +3,7 @@ package com.agribank.qldv_api.service.handler;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.DVService;
-import com.agribank.qldv_api.service.EstablishmentDissolveDraftService;
+import com.agribank.qldv_api.service.DissolveDisbandDraftService;
 import com.agribank.qldv_api.service.form02.OrganizationMergeService;
 import com.agribank.qldv_api.service.form02.OrganizationUnifyService;
 import com.agribank.qldv_api.service.form02.PartyOrganizationTransferService;
@@ -35,7 +35,7 @@ public class EntityHandlerRegistry {
     public EntityHandlerRegistry(
             OrganizationService organizationService,
             OrganizationUpDownService historyService,
-            EstablishmentDissolveDraftService establishmentDissolveDraftService,
+            DissolveDisbandDraftService DissolveDisbandDraftService,
             DVService dvService,
             MembershipProposalService membershipProposalService,
             PartyActivityExemptionService partyActivityExemptionService,
@@ -60,7 +60,7 @@ public class EntityHandlerRegistry {
                 entry(EForm.BIEU_01.getCode(), organizationService),
                 entry(EForm.BIEU_02_UP.getCode(), historyService),
                 entry(EForm.BIEU_02_DOWN.getCode(), historyService),
-                entry(EForm.BIEU_02_ESTA.getCode(), establishmentDissolveDraftService),
+                entry(EForm.BIEU_02_DIS.getCode(), DissolveDisbandDraftService),
                 entry(EForm.BIEU_02_SPLIT.getCode(), splitOrganizationService),
                 entry(EForm.BIEU_02_MERGE.getCode(), organizationMergeService),
                 entry(EForm.BIEU_02_UNION.getCode(), organizationUnifyService),

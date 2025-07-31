@@ -8,7 +8,7 @@ import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.gateway.form02.updown.OrganizationUpDownClient;
 import com.agribank.qldv_api.gateway.form02.updown.OrganizationUpDownDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.organization_transform.OrganizationUpDownRequest;
+import com.agribank.qldv_api.request.form02.OrganizationUpDownRequest;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;

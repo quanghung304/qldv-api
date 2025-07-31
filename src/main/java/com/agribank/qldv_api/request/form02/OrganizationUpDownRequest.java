@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.request.organization_transform;
+package com.agribank.qldv_api.request.form02;
 
 import com.agribank.qldv_api.enums.EReport01Type;
 import com.agribank.qldv_api.request.validator.ValidOrganizationForm;

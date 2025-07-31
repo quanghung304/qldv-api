@@ -1,6 +1,6 @@
 package com.agribank.qldv_api.controller.form02;
 
-import com.agribank.qldv_api.request.organization_transform.OrganizationUpDownRequest;
+import com.agribank.qldv_api.request.form02.OrganizationUpDownRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.form02.OrganizationUpDownService;
 import com.agribank.qldvutils.entity.Request;
