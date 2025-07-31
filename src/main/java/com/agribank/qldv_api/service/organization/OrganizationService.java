@@ -103,6 +103,10 @@ public class OrganizationService implements EntityHandler {
         if (Objects.isNull(organization)) {
             throw new CommonException("Không tồn tại Tổ chức đảng có mã code:" + organizationRequest.getParentCode());
         }
+
+        if (!Constants.FORM_B1_NAME.equals(organization.getForm()) && !Constants.FORM_C1_NAME.equals(organization.getForm())) {
+            throw new CommonException(String.format("Tổ chức Đảng: %s không có TCĐ con trực thuộc. Vui lòng chọn TCD khác", organization.getName()));
+        }
         //Tìm tcd để thực hiện việc tăng mã tcd
         Organization organizationDb = getByParentCodeMax(organizationRequest.getParentCode());
 
