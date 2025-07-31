@@ -24,7 +24,7 @@ import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetailDraft;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDraft;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.dv_org_history.DvOrgHisRequest;
+import com.agribank.qldvutils.request.dv_org_history.DvOrganizationHisRequest;
 import com.agribank.qldvutils.request.form02.ApproveUnifyRequest;
 import com.agribank.qldvutils.request.form02.ApproveUpdateUnifyRequest;
 import com.agribank.qldvutils.request.form02.SearchOrganizationUnionRequest;
@@ -330,7 +330,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
             member.setOrganizationCode(organizationUnify.getOrganizationCode());
         }
 
-        List<DvOrgHistory> dvOrgHistoryListInDb = dvOrgService.getOrgHis(DvOrgHisRequest.builder()
+        List<DvOrgHistory> dvOrgHistoryListInDb = dvOrgService.getOrgHis(DvOrganizationHisRequest.builder()
                         .refId(organizationUnify.getId())
                         .newOrgCodes(organizationCodes)
                         .action(String.valueOf(EReport01Type.UNION.getId()))
