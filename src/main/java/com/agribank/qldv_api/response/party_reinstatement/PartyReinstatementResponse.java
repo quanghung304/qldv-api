@@ -20,4 +20,5 @@ public class PartyReinstatementResponse {
     String decisionNumber;
     Date decisionDate;
     Date effectiveDate;
+    String decisionCommittee;
 }
