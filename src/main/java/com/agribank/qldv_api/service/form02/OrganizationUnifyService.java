@@ -317,6 +317,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
                     .staffCode(dvOrgHistoryDraft.getStaffCode())
                     .action(String.valueOf(EReport01Type.UNION.getId()))
                     .refId(organizationUnify.getId())
+                    .effectiveDate(organizationUnify.getEffectiveDate())
                     .build();
 
             dvOrgHistories.add(dvOrgHistory);
@@ -346,8 +347,9 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
             for (DvOrgHistory dvOrgHistory : dvOrgHistories) {
                 DvOrgHistory dvOrgHis = dvOrgHistoriesMap.getOrDefault(dvOrgHistory.getStaffCode(), null);
                 if (Objects.nonNull(dvOrgHis)) {
-                    dvOrgHistory.setId(dvOrgHis.getId());
+                    dvOrgHistory = dvOrgHis;
                 }
+                dvOrgHistory.setEffectiveDate(organizationUnify.getEffectiveDate());
             }
         }
 
