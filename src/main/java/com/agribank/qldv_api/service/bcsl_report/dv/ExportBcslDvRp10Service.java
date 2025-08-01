@@ -69,7 +69,7 @@ public class ExportBcslDvRp10Service extends ExportService {
             item.put("transferProcessing", bcslRp10Response.getTransferProcessing());
             item.put("exemptionCount", bcslRp10Response.getExemptionCount());
             item.put("totalAfter", bcslRp10Response.getTotalAfter());
-            item.put("admissionPercent", bcslRp10Response.getAdmissionPercent());
+            item.put("admissionPercent", (int) Math.ceil(bcslRp10Response.getAdmissionPercent()));
             exportData.add(item);
         }
         return exportData;
