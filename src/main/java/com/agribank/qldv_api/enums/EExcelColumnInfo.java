@@ -19,7 +19,7 @@ public enum EExcelColumnInfo {
     BC_07_DSDV("Thống kê Đảng viên theo thành phần gia đình", "THỐNG KÊ ĐẢNG VIÊN THEO THÀNH PHẦN GIA ĐÌNH", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_05_DSTCD("Danh sách chi, đảng bộ nâng cấp/hạ cấp/thành lập mới/giải thể/giải tán", "DANH SÁCH CHI, ĐẢNG BỘ NÂNG CẤP/HẠ CẤP/THÀNH LẬP MỚI/GIẢI THỂ/GIẢI TÁN", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
     BC_17_DSDV("Thông tin Đảng viên", "THÔNG TIN ĐẢNG VIÊN", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
-    BC_18_BCSL("Thống kê Đảng viên theo độ tuổi ", "THỐNG KÊ ĐẢNG VIÊN THEO ĐỘ TUỔI", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
+    BC_18_BCSL("Thống kê Đảng viên theo độ tuổi", "THỐNG KÊ ĐẢNG VIÊN THEO ĐỘ TUỔI", ERequestType.TO_CHUC_DANG.getId(), "A4N"),
     BC_21_DSDV("Danh sách Đảng viên dự bị danh sách Đảng viên đến hạn công nhận Đảng viên chính thức",
             "DANH SÁCH ĐẢNG VIÊN DỰ BỊ/\nDANH SÁCH ĐẢNG VIÊN ĐẾN HẠN CÔNG NHẬN ĐẢNG VIÊN CHÍNH THỨC", ERequestType.DANG_VIEN.getId(), "A4N"),
     BC_22_DSDV("Danh sách kết nạp Đảng", "DANH SÁCH KẾT NẠP ĐẢNG", ERequestType.DANG_VIEN.getId(), "A4N"),

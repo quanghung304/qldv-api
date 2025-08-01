@@ -192,6 +192,10 @@ public class ExportHandlerService {
                     SearchRp01Request SearchRp01Request = gson.fromJson(paramString, SearchRp01Request.class);
                     exportResult = exportBcslTcdRp01Service.exportPDFData(SearchRp01Request, BC_01_BCSL.getName(), "", BC_01_BCSL.getName(), 1, BC_01_BCSL.getPageType());
                     break;
+                case BC_02_BCSL:
+                    SearchRequest SearchRp02Request = gson.fromJson(paramString, SearchRequest.class);
+                    exportResult = exportBcslTcdRp02Service.exportPDFData(SearchRp02Request, BC_02_BCSL.getName(), "", BC_02_BCSL.getName(), 1, BC_02_BCSL.getPageType());
+                    break;
                 case BC_09_BCSL:
                     SearchRp09Request searchRp09Request = gson.fromJson(paramString, SearchRp09Request.class);
                     exportResult = exportBcslTcdRp09Service.exportPDFData(searchRp09Request, BC_09_BCSL.getName(), "", BC_09_BCSL.getName(), 1, BC_09_BCSL.getPageType());
@@ -200,9 +204,20 @@ public class ExportHandlerService {
                     SearchRp10Request searchRp10Request = gson.fromJson(paramString, SearchRp10Request.class);
                     exportResult = exportBcslDvRp10Service.exportPDFData(searchRp10Request, BC_10_BCSL.getName(), "", BC_10_BCSL.getName(), 1, BC_10_BCSL.getPageType());
                     break;
+                case BC_18_BCSL:
+                    SearchRp18Request searchRp18Request = gson.fromJson(paramString, SearchRp18Request.class);
+                    if (Objects.isNull(searchRp18Request.getDate())) {
+                        throw new CommonException("Vui lòng chọn ngày");
+                    }
+                    exportResult = exportBcslDvRp18Service.exportPDFData(searchRp18Request, EExcelColumnInfo.BC_18_BCSL.getName(), "", EExcelColumnInfo.BC_18_BCSL.getName(), 1, EExcelColumnInfo.BC_18_BCSL.getPageType());
+                    break;
                 case BC_03_04_DS:
                     OrganizationRpSearchRequest paramExport = gson.fromJson(paramString, OrganizationRpSearchRequest.class);
                     exportResult = tcdReportService.exportPDFRp0304(paramExport);
+                    break;
+                case BC_05_DSTCD:
+                    SearchBCDSRequest searchRp15Request = gson.fromJson(paramString, SearchBCDSRequest.class);
+                    exportResult = exportTcdRp05Service.exportPDFData(searchRp15Request, BC_05_DSTCD.getName(), "", BC_05_DSTCD.getName(), 1, BC_05_DSTCD.getPageType());
                     break;
                 case BC_07_DSDV:
                     SearchRp07Request SearchRp07Request = gson.fromJson(paramString, SearchRp07Request.class);
