@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "DissolveDisbandDraftClient", url = "${qldv.database.url}"+ "/dissolve-disband-draft", configuration = DatabaseFeignConfiguration.class)
+@FeignClient(name = "DissolveDisbandDraftClient", url = "${qldv.database.url}"+ "/api/v1/dissolve-disband-draft", configuration = DatabaseFeignConfiguration.class)
 public interface DissolveDisbandDraftClient {
 
     @PostMapping("/save")

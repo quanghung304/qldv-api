@@ -32,8 +32,7 @@ public class DissolveDisbandRequest extends BaseFormDto {
         }
 
         if (
-                EReport01Type.getValue(type) != EReport01Type.DISSOLVE.getId()
-                || EReport01Type.getValue(type) != EReport01Type.DISBAND.getId()
+                EReport01Type.getValue(type) != EReport01Type.DISSOLVE.getId() && EReport01Type.getValue(type) != EReport01Type.DISBAND.getId()
         ) {
             throw new CommonException("Type is invalid");
         }
