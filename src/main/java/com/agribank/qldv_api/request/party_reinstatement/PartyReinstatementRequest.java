@@ -13,16 +13,16 @@ import java.util.Objects;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PartyReinstatementRequest {
     String id;
-    String organizationCode;
     String staffCode;
     String conclusionNumber;
     Date conclusionDate;
     String decisionNumber;
     Date decisionDate;
     Date effectiveDate;
+    String decisionCommittee;
 
     public void validate() {
-        if (Objects.isNull(organizationCode) || organizationCode.isBlank()) {
+        if (Objects.isNull(decisionCommittee) || decisionCommittee.isBlank()) {
             throw new CommonException("Cấp ủy quyết định không được bỏ trống");
         }
 
