@@ -5,6 +5,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.user.UserSearchResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public interface UserClient {
     );
 
     @PostMapping("api/v1/user/search")
-    DefaultResponse<PageResponse<User>> search(
+    DefaultResponse<PageResponse<UserSearchResponse>> search(
             @RequestBody SearchUserRequest request
     );
 
