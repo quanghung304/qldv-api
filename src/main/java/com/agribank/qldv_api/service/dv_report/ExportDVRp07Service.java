@@ -1,13 +1,11 @@
 package com.agribank.qldv_api.service.dv_report;
 
-import com.agribank.qldv_api.response.dv_report.DvRp21Response;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldv_api.service.export.ExportService;
 import com.agribank.qldv_api.service.export.ZipHelper;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import org.springframework.beans.factory.annotation.Autowired;
