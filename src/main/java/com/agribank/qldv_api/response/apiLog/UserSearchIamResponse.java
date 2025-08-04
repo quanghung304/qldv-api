@@ -10,6 +10,6 @@ import java.util.List;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserSearchResponse extends PageResponse {
+public class UserSearchIamResponse extends PageResponse {
     List<UserIamResponse> results;
 }

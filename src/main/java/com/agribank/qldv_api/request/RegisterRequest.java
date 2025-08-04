@@ -33,9 +33,10 @@ public class RegisterRequest {
 
     public void validate() {
         if (Objects.isNull(email)) {
-            throw new CommonException("Email is required");
-        }  else if (Objects.isNull(brcd)) {
-            throw new CommonException("Brcd is required");
+            throw new CommonException("Email không được để trống");
+        }
+        if (Objects.isNull(brcd)) {
+            throw new CommonException("Chưa chọn Chi nhánh");
         }
 
         if (!validateEmail(email)){
@@ -43,20 +44,21 @@ public class RegisterRequest {
         }
 
         if (Objects.isNull(roleIds) || roleIds.isEmpty()) {
-            throw new CommonException("Roleids is required");
+            throw new CommonException("Chưa chọn Chức năng");
         }
         this.email = email.trim().toLowerCase();
         if (Objects.isNull(fullName) || fullName.isBlank()) {
-            throw new CommonException("FullName is required");
+            throw new CommonException("Họ tên không được để trống");
         }
 
         if (Objects.isNull(staffCode)) {
-            throw new CommonException("StaffCode is required");
+            throw new CommonException("Mã cán bộ không được để trống");
         }
 
-        if (Objects.isNull(brcd)) {
-            throw new CommonException("Brcd is required");
+        if(Objects.isNull(organizationCode) || organizationCode.isBlank()){
+            throw new CommonException("Chưa chọn Cơ quan tham mưu");
         }
+
     }
 
     private boolean validateEmail(String email) {
