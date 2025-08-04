@@ -3,9 +3,9 @@ package com.agribank.qldv_api.gateway.party_transfer.transfer_to;
 import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribank;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferToRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp28Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
@@ -28,7 +28,7 @@ public interface TransferToAgribankClient extends BaseClient<TransferToAgribank,
     BaseResponse<TransferToAgribank> findByStaffCode(@PathVariable String staffCode);
 
     @PostMapping("/search-rp-28")
-    BaseResponse<PageResponse<DvRp28Response>> searchRp28(@RequestBody SearchRp28Request request);
+    BaseResponse<PageResponse<DvRp28Response>> searchRp28(@RequestBody SearchRpRequest request);
 
     @PutMapping("/save-entities")
     BaseResponse<Boolean> saveEntities(@RequestBody ApproveTransferToRequest request);

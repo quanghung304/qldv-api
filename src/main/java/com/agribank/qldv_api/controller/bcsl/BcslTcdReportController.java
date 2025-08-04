@@ -2,10 +2,9 @@ package com.agribank.qldv_api.controller.bcsl;
 
 import com.agribank.qldv_api.service.bcsl_report.tcd.BcslTcdReportService;
 import com.agribank.qldv_api.service.dv_report.DVReportService;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
-import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
@@ -33,12 +32,12 @@ public class BcslTcdReportController {
     }
 
     @PostMapping("/search/report-09")
-    public ResponseEntity<BaseResponse<PageResponse<BcslTcdRp09Response>>> search(@RequestBody @Valid SearchRp09Request request) {
+    public ResponseEntity<BaseResponse<PageResponse<BcslTcdRp09Response>>> searchRp09(@RequestBody @Valid SearchRpRequest request) {
         return BaseResponse.success(service.searchRp09(request));
     }
 
     @PostMapping("/search/report-10")
-    public ResponseEntity<BaseResponse<PageResponse<BcslDvRp10Response>>> search(@RequestBody @Valid SearchRp10Request request) {
+    public ResponseEntity<BaseResponse<PageResponse<BcslDvRp10Response>>> searchRp10(@RequestBody @Valid SearchRpRequest request) {
         return BaseResponse.success(dvReportService.searchRp10(request));
     }
 

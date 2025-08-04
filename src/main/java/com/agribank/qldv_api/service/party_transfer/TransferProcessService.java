@@ -34,7 +34,6 @@ public class TransferProcessService {
     TransferOutAgribankClient transferOutAgribankClient;
     private final TransferTemporaryClient transferTemporaryClient;
     TransferWithinAgribankClient transferWithinAgribankClient;
-    private final UserService userService;
     private final CheckAuthorityService checkAuthorityService;
 
     public PageResponse<TransferProcess> getList(TransferProcessRequest request) {

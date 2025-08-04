@@ -4,8 +4,8 @@ import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.IamFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.report26.Report26;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.report26.Report26SearchRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.report26.Report26DtoResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -27,7 +27,7 @@ public interface Report26Client extends BaseClient<Report26, String> {
     );
     @PostMapping("/search-report-34")
     DefaultResponse<PageResponse<Report26>> searchRp34(
-            @RequestBody SearchRp34Request request
+            @RequestBody SearchRpRequest request
     );
 
 }
