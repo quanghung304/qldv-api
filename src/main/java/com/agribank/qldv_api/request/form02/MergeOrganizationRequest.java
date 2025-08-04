@@ -5,8 +5,9 @@ import com.agribank.qldvutils.exception.CommonException;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -17,6 +18,7 @@ public class MergeOrganizationRequest extends BaseFormRequest {
     @NotNull(message = "không để trống trường mã tổ chức đảng nhận sáp nhập")
     private String organizationCode;
     private List<String> mergedCodes;
+    List<String> staffCodes;
 
     public void validate() {
         if (mergedCodes.isEmpty() || mergedCodes.size() > MAX_SIZE) {
@@ -24,5 +26,9 @@ public class MergeOrganizationRequest extends BaseFormRequest {
         }
 
         mergedCodes.remove(organizationCode);
+
+        if (Objects.isNull(staffCodes)){
+            staffCodes = new ArrayList<>();
+        }
     }
 }

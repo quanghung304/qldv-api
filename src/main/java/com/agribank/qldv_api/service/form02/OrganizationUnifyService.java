@@ -24,7 +24,6 @@ import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetailDraft;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDraft;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.dv_org_history.DvOrganizationHisRequest;
 import com.agribank.qldvutils.request.form02.ApproveUnifyRequest;
 import com.agribank.qldvutils.request.form02.ApproveUpdateUnifyRequest;
 import com.agribank.qldvutils.request.form02.SearchOrganizationUnionRequest;
@@ -32,7 +31,6 @@ import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -40,9 +38,6 @@ import java.util.*;
 
 @Service
 public class OrganizationUnifyService extends MergeUnifyService implements EntityHandler {
-    @Autowired
-    private DvOrgHistoryDraftClient dvOrgHistoryDraftClient;
-
     static final EForm form = EForm.BIEU_02_UNION;
 
     public OrganizationUnifyService(
@@ -56,6 +51,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
             OrganizationMergeDetailDraftClient mergeDetailDraftClient,
             RequestClient requestClient,
             DvOrgHistoryClient dvOrgHistoryClient,
+            DvOrgHistoryDraftClient dvOrgHistoryDraftClient,
             OrganizationMergeDetailClient organizationMergeDetailClient,
             OrganizationHistoryClient organizationHistoryClient,
             RequestService requestService,
@@ -65,7 +61,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
     ) {
         super(
                 objectMapper, modelMapper, dvClient, organizationClient, mergeClient, mergeDetailClient, mergeDraftClient,
-                mergeDetailDraftClient, requestClient, dvOrgHistoryClient, organizationMergeDetailClient, organizationHistoryClient,
+                mergeDetailDraftClient, requestClient, dvOrgHistoryClient, dvOrgHistoryDraftClient, organizationMergeDetailClient, organizationHistoryClient,
                 requestService, organizationService, dvOrgService, checkAuthorityService
         );
     }
@@ -262,7 +258,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         }
 
         List<DvOrgHistory> dvOrgHistories = new ArrayList<>();
-        List<DV> unifiedMembers = createDvOrgHistory(draftId, organizationUnify, dvOrgHistories);
+        List<DV> unifiedMembers = createDvOrgHistory(draftId, organizationUnify, dvOrgHistories, EReport01Type.UNION.getId());
 
         //luu trang thai draft
         draft.setApprovedBy(userDetails.getStaffCode());
@@ -300,60 +296,6 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
 
         mergeClient.saveUnifyEntities(request);
         return true;
-    }
-
-    private List<DV> createDvOrgHistory(String draftId, OrganizationMerge organizationUnify,  List<DvOrgHistory> dvOrgHistories){
-        List<DvOrgHistoryDraft> dvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(draftId).getData();
-        if (dvOrgHistoryDrafts.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<String> staffCodes = new ArrayList<>();
-        List<String> organizationCodes = new ArrayList<>();
-        for (DvOrgHistoryDraft dvOrgHistoryDraft : dvOrgHistoryDrafts) {
-            DvOrgHistory dvOrgHistory = DvOrgHistory.builder()
-                    .oldOrgCode(dvOrgHistoryDraft.getOldOrgCode())
-                    .newOrgCode(dvOrgHistoryDraft.getNewOrgCode())
-                    .staffCode(dvOrgHistoryDraft.getStaffCode())
-                    .action(String.valueOf(EReport01Type.UNION.getId()))
-                    .refId(organizationUnify.getId())
-                    .effectiveDate(organizationUnify.getEffectiveDate())
-                    .build();
-
-            dvOrgHistories.add(dvOrgHistory);
-            staffCodes.add(dvOrgHistoryDraft.getStaffCode());
-            organizationCodes.add(dvOrgHistoryDraft.getNewOrgCode());
-        }
-
-        List<DV> unifiedMembers = dvClient.findByStaffCodes(staffCodes).getData();
-
-        for (DV member : unifiedMembers) {
-            member.setOrganizationCode(organizationUnify.getOrganizationCode());
-        }
-
-        List<DvOrgHistory> dvOrgHistoryListInDb = dvOrgService.getOrgHis(DvOrganizationHisRequest.builder()
-                        .refId(organizationUnify.getId())
-                        .newOrgCodes(organizationCodes)
-                        .action(String.valueOf(EReport01Type.UNION.getId()))
-                .build());
-
-        if (!dvOrgHistoryListInDb.isEmpty()) {
-            Map<String, DvOrgHistory> dvOrgHistoriesMap = new HashMap<>();
-
-            for (DvOrgHistory dvOrgHistory : dvOrgHistoryListInDb) {
-                dvOrgHistoriesMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory);
-            }
-
-            for (DvOrgHistory dvOrgHistory : dvOrgHistories) {
-                DvOrgHistory dvOrgHis = dvOrgHistoriesMap.getOrDefault(dvOrgHistory.getStaffCode(), null);
-                if (Objects.nonNull(dvOrgHis)) {
-                    dvOrgHistory = dvOrgHis;
-                }
-                dvOrgHistory.setEffectiveDate(organizationUnify.getEffectiveDate());
-            }
-        }
-
-        return unifiedMembers;
     }
 
     @Override
@@ -431,7 +373,7 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         }
 
         List<DvOrgHistory> newDvOrgHistories = new ArrayList<>();
-        List<DV> newDVs = createDvOrgHistory(referenceId, organizationUnify, newDvOrgHistories);
+        List<DV> newDVs = createDvOrgHistory(referenceId, organizationUnify, newDvOrgHistories, EReport01Type.UNION.getId());
 
         //update lai EffectiveDate bang OrganizationHistory
         List<OrganizationHistory> newOrganizationHistories = new ArrayList<>();
@@ -487,40 +429,6 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
 
         mergeClient.updateUnifyEntities(request);
         return true;
-    }
-
-    private List<DV> rollBackDV(String refId, OrganizationMerge organizationUnify, List<DvOrgHistory> oldDvOrgHistories){
-        List<DvOrgHistoryDraft> dvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(refId).getData();
-        if (dvOrgHistoryDrafts.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        Map<String, DvOrgHistoryDraft> dvOrgHistoryMap = new HashMap<>();
-        List<String> staffCodes = new ArrayList<>();
-
-        for (DvOrgHistoryDraft dvOrgHistory : dvOrgHistoryDrafts) {
-            dvOrgHistoryMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory);
-        }
-
-        Map<String, DvOrgHistory> dvOrgHistoryRollbackMap = new HashMap<>();
-        for (DvOrgHistory dvOrgHistory : oldDvOrgHistories) {
-            DvOrgHistoryDraft dvOrgHistoryDraft = dvOrgHistoryMap.getOrDefault(dvOrgHistory.getStaffCode(), null);
-            if (Objects.isNull(dvOrgHistoryDraft)) {
-                staffCodes.add(dvOrgHistory.getStaffCode());
-                dvOrgHistoryRollbackMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory);
-            }
-        }
-
-        List<DV> oldDVs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
-
-        for (DV dv : oldDVs) {
-            if (Objects.equals(dv.getOrganizationCode(), organizationUnify.getOrganizationCode())) {
-                String oldCode = dvOrgHistoryRollbackMap.get(dv.getStaffCode()).getOldOrgCode();
-                dv.setOrganizationCode(oldCode);
-            }
-        }
-
-        return oldDVs;
     }
 
     @Override
