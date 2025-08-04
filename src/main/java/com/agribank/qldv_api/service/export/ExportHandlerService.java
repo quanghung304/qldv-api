@@ -195,7 +195,7 @@ public class ExportHandlerService {
                     exportResult = exportBcslDvRp10Service.exportPDFData(searchRp10Request, BC_10_BCSL.getName(), "", BC_10_BCSL.getName(), 1, BC_10_BCSL.getPageType());
                     break;
                 case BC_18_BCSL:
-                    SearchRp18Request searchRp18Request = gson.fromJson(paramString, SearchRp18Request.class);
+                    SearchRequest searchRp18Request = gson.fromJson(paramString, SearchRequest.class);
                     if (Objects.isNull(searchRp18Request.getDate())) {
                         throw new CommonException("Vui lòng chọn ngày");
                     }
@@ -206,7 +206,7 @@ public class ExportHandlerService {
                     exportResult = tcdReportService.exportPDFRp0304(paramExport);
                     break;
                 case BC_05_DSTCD:
-                    SearchBCDSRequest searchRp15Request = gson.fromJson(paramString, SearchBCDSRequest.class);
+                    SearchRpRequest searchRp15Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportTcdRp05Service.exportPDFData(searchRp15Request, BC_05_DSTCD.getName(), "", BC_05_DSTCD.getName(), 1, BC_05_DSTCD.getPageType());
                     break;
                 case BC_07_DSDV:
