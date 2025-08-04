@@ -6,12 +6,11 @@ import com.agribank.qldv_api.service.export.ExportService;
 import com.agribank.qldv_api.service.export.ZipHelper;
 import com.agribank.qldvutils.dto.Report05BcdsDto;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
-import com.agribank.qldvutils.request.report_tcd.SearchBCDSRequest;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -22,8 +21,7 @@ import java.util.*;
 public class ExportTcdRp05Service extends ExportService {
     @Autowired
     private TcdReportService tcdReportService;
-    @Autowired
-    private ModelMapper modelMapper;
+
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
     public ExportTcdRp05Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
@@ -31,7 +29,7 @@ public class ExportTcdRp05Service extends ExportService {
     }
 
     public int handleGetTotalRecord(Object serviceParam) {
-        SearchBCDSRequest requestParam = (SearchBCDSRequest) serviceParam;
+        SearchRpRequest requestParam = (SearchRpRequest) serviceParam;
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<Report05BcdsDto> dataDto = tcdReportService.searchRp05(requestParam);
         if(dataDto == null){
@@ -42,7 +40,7 @@ public class ExportTcdRp05Service extends ExportService {
 
 
     public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
-        SearchBCDSRequest requestParam = (SearchBCDSRequest) serviceParam;
+        SearchRpRequest requestParam = (SearchRpRequest) serviceParam;
         requestParam.setPage(pageIndex);
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<Report05BcdsDto> dataDto = tcdReportService.searchRp05(requestParam);

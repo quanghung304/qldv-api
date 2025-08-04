@@ -4,9 +4,9 @@ import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_agribank.TransferWithinAgribank;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferWithinRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferWithinAgribankSearch;
-import com.agribank.qldvutils.request.report_dv.SearchRp30Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
@@ -31,7 +31,7 @@ public interface TransferWithinAgribankClient extends BaseClient<TransferWithinA
 
     @PostMapping("/search-rp-30")
     DefaultResponse<PageResponse<DvRp30Response>> searchRp30(
-            @RequestBody SearchRp30Request request
+            @RequestBody SearchRpRequest request
     );
 
     @PutMapping("/save-entities")

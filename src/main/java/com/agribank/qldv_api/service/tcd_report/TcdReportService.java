@@ -14,9 +14,9 @@ import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.Report05BcdsDto;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.form02.OrganizationUpDownRpRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
-import com.agribank.qldvutils.request.report_tcd.SearchBCDSRequest;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -168,9 +168,9 @@ public class TcdReportService {
         return null;
     }
 
-    public PageResponse<Report05BcdsDto> searchRp05(SearchBCDSRequest request) {
-        String organizationCode = Objects.nonNull(request.getCode()) ? request.getCode() : CommonUtils.getOrganizationByRequestedUser();
-        request.setCode(organizationCode);
+    public PageResponse<Report05BcdsDto> searchRp05(SearchRpRequest request) {
+        String organizationCode = Objects.nonNull(request.getOrganizationCode()) ? request.getOrganizationCode() : CommonUtils.getOrganizationByRequestedUser();
+        request.setOrganizationCode(organizationCode);
         return historyClient.searchRp05(request).getData();
     }
 }

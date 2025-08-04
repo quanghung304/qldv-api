@@ -9,7 +9,7 @@ import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
-import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp01Response;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp09Response;
@@ -138,7 +138,7 @@ public class BcslTcdReportService {
         return bcslRp01Response;
     }
 
-    public PageResponse<BcslTcdRp09Response> searchRp09(SearchRp09Request request){
+    public PageResponse<BcslTcdRp09Response> searchRp09(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(),getUserRequested()));
         if (Objects.isNull(request.getOrderBy())){
             request.setOrderBy("code");
@@ -152,8 +152,8 @@ public class BcslTcdReportService {
     }
 
     public PageResponse<BcslTcdRp02Response> searchRp02(SearchRequest request) {
-        String organizationCode = Objects.nonNull(request.getCode()) ? request.getCode() : CommonUtils.getOrganizationByRequestedUser();
-        request.setCode(organizationCode);
+        String organizationCode = Objects.nonNull(request.getOrganizationCode()) ? request.getOrganizationCode() : CommonUtils.getOrganizationByRequestedUser();
+        request.setOrganizationCode(organizationCode);
         return organizationClient.searchRp02(request).getData();
     }
 }

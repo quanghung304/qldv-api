@@ -19,10 +19,10 @@ import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribankDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferOutRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp29Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -268,15 +268,15 @@ public class TransferOutAgribankService implements EntityHandler {
         transfer.setReceivedOrganization(draft.getReceivedOrganization());
     }
 
-    public PageResponse<TransferOutAgribank> search29(SearchRp29Request request) {
+    public PageResponse<TransferOutAgribank> search29(SearchRpRequest request) {
         return outAgribankClient.search29(request).getData();
     }
 
-    public PageResponse<TransferOutAgribank> searchRp29OnTime(SearchRp29Request request) {
+    public PageResponse<TransferOutAgribank> searchRp29OnTime(SearchRpRequest request) {
         return outAgribankClient.searchRp29OnTime(request).getData();
     }
 
-    public PageResponse<TransferOutAgribank> searchRp29Late(SearchRp29Request request) {
+    public PageResponse<TransferOutAgribank> searchRp29Late(SearchRpRequest request) {
         return outAgribankClient.searchRp29Late(request).getData();
     }
 }

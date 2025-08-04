@@ -20,10 +20,10 @@ import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribank;
 import com.agribank.qldvutils.entity.party_transfer.transfer_to.TransferToAgribankDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferToRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp28Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp28Response;
 import lombok.AccessLevel;
@@ -280,7 +280,7 @@ public class TransferToAgribankService implements EntityHandler {
         transfer.setReceivingOrgCName(draft.getReceivingOrgCName());
     }
 
-    public PageResponse<DvRp28Response> searchRp28(SearchRp28Request request){
+    public PageResponse<DvRp28Response> searchRp28(SearchRpRequest request){
         return transferToAgribankClient.searchRp28(request).getData();
     }
 }

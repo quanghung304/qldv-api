@@ -17,21 +17,11 @@ import com.agribank.qldv_api.service.dv_report.*;
 import com.agribank.qldv_api.service.tcd_report.ExportTcdRp05Service;
 import com.agribank.qldv_api.service.tcd_report.TcdReportService;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.request.report_dv.*;
-import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp31Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp33Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp34Request;
-import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
-import com.agribank.qldvutils.request.report_tcd.SearchBCDSRequest;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -89,15 +79,15 @@ public class ExportHandlerService {
                     exportResult = exportBcslTcdRp02Service.exportDataBcsl(searchRequest, BC_02_BCSL.getName(), "", BC_02_BCSL.name(), 1, BC_02_BCSL.getName());
                     break;
                 case BC_09_BCSL:
-                    SearchRp09Request searchRp09Request = gson.fromJson(paramString, SearchRp09Request.class);
+                    SearchRpRequest searchRp09Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportBcslTcdRp09Service.exportDataBcsl(searchRp09Request, BC_09_BCSL.getName(), "", BC_09_BCSL.name(), 1, BC_09_BCSL.getName());
                     break;
                 case BC_10_BCSL:
-                    SearchRp10Request searchRp10Request = gson.fromJson(paramString, SearchRp10Request.class);
+                    SearchRpRequest searchRp10Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportBcslDvRp10Service.exportData(searchRp10Request, BC_10_BCSL.getName(), "", BC_10_BCSL.name(), 1, BC_10_BCSL.getName());
                     break;
                 case BC_18_BCSL:
-                    SearchRp18Request searchRp18Request = gson.fromJson(paramString, SearchRp18Request.class);
+                    SearchRequest searchRp18Request = gson.fromJson(paramString, SearchRequest.class);
                     if (Objects.isNull(searchRp18Request.getDate())) {
                         throw new CommonException("Vui lòng chọn ngày");
                     }
@@ -108,7 +98,7 @@ public class ExportHandlerService {
                     exportResult = tcdReportService.exportExcelRp0304(paramExport);
                     break;
                 case BC_05_DSTCD:
-                    SearchBCDSRequest searchRp15Request = gson.fromJson(paramString, SearchBCDSRequest.class);
+                    SearchRpRequest searchRp15Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportTcdRp05Service.exportData(searchRp15Request, BC_05_DSTCD.getName(), "", BC_05_DSTCD.name(), 1, BC_05_DSTCD.getName());
                     break;
                 case BC_07_DSDV:
@@ -120,27 +110,27 @@ public class ExportHandlerService {
                     exportResult = tcdReportService.exportExcelRp17(searchRp17Request);
                     break;
                 case BC_21_DSDV:
-                    SearchRp21Request searchRp21Request = gson.fromJson(paramString, SearchRp21Request.class);
+                    SearchRpRequest searchRp21Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp21Service.exportData(searchRp21Request, EExcelColumnInfo.BC_21_DSDV.getName(), "", EExcelColumnInfo.BC_21_DSDV.name(), 1, EExcelColumnInfo.BC_21_DSDV.getName());
                     break;
                 case BC_22_DSDV:
-                    SearchRp22Request searchRp22Request = gson.fromJson(paramString, SearchRp22Request.class);
+                    SearchRpRequest searchRp22Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp22Service.exportData(searchRp22Request, EExcelColumnInfo.BC_22_DSDV.getName(), "", EExcelColumnInfo.BC_22_DSDV.name(), 1, EExcelColumnInfo.BC_22_DSDV.getName());
                     break;
                 case BC_23_DSDV:
-                    SearchRp23Request searchRp23Request = gson.fromJson(paramString, SearchRp23Request.class);
+                    SearchRpRequest searchRp23Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp23Service.exportData(searchRp23Request, EExcelColumnInfo.BC_23_DSDV.getName(), "", EExcelColumnInfo.BC_23_DSDV.name(), 1, EExcelColumnInfo.BC_23_DSDV.getName());
                     break;
                 case BC_24_DSDV:
-                    SearchRp24Request searchRp24Request = gson.fromJson(paramString, SearchRp24Request.class);
+                    SearchRpRequest searchRp24Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp24Service.exportData(searchRp24Request, BC_24_DSDV.getName(), "", BC_24_DSDV.name(), 1, BC_24_DSDV.getName());
                     break;
                 case BC_25_DSDV:
-                    SearchRp25Request searchRp25Request = gson.fromJson(paramString, SearchRp25Request.class);
+                    SearchRpRequest searchRp25Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp25Service.exportData(searchRp25Request, BC_25_DSDV.getName(), "", BC_25_DSDV.name(), 1, BC_25_DSDV.getName());
                     break;
                 case BC_28_DSDV:
-                    SearchRp28Request searchRp28Request = gson.fromJson(paramString, SearchRp28Request.class);
+                    SearchRpRequest searchRp28Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp28Service.exportData(searchRp28Request, EExcelColumnInfo.BC_28_DSDV.getName(), "", EExcelColumnInfo.BC_28_DSDV.name(), 1, EExcelColumnInfo.BC_28_DSDV.getName());
                     break;
                 case BC_29_DSDV:
@@ -148,11 +138,11 @@ public class ExportHandlerService {
                     exportResult = exportDVRp29Service.exportData(searchReport29Request, BC_29_DSDV.getName(), "", BC_29_DSDV.name(), 1, BC_29_DSDV.getName());
                     break;
                 case BC_30_DSDV:
-                    SearchRp30Request searchRp30Request = gson.fromJson(paramString, SearchRp30Request.class);
+                    SearchRpRequest searchRp30Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp30Service.exportData(searchRp30Request, EExcelColumnInfo.BC_30_DSDV.getName(), "", EExcelColumnInfo.BC_30_DSDV.name(), 1, EExcelColumnInfo.BC_30_DSDV.getName());
                     break;
                 case BC_31_DSDV:
-                    SearchRp31Request searchRp31Request = gson.fromJson(paramString, SearchRp31Request.class);
+                    SearchRpRequest searchRp31Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp31Service.exportData(searchRp31Request, EExcelColumnInfo.BC_31_DSDV.getName(), "", EExcelColumnInfo.BC_31_DSDV.name(), 1, EExcelColumnInfo.BC_31_DSDV.getName());
                     break;
                 case BC_32_DSDV:
@@ -160,11 +150,11 @@ public class ExportHandlerService {
                     exportResult = exportDVRp32Service.exportData(searchRp32Request, EExcelColumnInfo.BC_32_DSDV.getName(), "", EExcelColumnInfo.BC_32_DSDV.name(), 1, EExcelColumnInfo.BC_32_DSDV.getName());
                     break;
                 case BC_33_DSDV:
-                    SearchRp33Request searchRp33Request = gson.fromJson(paramString, SearchRp33Request.class);
+                    SearchRpRequest searchRp33Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp33Service.exportData(searchRp33Request, BC_33_DSDV.getName(), "", BC_33_DSDV.name(), 1, BC_33_DSDV.getName());
                     break;
                 case BC_34_DSDV:
-                    SearchRp34Request searchRp34Request = gson.fromJson(paramString, SearchRp34Request.class);
+                    SearchRpRequest searchRp34Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp34Service.exportData(searchRp34Request, BC_34_DSDV.getName(), "", BC_34_DSDV.name(), 1, BC_34_DSDV.getName());
                     break;
                 default:
@@ -197,11 +187,11 @@ public class ExportHandlerService {
                     exportResult = exportBcslTcdRp02Service.exportPDFData(SearchRp02Request, BC_02_BCSL.getName(), "", BC_02_BCSL.getName(), 1, BC_02_BCSL.getPageType());
                     break;
                 case BC_09_BCSL:
-                    SearchRp09Request searchRp09Request = gson.fromJson(paramString, SearchRp09Request.class);
+                    SearchRpRequest searchRp09Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportBcslTcdRp09Service.exportPDFData(searchRp09Request, BC_09_BCSL.getName(), "", BC_09_BCSL.getName(), 1, BC_09_BCSL.getPageType());
                     break;
                 case BC_10_BCSL:
-                    SearchRp10Request searchRp10Request = gson.fromJson(paramString, SearchRp10Request.class);
+                    SearchRpRequest searchRp10Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportBcslDvRp10Service.exportPDFData(searchRp10Request, BC_10_BCSL.getName(), "", BC_10_BCSL.getName(), 1, BC_10_BCSL.getPageType());
                     break;
                 case BC_18_BCSL:
@@ -230,27 +220,27 @@ public class ExportHandlerService {
                     exportResult = tcdReportService.exportPDFRp17(searchRp17Request);
                     break;
                 case BC_21_DSDV:
-                    SearchRp21Request searchRp21Request = gson.fromJson(paramString, SearchRp21Request.class);
+                    SearchRpRequest searchRp21Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp21Service.exportPDFData(searchRp21Request, EExcelColumnInfo.BC_21_DSDV.getName(), "", EExcelColumnInfo.BC_21_DSDV.getName(), 1, EExcelColumnInfo.BC_21_DSDV.getPageType());
                     break;
                 case BC_22_DSDV:
-                    SearchRp22Request searchRp22Request = gson.fromJson(paramString, SearchRp22Request.class);
+                    SearchRpRequest searchRp22Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp22Service.exportPDFData(searchRp22Request, EExcelColumnInfo.BC_22_DSDV.getName(), "", EExcelColumnInfo.BC_22_DSDV.getName(), 1, EExcelColumnInfo.BC_22_DSDV.getPageType());
                     break;
                 case BC_23_DSDV:
-                    SearchRp23Request searchRp23Request = gson.fromJson(paramString, SearchRp23Request.class);
+                    SearchRpRequest searchRp23Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp23Service.exportPDFData(searchRp23Request, EExcelColumnInfo.BC_23_DSDV.getName(), "", EExcelColumnInfo.BC_23_DSDV.getName(), 1, EExcelColumnInfo.BC_23_DSDV.getPageType());
                     break;
                 case BC_24_DSDV:
-                    SearchRp24Request searchRp24Request = gson.fromJson(paramString, SearchRp24Request.class);
+                    SearchRpRequest searchRp24Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp24Service.exportPDFData(searchRp24Request, BC_24_DSDV.getName(), "", BC_24_DSDV.getName(), 1, BC_24_DSDV.getPageType());
                     break;
                 case BC_25_DSDV:
-                    SearchRp25Request searchRp25Request = gson.fromJson(paramString, SearchRp25Request.class);
+                    SearchRpRequest searchRp25Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp25Service.exportPDFData(searchRp25Request, EExcelColumnInfo.BC_25_DSDV.getName(), "", EExcelColumnInfo.BC_25_DSDV.getName(), 1, EExcelColumnInfo.BC_25_DSDV.getPageType());
                     break;
                 case BC_28_DSDV:
-                    SearchRp28Request searchRp28Request = gson.fromJson(paramString, SearchRp28Request.class);
+                    SearchRpRequest searchRp28Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp28Service.exportPDFData(searchRp28Request, EExcelColumnInfo.BC_28_DSDV.getName(), "", EExcelColumnInfo.BC_28_DSDV.getName(), 1, EExcelColumnInfo.BC_28_DSDV.getPageType());
                     break;
                 case BC_29_DSDV:
@@ -258,11 +248,11 @@ public class ExportHandlerService {
                     exportResult = exportDVRp29Service.exportPDFData(searchReport29Request, EExcelColumnInfo.BC_29_DSDV.getName(), "", EExcelColumnInfo.BC_29_DSDV.getName(), 1, EExcelColumnInfo.BC_29_DSDV.getPageType());
                     break;
                 case BC_30_DSDV:
-                    SearchRp30Request searchRp30Request = gson.fromJson(paramString, SearchRp30Request.class);
+                    SearchRpRequest searchRp30Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp30Service.exportPDFData(searchRp30Request, EExcelColumnInfo.BC_30_DSDV.getName(), "", EExcelColumnInfo.BC_30_DSDV.getName(), 1, EExcelColumnInfo.BC_30_DSDV.getPageType());
                     break;
                 case BC_31_DSDV:
-                    SearchRp31Request searchRp31Request = gson.fromJson(paramString, SearchRp31Request.class);
+                    SearchRpRequest searchRp31Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp31Service.exportPDFData(searchRp31Request, EExcelColumnInfo.BC_31_DSDV.getName(), "", EExcelColumnInfo.BC_31_DSDV.getName(), 1, EExcelColumnInfo.BC_31_DSDV.getPageType());
                     break;
                 case BC_32_DSDV:
@@ -270,11 +260,11 @@ public class ExportHandlerService {
                     exportResult = exportDVRp32Service.exportPDFData(searchRp32Request, EExcelColumnInfo.BC_32_DSDV.getName(), "", EExcelColumnInfo.BC_32_DSDV.getName(), 1, EExcelColumnInfo.BC_32_DSDV.getPageType());
                     break;
                 case BC_33_DSDV:
-                    SearchRp33Request searchRp33Request = gson.fromJson(paramString, SearchRp33Request.class);
+                    SearchRpRequest searchRp33Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp33Service.exportPDFData(searchRp33Request, EExcelColumnInfo.BC_33_DSDV.getName(), "", EExcelColumnInfo.BC_33_DSDV.getName(), 1, EExcelColumnInfo.BC_33_DSDV.getPageType());
                     break;
                 case BC_34_DSDV:
-                    SearchRp34Request searchRp34Request = gson.fromJson(paramString, SearchRp34Request.class);
+                    SearchRpRequest searchRp34Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp34Service.exportPDFData(searchRp34Request, EExcelColumnInfo.BC_34_DSDV.getName(), "", EExcelColumnInfo.BC_34_DSDV.getName(), 1, EExcelColumnInfo.BC_34_DSDV.getPageType());
                     break;
                 default:

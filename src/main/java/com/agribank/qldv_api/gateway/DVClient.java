@@ -5,11 +5,9 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.request.SearchDVRequest;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
-import com.agribank.qldvutils.request.report_tcd.SearchRp09Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
@@ -74,7 +72,7 @@ public interface DVClient {
 
     @PostMapping("api/v1/dv/search-report-24")
     DefaultResponse<PageResponse<DV>> searchRp24(
-            @RequestBody SearchRp24Request request
+            @RequestBody SearchRpRequest request
     );
 
     @PostMapping("api/v1/dv/find-by-vneids")
@@ -94,7 +92,7 @@ public interface DVClient {
 
     @PostMapping("api/v1/dv/search-report-21")
     DefaultResponse<PageResponse<DV>> searchRp21(
-            @RequestBody SearchRp21Request request
+            @RequestBody SearchRpRequest request
     );
 
     @GetMapping("api/v1/dv/find-active-dv-by-organization-code")
@@ -113,11 +111,11 @@ public interface DVClient {
     );
 
     @PostMapping("api/v1/dv/search-rp-09")
-    DefaultResponse<PageResponse<BcslTcdRp09Response>> searchRp09(@RequestBody SearchRp09Request request);
+    DefaultResponse<PageResponse<BcslTcdRp09Response>> searchRp09(@RequestBody SearchRpRequest request);
 
 
     @PostMapping("api/v1/dv/report-18")
     DefaultResponse<PageResponse<DvRp18Response>> searchRp18(
-            @RequestBody SearchRp18Request request
+            @RequestBody SearchRequest request
     );
 }

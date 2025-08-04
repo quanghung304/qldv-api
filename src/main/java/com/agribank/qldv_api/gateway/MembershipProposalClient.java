@@ -2,9 +2,8 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.MembershipProposal;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.membershipProposal.MPSearchRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp22Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp23Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
@@ -33,11 +32,11 @@ public interface MembershipProposalClient extends BaseClient<MembershipProposal,
 
     @PostMapping("/search-report-22")
     DefaultResponse<PageResponse<DvRp22Response>> searchRp22(
-            @RequestBody SearchRp22Request request
+            @RequestBody SearchRpRequest request
     );
 
     @PostMapping("/search-report-23")
     DefaultResponse<PageResponse<DvRp23Response>> searchRp23(
-            @RequestBody SearchRp23Request request
+            @RequestBody SearchRpRequest request
     );
 }

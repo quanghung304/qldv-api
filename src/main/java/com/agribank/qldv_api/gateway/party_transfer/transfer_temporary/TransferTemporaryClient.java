@@ -5,9 +5,9 @@ import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.dto.SearchRp33Dto;
 import com.agribank.qldvutils.dto.TransferTemporaryDto;
 import com.agribank.qldvutils.entity.party_transfer.transfer_temporary.TransferTemporary;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferTemporaryRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferTemporaryFilterRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp33Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -34,5 +34,5 @@ public interface TransferTemporaryClient extends BaseClient<TransferTemporary, S
     BaseResponse<Boolean> saveEntities(@RequestBody ApproveTransferTemporaryRequest request);
 
     @PostMapping("search-rp33")
-    BaseResponse<PageResponse<SearchRp33Dto>> searchRp33(@RequestBody SearchRp33Request request);
+    BaseResponse<PageResponse<SearchRp33Dto>> searchRp33(@RequestBody SearchRpRequest request);
 }

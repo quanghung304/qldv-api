@@ -24,7 +24,7 @@ import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
 import com.agribank.qldvutils.entity.report26.*;
 import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.report_dv.*;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
@@ -69,7 +69,7 @@ public class DVReportService {
     private final CheckAuthorityService checkAuthorityService;
 
 
-    public PageResponse<DvRp24Response> search24(SearchRp24Request request){
+    public PageResponse<DvRp24Response> search24(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
 
         PageResponse<DV> dvPageResponse = dvService.searchRp24(request);
@@ -173,7 +173,7 @@ public class DVReportService {
         return organization.getName();
     }
 
-    public PageResponse<DvRp25Response> search25(SearchRp25Request request){
+    public PageResponse<DvRp25Response> search25(SearchRpRequest request){
         PageResponse<DvRp25Response> response = new PageResponse<>();
         PageResponse<PartyReinstatement> partyReinstatementPageResponse = partyReinstatementService.searchRp25(request);
         if (Objects.isNull(partyReinstatementPageResponse.getData()) || partyReinstatementPageResponse.getData().isEmpty()) {
@@ -245,7 +245,7 @@ public class DVReportService {
         return response;
     }
 
-    public PageResponse<DvRp34Response> search34(SearchRp34Request request){
+    public PageResponse<DvRp34Response> search34(SearchRpRequest request){
         PageResponse<DvRp34Response> response = new PageResponse<>();
         PageResponse<Report26> pageResponse = report26Service.search34(request);
 
@@ -453,7 +453,7 @@ public class DVReportService {
 
     public PageResponse<DvRp29Response> search29(SearchReport29Request searchReport29Request){
         PageResponse<TransferOutAgribank> pageResponse;
-        SearchRp29Request request = SearchRp29Request.builder()
+        SearchRpRequest request = SearchRpRequest.builder()
                 .organizationCode(searchReport29Request.getOrganizationCode())
                 .fromDate(searchReport29Request.getFromDate())
                 .toDate(searchReport29Request.getToDate())
@@ -540,7 +540,7 @@ public class DVReportService {
         return response;
     }
 
-    public PageResponse<DvRp21Response> searchRp21(SearchRp21Request request) {
+    public PageResponse<DvRp21Response> searchRp21(SearchRpRequest request) {
         PageResponse<DvRp21Response> response = new PageResponse<>();
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         PageResponse<DV> dvPageResponse = dvService.searchRp21(request);
@@ -603,13 +603,13 @@ public class DVReportService {
         return response;
     }
 
-    public PageResponse<DvRp23Response> searchRp23(SearchRp23Request request) {
+    public PageResponse<DvRp23Response> searchRp23(SearchRpRequest request) {
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
 
         return membershipProposalService.searchRp23(request);
     }
 
-    public PageResponse<DvRp28Response> searchRp28(SearchRp28Request request) {
+    public PageResponse<DvRp28Response> searchRp28(SearchRpRequest request) {
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
 
         PageResponse<DvRp28Response> response = transferToAgribankService.searchRp28(request);
@@ -631,7 +631,7 @@ public class DVReportService {
         return response;
     }
 
-    public PageResponse<DvRp30Response> searchRp30(SearchRp30Request request) {
+    public PageResponse<DvRp30Response> searchRp30(SearchRpRequest request) {
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
 
         PageResponse<DvRp30Response> response = transferWithinAgribankService.search30(request);
@@ -649,20 +649,20 @@ public class DVReportService {
         return response;
     }
 
-    public PageResponse<DvRp22Response> searchRp22(SearchRp22Request request){
+    public PageResponse<DvRp22Response> searchRp22(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
 
         return membershipProposalService.searchRp22(request);
     }
 
-    public PageResponse<Report31Dto> search31(SearchRp31Request request){
+    public PageResponse<Report31Dto> search31(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         PageResponse<Report31Dto> report31DtoPageResponse = transferWithinBaseService.search31(request);
         return report31DtoPageResponse;
     }
 
 
-    public PageResponse<SearchRp33Dto> search33(SearchRp33Request request) {
+    public PageResponse<SearchRp33Dto> search33(SearchRpRequest request) {
         String organizationCode = Objects.nonNull(request.getOrganizationCode()) ? request.getOrganizationCode() : CommonUtils.getOrganizationByRequestedUser();
         request.setOrganizationCode(organizationCode);
         return transferTemporaryClient.searchRp33(request).getData();
@@ -690,7 +690,7 @@ public class DVReportService {
         return transferProcessService.searchRp32(request);
     }
 
-    public PageResponse<BcslDvRp10Response> searchRp10(SearchRp10Request request) {
+    public PageResponse<BcslDvRp10Response> searchRp10(SearchRpRequest request) {
         PageResponse<BcslDvRp10Response> searchCount = new PageResponse<>();
 
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
