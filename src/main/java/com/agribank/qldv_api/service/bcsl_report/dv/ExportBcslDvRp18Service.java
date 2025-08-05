@@ -5,7 +5,7 @@ import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldv_api.service.export.ExportService;
 import com.agribank.qldv_api.service.export.ZipHelper;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.dv.DvRp18Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public class ExportBcslDvRp18Service extends ExportService {
     }
 
     public int handleGetTotalRecord(Object serviceParam) {
-        SearchRp18Request requestParam = (SearchRp18Request) serviceParam;
+        SearchRequest requestParam = (SearchRequest) serviceParam;
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<DvRp18Response> dataDto = bcslDvReportService.searchRp18(requestParam);
         if(dataDto == null){
@@ -38,7 +38,7 @@ public class ExportBcslDvRp18Service extends ExportService {
     }
 
     public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
-        SearchRp18Request requestParam = (SearchRp18Request) serviceParam;
+        SearchRequest requestParam = (SearchRequest) serviceParam;
         requestParam.setPage(pageIndex);
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<DvRp18Response> dataDto = bcslDvReportService.searchRp18(requestParam);

@@ -20,10 +20,10 @@ import com.agribank.qldvutils.entity.party_transfer.TransferProcess;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_agribank.TransferWithinAgribank;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_agribank.TransferWithinAgribankDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferWithinRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferWithinAgribankSearch;
-import com.agribank.qldvutils.request.report_dv.SearchRp30Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import lombok.RequiredArgsConstructor;
@@ -340,7 +340,7 @@ public class TransferWithinAgribankService implements EntityHandler {
         }
     }
 
-    public PageResponse<DvRp30Response> search30(SearchRp30Request request){
+    public PageResponse<DvRp30Response> search30(SearchRpRequest request){
         return client.searchRp30(request).getData();
     }
 }

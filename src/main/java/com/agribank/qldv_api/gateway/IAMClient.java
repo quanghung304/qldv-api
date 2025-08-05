@@ -3,13 +3,12 @@ package com.agribank.qldv_api.gateway;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
+import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
 import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.user.ADResponse;
 import com.agribank.qldv_api.response.user.DepartmentResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
-import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +35,7 @@ public interface IAMClient {
     );
 
     @GetMapping("api/v1/user/get-user-page")
-    DefaultResponse<UserSearchResponse> search(
+    DefaultResponse<UserSearchIamResponse> search(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(name = "appId") Integer appId,
             @RequestParam(name = "brcd") String brcd,

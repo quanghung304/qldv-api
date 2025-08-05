@@ -6,7 +6,7 @@ import com.agribank.qldv_api.service.export.ExportService;
 import com.agribank.qldv_api.service.export.ZipHelper;
 import com.agribank.qldvutils.dto.Report31Dto;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
-import com.agribank.qldvutils.request.report_dv.SearchRp31Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +29,7 @@ public class ExportDVRp31Service extends ExportService {
     }
 
     public int handleGetTotalRecord(Object serviceParam) {
-        SearchRp31Request requestParam = (SearchRp31Request) serviceParam;
+        SearchRpRequest requestParam = (SearchRpRequest) serviceParam;
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<Report31Dto> dataDto = dvReportService.search31(requestParam);
         if(dataDto == null){
@@ -40,7 +40,7 @@ public class ExportDVRp31Service extends ExportService {
 
 
     public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
-        SearchRp31Request requestParam = (SearchRp31Request) serviceParam;
+        SearchRpRequest requestParam = (SearchRpRequest) serviceParam;
         requestParam.setPage(pageIndex);
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<Report31Dto> dvRp31ResponsePageResponse = dvReportService.search31(requestParam);

@@ -6,7 +6,7 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
+import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
 import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
@@ -21,6 +21,7 @@ import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.user.UserSearchResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -64,7 +65,7 @@ public class UserService {
         return null;
     }
 
-    public UserSearchResponse searchUserIam(SearchUserIAMRequest request){
+    public UserSearchIamResponse searchUserIam(SearchUserIAMRequest request){
         String authorHeader = getAuthorHeader();
 
         request.validate();
@@ -87,26 +88,19 @@ public class UserService {
         return  "Bearer " + CommonUtils.getAccessToken(servletRequest);
     }
 
-    public PageResponse<UserResponse> searchQLDV(SearchUserRequest request){
+    public PageResponse<UserSearchResponse> searchQLDV(SearchUserRequest request){
         //Kiểm tra quyền search user cho Chi nhánh
         checkPermissionSearchUser(request);
+        if (Objects.isNull(request.getOrderBy())){
+            request.setOrderBy("organizationCodeB");
+        }
 
-        PageResponse<User> userPageResponse = userClient.search(request).getData();
-        PageResponse<UserResponse> response = new PageResponse<>();
-        if (Objects.isNull(userPageResponse)) {
+        PageResponse<UserSearchResponse> response = userClient.search(request).getData();
+        if(Objects.isNull(response.getData()) || response.getData().isEmpty()){
             return response;
         }
-        response.setTotalPages(userPageResponse.getTotalPages());
-        response.setCurrentPage(userPageResponse.getCurrentPage());
-        response.setTotalItems(userPageResponse.getTotalItems());
 
-        if (Objects.isNull(userPageResponse.getData())) {
-          return response;
-        }
-
-        List<UserResponse> userResponses = userPageResponse.getData().stream()
-                .map( user -> modelMapper.map(user, UserResponse.class)
-                ).toList();
+        List<UserSearchResponse> userResponses = response.getData();
 
         List<Integer> brcds = new ArrayList<>();
         List<String> userIds = new ArrayList<>();
@@ -121,7 +115,7 @@ public class UserService {
         //Lấy role
         Map<String, List<String>> roleMap = getUserRole(userIds);
 
-        for (UserResponse userResponse : userResponses) {
+        for (UserSearchResponse userResponse : userResponses) {
             BranchResponse branchResponse = branchResponseMap.getOrDefault(userResponse.getBrcd(), null);
             if (Objects.nonNull(branchResponse)) {
                 userResponse.setBranchName(branchResponse.getLclbrnm());

@@ -225,6 +225,7 @@ public class SplitOrganizationService implements EntityHandler {
         OrganizationSplit organizationSplit = modelMapper.map(splitDraft, OrganizationSplit.class);
         organizationSplit = organizationSplitClient.save(organizationSplit).getData();
         String organizationSplitId = organizationSplit.getId();
+        Date organizationSplitEffectiveDate = organizationSplit.getEffectiveDate();
 
         //luu danh sach to chuc Dang sau chia tach
         List<Organization> newOrganizationList = new ArrayList<>();
@@ -270,6 +271,7 @@ public class SplitOrganizationService implements EntityHandler {
         List<DvOrgHistory> dvOrgHistories = dvOrgHistoryDrafts.stream().map(dv -> {
             DvOrgHistory dvOrgHistory = modelMapper.map(dv, DvOrgHistory.class);
             dvOrgHistory.setRefId(organizationSplitId);
+            dvOrgHistory.setEffectiveDate(organizationSplitEffectiveDate);
             staffCodes.add(dvOrgHistory.getStaffCode());
             dvOrgHistoriesMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory.getNewOrgCode());
             return dvOrgHistory;
@@ -388,6 +390,7 @@ public class SplitOrganizationService implements EntityHandler {
         List<DvOrgHistory> newDvOrgHistories = dvOrgHistoryDrafts.stream().map(dv -> {
             DvOrgHistory dvOrgHistory = modelMapper.map(dv, DvOrgHistory.class);
             dvOrgHistory.setRefId(organizationSplit.getId());
+            dvOrgHistory.setEffectiveDate(organizationSplit.getEffectiveDate());
             staffCodes.add(dvOrgHistory.getStaffCode());
             dvOrgHistoriesMap.put(dvOrgHistory.getStaffCode(), dvOrgHistory.getNewOrgCode());
             return dvOrgHistory;

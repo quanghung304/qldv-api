@@ -20,11 +20,9 @@ import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchDVRequest;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp18Request;
-import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp21Request;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
-import com.agribank.qldvutils.request.report_dv.SearchRp24Request;
 import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
@@ -400,7 +398,7 @@ public class DVService implements EntityHandler {
     }
 
 
-    public PageResponse<DV> searchRp24(SearchRp24Request request){
+    public PageResponse<DV> searchRp24(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         return dvClient.searchRp24(request).getData();
     }
@@ -409,7 +407,7 @@ public class DVService implements EntityHandler {
         return dvClient.findByStaffCodes(staffCodes).getData();
     }
 
-    public PageResponse<DV> searchRp21(SearchRp21Request request){
+    public PageResponse<DV> searchRp21(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         return dvClient.searchRp21(request).getData();
     }
@@ -447,11 +445,11 @@ public class DVService implements EntityHandler {
     public Report07DtoResponse getTotalRp07(SearchRp07Request request){
         return dvClient.getTotalRp07(request).getData();
     }
-    public PageResponse<DvRp18Response> searchRp18(SearchRp18Request request){
+    public PageResponse<DvRp18Response> searchRp18(SearchRequest request){
         return dvClient.searchRp18(request).getData();
     }
 
-    public PageResponse<BcslDvRp10Response> searchRp10(SearchRp10Request request){
+    public PageResponse<BcslDvRp10Response> searchRp10(SearchRpRequest request){
         return organizationClient.searchRp10(request).getData();
     }
 }

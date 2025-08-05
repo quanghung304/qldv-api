@@ -2,10 +2,11 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.apiLog.UserSearchResponse;
+import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.user.UserSearchResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,12 +20,12 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN')")
     @PostMapping("/iam-search")
-    public ResponseEntity<DefaultResponse<UserSearchResponse>> search(@RequestBody SearchUserIAMRequest request) {
+    public ResponseEntity<DefaultResponse<UserSearchIamResponse>> search(@RequestBody SearchUserIAMRequest request) {
         return DefaultResponse.success(userService.searchUserIam(request));
     }
 
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<UserResponse>>> search(@RequestBody SearchUserRequest request) {
+    public ResponseEntity<DefaultResponse<PageResponse<UserSearchResponse>>> search(@RequestBody SearchUserRequest request) {
         request.validate();
         return DefaultResponse.success(userService.searchQLDV(request));
     }

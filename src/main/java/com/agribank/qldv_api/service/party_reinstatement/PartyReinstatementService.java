@@ -18,8 +18,8 @@ import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatementDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.party_reinstatement.PartyReinstatementSearchRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp25Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.party_reinstatement.PartyReinstatementDtoResponse;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,8 @@ public class PartyReinstatementService implements EntityHandler {
     }
 
     public String create(PartyReinstatementRequest request) {
-        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+        UserDetailsImpl userRequested = getUserRequested();
+        checkAuthorityService.hasAuthorityOverOrganization(userRequested.getOrganizationCode());
         DV dvInfo = dvService.findByStaffCode(request.getStaffCode());
         if (Objects.isNull(dvInfo)) {
             throw new CommonException("Không tìm thấy thông tin Đảng viên: " + request.getStaffCode() + ". Vui lòng kiểm tra lại sau!");
@@ -66,10 +67,6 @@ public class PartyReinstatementService implements EntityHandler {
             throw new CommonException("Đảng viên này không cần khôi phục Đảng tịch");
         }
 
-        Organization organization = organizationService.findByCode(request.getOrganizationCode());
-        if (Objects.isNull(organization)) {
-            throw new CommonException("Không tồn tại TCD: " + request.getOrganizationCode());
-        }
         PartyReinstatement partyReinstatement = null;
         if (Objects.nonNull(request.getId())){
             partyReinstatement = findById(request.getId());
@@ -80,7 +77,8 @@ public class PartyReinstatementService implements EntityHandler {
         }
 
         PartyReinstatementDraft partyReinstatementDraft = modelMapper.map(request, PartyReinstatementDraft.class);
-        UserDetailsImpl userRequested = getUserRequested();
+        partyReinstatementDraft.setOrganizationCode(dvInfo.getOrganizationCode());
+
         partyReinstatementDraft.setStatus(EApprovalStatus.PENDING.getId());
         partyReinstatementDraft.setCreatedBy(userRequested.getId());
 
@@ -93,7 +91,7 @@ public class PartyReinstatementService implements EntityHandler {
         partyReinstatementDraft = partyReinstatementDraftService.save(partyReinstatementDraft);
 
         initializedRequest.setReferenceId(partyReinstatementDraft.getId());
-        initializedRequest.setOrganizationCode(request.getOrganizationCode());
+        initializedRequest.setOrganizationCode(dvInfo.getOrganizationCode());
         initializedRequest.setStaffCode(partyReinstatementDraft.getStaffCode());
         requestClient.save(initializedRequest);
 
@@ -197,6 +195,7 @@ public class PartyReinstatementService implements EntityHandler {
         partyReinstatement.setDecisionNumber(partyReinstatementDraft.getDecisionNumber());
         partyReinstatement.setDecisionDate(partyReinstatementDraft.getDecisionDate());
         partyReinstatement.setEffectiveDate(partyReinstatementDraft.getEffectiveDate());
+        partyReinstatement.setDecisionCommittee(partyReinstatementDraft.getDecisionCommittee());
 
         client.save(partyReinstatement);
         partyReinstatementDraftService.save(partyReinstatementDraft);
@@ -226,7 +225,7 @@ public class PartyReinstatementService implements EntityHandler {
         partyReinstatementDraftService.save(partyReinstatementDraft);
     }
 
-    public PageResponse<PartyReinstatement> searchRp25(SearchRp25Request request){
+    public PageResponse<PartyReinstatement> searchRp25(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         return client.search25(request).getData();
     }

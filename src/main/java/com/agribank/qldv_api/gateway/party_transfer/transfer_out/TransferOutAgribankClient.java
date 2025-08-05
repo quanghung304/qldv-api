@@ -3,9 +3,9 @@ package com.agribank.qldv_api.gateway.party_transfer.transfer_out;
 import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferOutRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp29Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -24,13 +24,13 @@ public interface TransferOutAgribankClient extends BaseClient<TransferOutAgriban
     BaseResponse<TransferOutAgribank> findByStaffCode(@PathVariable String staffCode);
 
     @PostMapping("/search/report-29")
-    BaseResponse<PageResponse<TransferOutAgribank>> search29(@RequestBody SearchRp29Request request);
+    BaseResponse<PageResponse<TransferOutAgribank>> search29(@RequestBody SearchRpRequest request);
 
     @PostMapping("/search/report-29-on-time")
-    BaseResponse<PageResponse<TransferOutAgribank>> searchRp29OnTime(@RequestBody SearchRp29Request request);
+    BaseResponse<PageResponse<TransferOutAgribank>> searchRp29OnTime(@RequestBody SearchRpRequest request);
 
     @PostMapping("/search/report-29-late")
-    BaseResponse<PageResponse<TransferOutAgribank>> searchRp29Late(@RequestBody SearchRp29Request request);
+    BaseResponse<PageResponse<TransferOutAgribank>> searchRp29Late(@RequestBody SearchRpRequest request);
 
     @GetMapping("find-by-process/{processId}")
     BaseResponse<TransferOutAgribank> findByProcess(@PathVariable String processId);

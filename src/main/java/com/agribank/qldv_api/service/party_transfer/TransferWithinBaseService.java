@@ -21,10 +21,10 @@ import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBase;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBaseDraft;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.dv_org.DvOrgHistoryRequest;
 import com.agribank.qldvutils.request.party_transfer.ApproveTransferBaseRequest;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
-import com.agribank.qldvutils.request.report_dv.SearchRp31Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -239,7 +238,7 @@ public class TransferWithinBaseService implements EntityHandler {
         transfer.setOrganizationName(draft.getOrganizationName());
     }
 
-    public PageResponse<Report31Dto> search31(SearchRp31Request request) {
+    public PageResponse<Report31Dto> search31(SearchRpRequest request) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         PageResponse<Report31Dto> response = transferWithinBaseClient.search31(request).getData();
         if (Objects.nonNull(userDetails.getOrganizationCode()) && userDetails.getOrganizationCode().equals(String.valueOf(BRANCH_CODE_HEAD_QUARTER))) {
