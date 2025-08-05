@@ -81,6 +81,8 @@ public class OrganizationService implements EntityHandler {
             throw new CommonException("Mã TCD đẫ tồn tại vui lòng kiểm tra lại");
         }
 
+        //đối với cấp B, cha là chính nó
+        organizationRequest.setParentCode(organizationRequest.getCode());
         return save(organizationRequest);
     }
 

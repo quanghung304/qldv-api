@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.organization;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldvutils.exception.CommonException;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -20,5 +21,9 @@ public class OrganizationCreateRequest extends OrganizationRequest {
     @Override
     public void validate() {
         super.validate();
+        //Chỉ truyền code khi tạo TCD cấp B
+        if (Objects.nonNull(this.getCode()) && this.getCode().length() > Constants.FORM_B_NAME_LENGTH){
+            throw new CommonException("Sai định dạng tổ chức Đảng, chỉ chứa 4 số");
+        }
     }
 }
