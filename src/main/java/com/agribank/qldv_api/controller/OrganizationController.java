@@ -2,12 +2,12 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
-import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.organization.OrganizationHierarchyResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldv_api.service.organization.OrganizationService;
+import com.agribank.qldvutils.request.organization.OrganizationSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;

@@ -1,6 +1,5 @@
 package com.agribank.qldv_api.gateway;
 
-import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
@@ -8,6 +7,7 @@ import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.organization.ApproveOrganizationRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
+import com.agribank.qldvutils.request.organization.OrganizationSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;

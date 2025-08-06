@@ -2,12 +2,12 @@ package com.agribank.qldv_api.service.organization;
 
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.OrganizationClient;
+import com.agribank.qldv_api.gateway.OrganizationReferenceClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.organization.OrganizationCreateRequest;
 import com.agribank.qldv_api.request.organization.OrganizationRequest;
-import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.organization.OrganizationHierarchyResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
@@ -21,6 +21,7 @@ import com.agribank.qldvutils.entity.form02.OrganizationHistory;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRp01Request;
 import com.agribank.qldvutils.request.organization.ApproveOrganizationRequest;
+import com.agribank.qldvutils.request.organization.OrganizationSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
@@ -45,6 +46,7 @@ public class OrganizationService implements EntityHandler {
     private final OrganizationClient client;
     private final RequestClient requestClient;
     private final OrganizationHistoryClient historyClient;
+    private final OrganizationReferenceClient organizationReferenceClient;
     private final ModelMapper modelMapper;
     private final OrganizationReferenceService organizationReferenceService;
     private final RequestService requestService;
@@ -81,6 +83,8 @@ public class OrganizationService implements EntityHandler {
             throw new CommonException("Mã TCD đẫ tồn tại vui lòng kiểm tra lại");
         }
 
+        //đối với cấp B, cha là chính nó
+        organizationRequest.setParentCode(organizationRequest.getCode());
         return save(organizationRequest);
     }
 
@@ -231,13 +235,30 @@ public class OrganizationService implements EntityHandler {
         response.setTotalItems(organizationPageResponse.getTotalItems());
 
         if (Objects.nonNull(organizationPageResponse.getData())) {
-            response.setData(organizationPageResponse.getData().stream()
-                    .map(organization -> modelMapper.map(organization, OrganizationResponse.class)
-                    ).toList()
+            response.setData(
+                    createOrganizationListResponse(organizationPageResponse.getData())
             );
         }
 
         return response;
+    }
+
+    private List<OrganizationResponse> createOrganizationListResponse(List<Organization> organizationList) {
+        List<OrganizationReference> formList = organizationReferenceClient.findAll().getData();
+
+        Map<String, String> formMap = new HashMap<>();
+
+        for (OrganizationReference reference: formList) {
+            formMap.put(reference.getCode(), reference.getName());
+        }
+
+        return organizationList.stream()
+                .map(organization -> {
+                    OrganizationResponse organizationResponse = modelMapper.map(organization, OrganizationResponse.class);
+                    organizationResponse.setForm(formMap.get(organization.getForm()));
+                    return organizationResponse;
+                })
+                .toList();
     }
 
     public String getOrganizationCode(String organizationCode, UserDetailsImpl userRequested) {
@@ -276,7 +297,8 @@ public class OrganizationService implements EntityHandler {
         if (Objects.isNull(organizations) || organizations.isEmpty()){
             return new ArrayList<>();
         }
-        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+
+        return createOrganizationListResponse(organizations);
     }
 
     public OrganizationResponse findByUserId(String userId) {

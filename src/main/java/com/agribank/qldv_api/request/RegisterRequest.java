@@ -56,7 +56,7 @@ public class RegisterRequest {
         }
 
         if(Objects.isNull(organizationCode) || organizationCode.isBlank()){
-            throw new CommonException("Chưa chọn Cơ quan tham mưu");
+            throw new CommonException("Chưa chọn chi, đảng bộ");
         }
 
     }
