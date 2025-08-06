@@ -43,7 +43,7 @@ public class OrganizationReferenceService {
     }
 
     public OrganizationReference findById(String code){
-        return client.findById(code).getData();
+        return client.findById(code).getData().orElse(null);
     }
 
     public List<OrganizationReferenceResponse> getAll(){

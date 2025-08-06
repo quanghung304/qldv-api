@@ -19,102 +19,102 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "dvClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
+@FeignClient(name = "dvClient", url = "${qldv.database.url}" + "/api/v1/dv", configuration = DatabaseFeignConfiguration.class)
 public interface DVClient {
 
-    @GetMapping("api/v1/dv/find-by-id/{id}")
+    @GetMapping("/find-by-id/{id}")
     DefaultResponse<DV> findById(
             @PathVariable("id") String id
     );
 
-    @PostMapping("api/v1/dv/search")
+    @PostMapping("/search")
     DefaultResponse<PageResponse<DVSearchResponse>> search(
             @RequestBody SearchDVRequest request
     );
 
-    @PostMapping("api/v1/dv/save")
+    @PostMapping("/save")
     DefaultResponse<DV> save(
             @RequestBody DV request
     );
 
-    @PostMapping("api/v1/dv/save/all")
+    @PostMapping("/save/all")
     DefaultResponse<List<DV>> saveAll(
             @RequestBody List<DV> dvs
     );
 
-    @GetMapping("api/v1/dv/find-un-official-dv")
+    @GetMapping("/find-un-official-dv")
     DefaultResponse<List<DVCodeNameDto>> findUnOfficialDV(
             @RequestParam(name = "code") String code
     );
 
-    @GetMapping("api/v1/dv/find-by-organization")
+    @GetMapping("/find-by-organization")
     DefaultResponse<List<DV>> findByOrganizationCode(
             @RequestParam(name = "organization") String organization
     );
 
-    @GetMapping("api/v1/dv/find-by-staff-code")
+    @GetMapping("/find-by-staff-code")
     DefaultResponse<DV> findByStaffCode(
             @RequestParam(name = "staffCode") String staffCode
     );
 
-    @GetMapping("api/v1/dv/party-reinstatement")
+    @GetMapping("/party-reinstatement")
     DefaultResponse<List<DV>> getDVByPartyReinstatement();
 
-    @PostMapping("api/v1/dv/search-report-17")
+    @PostMapping("/search-report-17")
     DefaultResponse<PageResponse<DV>> searchRp17(
             @RequestBody SearchRp17Request request
     );
 
-    @GetMapping("api/v1/dv/find-by-codes")
+    @GetMapping("/find-by-codes")
     DefaultListResponse<DV> findByOrganizationCodes(
             @RequestParam List<String> codes
     );
 
-    @PostMapping("api/v1/dv/search-report-24")
+    @PostMapping("/search-report-24")
     DefaultResponse<PageResponse<DV>> searchRp24(
             @RequestBody SearchRpRequest request
     );
 
-    @PostMapping("api/v1/dv/find-by-vneids")
+    @PostMapping("/find-by-vneids")
     DefaultListResponse<DV> findByVneids(@RequestBody List<String> vneids);
 
-    @PostMapping("api/v1/dv/find-by-party-card-numbers")
+    @PostMapping("/find-by-party-card-numbers")
     DefaultListResponse<DV> findByPartyCardNumbers(@RequestBody List<String> partyCardNumbers);
 
-    @PostMapping("api/v1/dv/find-by-staff-codes")
+    @PostMapping("/find-by-staff-codes")
     DefaultListResponse<DV> findByStaffCodes(@RequestBody List<String> staffCodes);
 
-    @PostMapping("api/v1/dv/find-by-staff-code-actives")
+    @PostMapping("/find-by-staff-code-actives")
     DefaultListResponse<DV> findByStaffCodeActiveIn(@RequestBody List<String> staffCodes);
 
-    @PostMapping("api/v1/dv/find-organization-code-actives")
+    @PostMapping("/find-organization-code-actives")
     DefaultListResponse<DV> findByOrganizationCodeActiveIn(@RequestBody List<String> organizationCodes);
 
-    @PostMapping("api/v1/dv/search-report-21")
+    @PostMapping("/search-report-21")
     DefaultResponse<PageResponse<DV>> searchRp21(
             @RequestBody SearchRpRequest request
     );
 
-    @GetMapping("api/v1/dv/find-active-dv-by-organization-code")
+    @GetMapping("/find-active-dv-by-organization-code")
     DefaultResponse<List<DV>> findActiveDVByOrganizationCode(
             @RequestParam(name = "organization") String organization
     );
 
-    @PostMapping("api/v1/dv/search-report-07")
+    @PostMapping("/search-report-07")
     DefaultResponse<PageResponse<Report07DtoResponse>> searchRp07(
             @RequestBody SearchRp07Request request
     );
 
-    @PostMapping("api/v1/dv/search-report-07/total")
+    @PostMapping("/search-report-07/total")
     DefaultResponse<Report07DtoResponse> getTotalRp07(
             @RequestBody SearchRp07Request request
     );
 
-    @PostMapping("api/v1/dv/search-rp-09")
+    @PostMapping("/search-rp-09")
     DefaultResponse<PageResponse<BcslTcdRp09Response>> searchRp09(@RequestBody SearchRpRequest request);
 
 
-    @PostMapping("api/v1/dv/report-18")
+    @PostMapping("/report-18")
     DefaultResponse<PageResponse<DvRp18Response>> searchRp18(
             @RequestBody SearchRequest request
     );
