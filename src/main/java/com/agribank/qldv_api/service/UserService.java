@@ -7,7 +7,6 @@ import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
-import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
@@ -20,6 +19,7 @@ import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.request.SearchUserRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.user.UserSearchResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +35,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.*;
 
 import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
+import static com.agribank.qldv_api.enums.Constants.BTCDU_CODE;
 
 
 @Service
@@ -47,7 +48,6 @@ public class UserService {
     private final UserClient userClient;
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
-    private final BranchService branchService;
     private final OrganizationClient organizationClient;
     private final UserRoleService userRoleService;
     private final DVService dvService;
@@ -131,25 +131,16 @@ public class UserService {
 
     private void checkPermissionSearchUser(SearchUserRequest request){
         UserDetailsImpl userRequested = getUserRequested();
-        //Check user chi nhanh
-        BranchChildResponse branch = null;
-        if (Objects.nonNull(request.getBrcd())) {
-            branch = branchService.getBranchChild(request.getBrcd());
-        }
-        List<Integer> brcdChild = new ArrayList<>();
-        brcdChild.add(userRequested.getBrcd());
-        if (Objects.nonNull(branch)) {
-            brcdChild = branch.getBranchChild().stream().map(BranchResponse::getBrcd).toList();
-        }
+        String userOrganizationCode = userRequested.getOrganizationCode();
 
-        if (userRequested.getBrcd() > BRANCH_CODE_HEAD_QUARTER
-                && Objects.nonNull(request.getBrcd()) && !brcdChild.contains(request.getBrcd())
+        if (!BTCDU_CODE.equals(userOrganizationCode)
+                && Objects.nonNull(request.getOrganizationCode()) && !request.getOrganizationCode().contains(userOrganizationCode)
         ){
-            throw new CommonException("Bạn không có quyền tìm kiếm User chi nhánh khác");
+            throw new CommonException("Bạn không có quyền tìm kiếm User chi, đảng bộ khác");
         }
 
-        if (userRequested.getBrcd() > BRANCH_CODE_HEAD_QUARTER && Objects.isNull(request.getBrcd())){
-            request.setBrcd(userRequested.getBrcd());
+        if (!BTCDU_CODE.equals(userOrganizationCode) && Objects.isNull(request.getOrganizationCode())){
+            request.setOrganizationCode(userOrganizationCode);
         }
     }
 
