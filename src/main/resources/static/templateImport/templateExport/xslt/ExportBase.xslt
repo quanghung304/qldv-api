@@ -497,24 +497,24 @@
         }
 
         function addTableHeader() {
-            //headerTable
             var page = document.getElementsByClassName("page-" + pageNumber)[0],
                 tempTable = document.createElement("table"),
                 tempTbody = document.createElement("tbody"),
-                tempTr = document.createElement("tr"),
                 table = document.getElementById('tbDetail');
             if (table) {
-                var trs = table.getElementsByTagName('tr'),
-                    trTite = trs[0].innerHTML;
-
+                var trs = table.querySelectorAll(".tr-header");
                 tempTable.setAttribute("id", "tbDetail");
                 tempTable.setAttribute("cellpadding", "0");
                 tempTable.setAttribute("cellspacing", "0");
                 tempTable.setAttribute("width", "100%");
                 tempTable.setAttribute("class", "table-detail");
-                tempTr.setAttribute("class", "font-bold tr-header");
-                tempTr.innerHTML = trTite;
-                tempTbody.appendChild(tempTr);
+                for(let i=0; i<trs.length; i++){
+                    var tempTr = document.createElement("tr");
+                    tempTr.setAttribute("class", trs[i].getAttribute("class"));
+                    tempTr.setAttribute("style", trs[i].getAttribute("style"));
+                    tempTr.innerHTML = trs[i].innerHTML;
+                    tempTbody.appendChild(tempTr);
+                }
                 tempTable.appendChild(tempTbody);
                 page.appendChild(tempTable);
             }

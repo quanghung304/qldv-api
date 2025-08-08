@@ -148,9 +148,7 @@ public class ExportPDFReportService {
     private @NotNull RecordReportData getRecordReportData(List<Map<String, Object>> listData, String reportName) {
         LayoutConfig layoutConfig= layoutConfigService.findByDescription(reportName);
         List<LayoutConfigItem> layoutConfigItems = getLayoutConfigItem(layoutConfig);
-        List<LayoutConfigItem> firstLayout = layoutConfigItems.stream().filter(e -> e.rowOrder == 0 && (e.colSpan == null || e.colSpan == 1)).toList();
-        List<LayoutConfigItem> secondLayout = layoutConfigItems.stream().filter(e -> e.rowOrder == 1 && (e.colSpan == null || e.colSpan == 1)).toList();
-        List<LayoutConfigItem> thirdLayout = layoutConfigItems.stream().filter(e -> e.rowOrder == 2 && (e.colSpan == null || e.colSpan == 1)).toList();
+        Integer maxRowOrder = layoutConfigItems.stream().map(LayoutConfigItem::getRowOrder).max(Comparator.comparing(Integer::intValue)).orElse(null);
         List<LayoutConfigItem> columnExport = new ArrayList<>();
         LayoutConfigItem orderColumn = new LayoutConfigItem();
         orderColumn.columnName = "STT";
@@ -159,6 +157,8 @@ public class ExportPDFReportService {
         orderColumn.columnType = "Order";
         orderColumn.width = 10;
         orderColumn.isShow = true;
+        orderColumn.rowOrder=0;
+        orderColumn.rowSpan = maxRowOrder != null ? maxRowOrder + 1 : null;
         layoutConfigItems.add(orderColumn);
         layoutConfigItems.sort(Comparator.comparing(LayoutConfigItem::getSortOrder));
         for(LayoutConfigItem layoutConfigItem: layoutConfigItems){
@@ -173,10 +173,13 @@ public class ExportPDFReportService {
             }
             layoutConfigItem.sortOrder = layoutConfigItem.sortOrder + 1;
         }
-        columnExport.add(orderColumn);
-        columnExport.addAll(firstLayout);
-        columnExport.addAll(secondLayout);
-        columnExport.addAll(thirdLayout);
+        if (maxRowOrder != null) {
+            for (int i = 0; i <= maxRowOrder; i++) {
+                int finalI = i;
+                List<LayoutConfigItem> tempLayout = layoutConfigItems.stream().filter(e -> e.rowOrder == finalI && (e.colSpan == null || e.colSpan == 1)).toList();
+                columnExport.addAll(tempLayout);
+            }
+        }
         columnExport.sort(Comparator.comparing(LayoutConfigItem::getSortOrder));
 
         return new RecordReportData(layoutConfigItems, columnExport, listData);
@@ -203,13 +206,13 @@ public class ExportPDFReportService {
             StringBuilder builder = getTitleReportHeader(layout);
             trBuilder.append(String.format(trDetail, builder));
         }
-        String trSubDetail = "<tr class=\"font-italic tr-header\">%s</tr>";
-        StringBuilder builder = new StringBuilder();
-        for(int i=0; i<numberColumns; i++){
-            String th = String.format("<th>(%s)</th>", i+1);
-            builder.append(th);
-        }
-        trBuilder.append(String.format(trSubDetail, builder));
+//        String trSubDetail = "<tr class=\"font-italic tr-header\">%s</tr>";
+//        StringBuilder builder = new StringBuilder();
+//        for(int i=0; i<numberColumns; i++){
+//            String th = String.format("<th>(%s)</th>", i+1);
+//            builder.append(th);
+//        }
+//        trBuilder.append(String.format(trSubDetail, builder));
         xsltTemplate = xsltTemplate.replace("##TableHeader##", trBuilder.toString());
         return xsltTemplate;
     }
