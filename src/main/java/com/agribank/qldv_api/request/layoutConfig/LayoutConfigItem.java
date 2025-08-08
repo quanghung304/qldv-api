@@ -1,11 +1,13 @@
 package com.agribank.qldv_api.request.layoutConfig;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class LayoutConfigItem {
     public String columnName;
     public String columnField;
