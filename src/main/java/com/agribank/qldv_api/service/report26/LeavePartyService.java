@@ -24,23 +24,56 @@ import java.util.*;
 @RequiredArgsConstructor
 public class LeavePartyService implements EntityHandler {
     private final LeavePartyClient client;
+    private final RequestClient requestClient;
     private final ModelMapper modelMapper;
     private final CheckAuthorityService checkAuthorityService;
     private final CommitteeDecisionService committeeDecisionService;
     private final RequestService requestService;
-    private final RequestClient requestClient;
     private final Report26Service report26Service;
     private final UserService userService;
-    private final EForm form = EForm.BIEU_26_LEAVE_PARTY;
     private final LeavePartyDraftService leavePartyDraftService;
     private final DvHistoryService dvHistoryService;
 
+    private final EForm form = EForm.BIEU_26_LEAVE_PARTY;
 
     private Map<String, String> getCombinedFieldMap() {
         return new LinkedHashMap<>(LeavePartyDraft.FIELD_MAP);
     }
 
     public LeavePartyDraft createDraft(LeavePartyRequest request) {
+        validateLeavePartyRequest(request);
+
+        LeaveParty leaveParty = null;
+        if (Objects.nonNull(request.getId())){
+            leaveParty = client.findById(request.getId()).getData()
+                    .orElseThrow(()-> new CommonException("id request không chính xác"));
+        }
+
+        LeavePartyDraft requestedDraft = modelMapper.map(request, LeavePartyDraft.class);
+
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        requestedDraft.setUsernameCreated(userRequested.getUsername());
+        requestedDraft.setStatus(EApprovalStatus.PENDING.getId());
+        requestedDraft.setDeleted(ERecordStatus.ACTIVE.getStatus());
+
+        if (Objects.nonNull(request.getId())){
+            requestedDraft.setRefId(request.getId());
+        }
+
+        Request partActivityRequest = requestService.initializeRequest(requestedDraft, leaveParty, form, getCombinedFieldMap());
+
+        requestedDraft = leavePartyDraftService.save(requestedDraft);
+
+        partActivityRequest.setCreatedBy(userRequested.getId());
+        partActivityRequest.setOrganizationCode(request.getOrganizationCode());
+        partActivityRequest.setReferenceId(requestedDraft.getId());
+        partActivityRequest.setStaffCode(requestedDraft.getStaffCode());
+        requestClient.save(partActivityRequest);
+
+        return requestedDraft;
+    }
+
+    private void validateLeavePartyRequest(LeavePartyRequest request) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
         UserDto userDto = userService.findByStaffCodeAndOrganizationCode(request.getStaffCode(), request.getOrganizationCode());
         if (Objects.isNull(userDto)) {
@@ -51,39 +84,11 @@ public class LeavePartyService implements EntityHandler {
                     " không chính xác. Vui lòng kiểm tra lại"
             );
         }
-        UserDetailsImpl userRequested = userService.getUserRequested();
 
         CommitteeDecision committeeDecision = committeeDecisionService.findByCode(request.getCommitteeDecision());
         if (Objects.isNull(committeeDecision)){
             throw new CommonException("Sai code cấp ủy quyết định. Vui lòng kiểm tra lại");
         }
-
-        LeaveParty leaveParty = null;
-        if (Objects.nonNull(request.getId())){
-            leaveParty = client.findById(request.getId()).getData()
-                    .orElseThrow(()-> new CommonException("id request không chính xác"));
-        }
-
-        LeavePartyDraft requestedDraft = modelMapper.map(request, LeavePartyDraft.class);
-        requestedDraft.setStatus(EApprovalStatus.PENDING.getId());
-        requestedDraft.setUsernameCreated(userRequested.getUsername());
-
-        requestedDraft.setDeleted(ERecordStatus.ACTIVE.getStatus());
-
-        Request partActivityRequest = requestService.initializeRequest(requestedDraft, leaveParty, form, getCombinedFieldMap());
-        partActivityRequest.setCreatedBy(userRequested.getId());
-        if (Objects.nonNull(request.getId())){
-            requestedDraft.setRefId(request.getId());
-        }
-
-        requestedDraft = leavePartyDraftService.save(requestedDraft);
-
-        partActivityRequest.setReferenceId(requestedDraft.getId());
-        partActivityRequest.setStaffCode(requestedDraft.getStaffCode());
-        partActivityRequest.setOrganizationCode(request.getOrganizationCode());
-        requestClient.save(partActivityRequest);
-
-        return requestedDraft;
     }
 
     public String createRequestDelete(String id){
@@ -173,5 +178,37 @@ public class LeavePartyService implements EntityHandler {
 
     public List<LeaveParty> findAllById(List<String> ids){
         return client.findAllById(ids).getData();
+    }
+
+    public LeavePartyDraft getDraftDetail(String id) {
+        return leavePartyDraftService.findById(id);
+    }
+
+    public String updateDraft(LeavePartyRequest request) {
+        validateLeavePartyRequest(request);
+
+        LeavePartyDraft draft = leavePartyDraftService.findById(request.getId());
+
+        if (!Objects.equals(draft.getStatus(), EApprovalStatus.PENDING.getId())) {
+            throw new CommonException("Chỉ được chỉnh sửa yêu cầu chưa được phê duyệt");
+        }
+
+        draft.setStaffCode(request.getStaffCode());
+        draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setCommitteeDecision(request.getCommitteeDecision());
+        draft.setReason(request.getReason());
+        draft.setResolutionNumber(request.getResolutionNumber());
+        draft.setResolutionDate(request.getResolutionDate());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+
+        Request leaveRequest = requestService.getRequestByDraftId(form.getCode(), request.getId());
+        String newData = requestService.createJsonData(draft, getCombinedFieldMap());
+        leaveRequest.setNewData(newData);
+
+        leavePartyDraftService.save(draft);
+        requestClient.save(leaveRequest);
+        return "Cập nhật yêu cầu thành công";
     }
 }

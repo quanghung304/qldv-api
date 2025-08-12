@@ -47,6 +47,7 @@ public class MembershipProposalController {
         return BaseResponse.success(service.getDraftDetail(id));
     }
 
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PutMapping("/draft")
     public ResponseEntity<BaseResponse<Object>> getDraftDetail(@RequestBody @Valid MembershipProposalRequest request) {
         return BaseResponse.success(service.updateProposalDraft(request));
