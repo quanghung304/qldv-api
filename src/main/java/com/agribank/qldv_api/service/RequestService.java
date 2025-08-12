@@ -20,6 +20,7 @@ import com.agribank.qldvutils.request.FilterRequest;
 import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -291,6 +292,25 @@ public class RequestService {
 
     public List<BcslDvRp10Response> searchRp10(SearchRp10DataRequest request){
         return requestClient.searchRp10(request).getData();
+    }
+
+    public Request getRequestByDraftId(String formCode, String draftId) {
+        Request request = requestClient.findByFormAndDraftId(formCode, draftId).getData();
+
+        if (Objects.isNull(request)) {
+            throw new CommonException(("Khong tim thay yeu cau"));
+        }
+
+        return request;
+    }
+
+    public String createJsonData(Object newObject, Map<String, String> fieldMap) {
+        try {
+            Map<String, Object> newDataMap = CommonUtils.createFilteredDataMap(newObject, fieldMap);
+            return objectMapper.writeValueAsString(newDataMap);
+        } catch (Exception e) {
+            throw new CommonException("Xảy ra lỗi đọc dữ liệu");
+        }
     }
 }
 

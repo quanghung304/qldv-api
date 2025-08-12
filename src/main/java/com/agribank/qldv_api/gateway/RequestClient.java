@@ -45,4 +45,10 @@ public interface RequestClient extends BaseClient<Request, String> {
     DefaultResponse<List<BcslDvRp10Response>> searchRp10(
             @RequestBody SearchRp10DataRequest request
     );
+
+    @GetMapping("/find-by-form-and-draft-id")
+    DefaultResponse<Request> findByFormAndDraftId(
+            @RequestParam(name = "formCode") String formCode,
+            @RequestParam(name = "draftId") String draftId
+    );
 }
