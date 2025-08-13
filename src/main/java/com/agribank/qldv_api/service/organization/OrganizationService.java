@@ -2,6 +2,7 @@ package com.agribank.qldv_api.service.organization;
 
 import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.OrganizationClient;
+import com.agribank.qldv_api.gateway.OrganizationDraftClient;
 import com.agribank.qldv_api.gateway.OrganizationReferenceClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
@@ -26,6 +27,7 @@ import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.bcsl_report.tcd.BcslTcdRp01Response;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
@@ -47,7 +49,9 @@ public class OrganizationService implements EntityHandler {
     private final RequestClient requestClient;
     private final OrganizationHistoryClient historyClient;
     private final OrganizationReferenceClient organizationReferenceClient;
+    private final OrganizationDraftClient organizationDraftClient;
     private final ModelMapper modelMapper;
+    private final ObjectMapper objectMapper;
     private final OrganizationReferenceService organizationReferenceService;
     private final RequestService requestService;
     private final CheckAuthorityService checkAuthorityService;
@@ -89,16 +93,42 @@ public class OrganizationService implements EntityHandler {
     }
 
     private OrganizationResponse save(OrganizationCreateRequest organizationRequest) {
+        Request request = null;
+        OrganizationDraft organizationDraft = new  OrganizationDraft();
+        if (Objects.nonNull(organizationRequest.getId())) {
+            request = requestClient.findByReferenceId(organizationRequest.getId()).getData();
+
+        }
+
+        if (Objects.nonNull(request)) {
+            organizationDraft = organizationDraftService.findById(request.getReferenceId());
+        }
+
         UserDetailsImpl userRequested = getUserRequested();
-        OrganizationDraft organizationDraft = modelMapper.map(organizationRequest, OrganizationDraft.class);
+        organizationDraft = fromModel(organizationDraft, organizationRequest);
         organizationDraft.setApprove(EApprovalStatus.PENDING.getId());
-        organizationDraft.setId(UUID.randomUUID().toString());
         organizationDraft.setStatus(EOrganizationStatus.YES.getStatus());
         organizationDraft.setOrganizationCode(userRequested.getOrganizationCode());
         organizationDraft.setCreatedBy(userRequested.getId());
 
-        saveRequest(organizationDraft, userRequested.getId(), null);
+        saveRequest(request, organizationDraft, userRequested.getId(), null);
         return modelMapper.map(organizationDraft, OrganizationResponse.class);
+    }
+
+    private OrganizationDraft fromModel(OrganizationDraft organizationDraft, OrganizationCreateRequest organizationRequest){
+        organizationDraft.setCode(organizationRequest.getCode());
+        organizationDraft.setName(organizationRequest.getName());
+        organizationDraft.setBrcd(organizationRequest.getBrcd());
+        organizationDraft.setForm(organizationRequest.getForm());
+        organizationDraft.setParentCode(organizationRequest.getParentCode());
+        organizationDraft.setAuthorized(organizationRequest.getAuthorized());
+        organizationDraft.setResolutionNumber(organizationRequest.getResolutionNumber());
+        organizationDraft.setResolutionDate(organizationRequest.getResolutionDate());
+        organizationDraft.setEstablishmentDecisionNumber(organizationRequest.getEstablishmentDecisionNumber());
+        organizationDraft.setDecisionDate(organizationRequest.getDecisionDate());
+        organizationDraft.setEffectiveDate(organizationRequest.getEffectiveDate());
+
+        return organizationDraft;
     }
 
     //Thuộc nhóm khác thì tìm chi nhánh cha của chi nhánh con rồi tăng giá trị lên 1
@@ -111,9 +141,14 @@ public class OrganizationService implements EntityHandler {
         if (!Constants.FORM_B1_NAME.equals(organization.getForm()) && !Constants.FORM_C1_NAME.equals(organization.getForm())) {
             throw new CommonException(String.format("Tổ chức Đảng: %s không có TCĐ con trực thuộc. Vui lòng chọn TCD khác", organization.getName()));
         }
+
         //Tìm tcd để thực hiện việc tăng mã tcd
         Organization organizationDb = getByParentCodeMax(organizationRequest.getParentCode());
 
+        int ascii = organizationRequest.getForm().charAt(0) - organization.getForm().charAt(0);
+        if (ascii != 1){
+            throw new CommonException("Chưa thể tạo hình thức Tổ chức Đảng này. Vui lòng chọn Hình thức khác!");
+        }
         //set giá trị mã tcd nếu nó chưa có thằng con thì + 01
         if (
                 Objects.isNull(organizationDb) ||
@@ -161,7 +196,7 @@ public class OrganizationService implements EntityHandler {
             throw new CommonException("Bạn chỉ có thể sửa hình thức tổ chức cùng cấp với tổ chức Đảng hiện tại");
         }
 
-        saveRequest(organizationDraft, userRequested.getId(), organizationOld);
+        saveRequest(null, organizationDraft, userRequested.getId(), organizationOld);
         return modelMapper.map(organizationDraft, OrganizationResponse.class);
     }
 
@@ -181,8 +216,20 @@ public class OrganizationService implements EntityHandler {
         return new LinkedHashMap<>(OrganizationDraft.FIELD_MAP);
     }
 
-    private void saveRequest(OrganizationDraft organizationDraft, String userId, Organization organizationDraftOld){
-        Request request = requestService.initializeRequest(organizationDraft, organizationDraftOld, form, getCombinedFieldMap());
+    @SneakyThrows
+    private void saveRequest(Request request, OrganizationDraft organizationDraft, String userId, Organization organizationDraftOld){
+        if (Objects.isNull(request)) {
+            request = requestService.initializeRequest(organizationDraft, organizationDraftOld, form, getCombinedFieldMap());
+        }else {
+            Map<String, Object> newDataMap = CommonUtils.createFilteredDataMap(organizationDraft, getCombinedFieldMap());
+            request.setNewData(objectMapper.writeValueAsString(newDataMap));
+        }
+
+        if (Objects.nonNull(organizationDraftOld) && Objects.nonNull(request)) {
+            Map<String, Object> oldDataMap = CommonUtils.createFilteredDataMap(organizationDraftOld, getCombinedFieldMap());
+            request.setOldData(objectMapper.writeValueAsString(oldDataMap));
+        }
+
         request.setCreatedBy(userId);
         organizationDraft = organizationDraftService.save(organizationDraft);
 
@@ -550,5 +597,26 @@ public class OrganizationService implements EntityHandler {
 
     public Organization getOrganizationChildMax(String code, String form){
         return client.getChildrenMax(code, form).getData();
+    }
+
+    public OrganizationResponse updateDraft(OrganizationCreateRequest request){
+        Request organizationRequestDraft = requestClient.findByReferenceId(request.getId()).getData();
+        if (Objects.isNull(organizationRequestDraft)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != organizationRequestDraft.getStatus()){
+            throw new CommonException("Yêu cầu này đã được cập nhật, vui lòng tạo request khác");
+        }
+
+        organizationDraftClient.findById(request.getId()).getData().orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
+        return create(request);
+    }
+
+    public OrganizationResponse getDraftDetail(String id){
+        OrganizationDraft organizationDraft = organizationDraftClient.findById(id)
+                .getData().orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
+
+        return modelMapper.map(organizationDraft, OrganizationResponse.class);
     }
 }

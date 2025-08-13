@@ -101,4 +101,17 @@ public class OrganizationController {
     public ResponseEntity<DefaultListResponse<OrganizationResponse>> getChildOrganizationByUser() {
         return DefaultListResponse.success(service.getChildOrganizationByUser());
     }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft")
+    public ResponseEntity<BaseResponse<OrganizationResponse>> updateDraft(@RequestBody OrganizationCreateRequest request) {
+        request.validate();
+        request.validateId();
+        return BaseResponse.success(service.updateDraft(request));
+    }
+
+    @GetMapping("/draft")
+    public ResponseEntity<BaseResponse<OrganizationResponse>> getDraftDetail(@RequestParam(name = "id") String id) {
+        return BaseResponse.success(null, service.getDraftDetail(id));
+    }
 }

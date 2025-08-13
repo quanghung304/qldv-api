@@ -10,6 +10,7 @@ import java.util.Date;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrganizationResponse {
+    String id;
     String code;
     String name;
     Integer brcd;
