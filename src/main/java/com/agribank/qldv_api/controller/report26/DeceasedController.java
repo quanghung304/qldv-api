@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.controller.report26;
 
 import com.agribank.qldv_api.request.deceased.DeceasedRequest;
+import com.agribank.qldv_api.response.report26.DeceasedResponse;
 import com.agribank.qldv_api.service.report26.DeceasedService;
 import com.agribank.qldvutils.entity.report26.DeceasedDraft;
 import com.agribank.qldvutils.response.BaseResponse;
@@ -33,5 +34,17 @@ public class DeceasedController {
     @GetMapping("/detail/{id}")
     public ResponseEntity<BaseResponse<RP26DetailResponse>> getDetail(@PathVariable(name = "id") String id) {
         return BaseResponse.success(service.getDetail(id));
+    }
+
+    @GetMapping("/draft/detail")
+    public ResponseEntity<BaseResponse<DeceasedResponse>> getDraftDetail(@RequestParam(name = "id") String id) {
+        return BaseResponse.success(service.getDraftDetail(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft/update")
+    public ResponseEntity<BaseResponse<DeceasedResponse>> updateDraft(@RequestBody DeceasedRequest request) {
+        request.validate();
+        return BaseResponse.success(service.updateDraft(request));
     }
 }
