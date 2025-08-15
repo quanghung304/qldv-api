@@ -44,4 +44,16 @@ public class PartyReinstatementController {
         request.validate();
         return DefaultResponse.success(service.search(request));
     }
+
+    @GetMapping("/draft/detail")
+    public ResponseEntity<BaseResponse<PartyReinstatementResponse>> getDraftDetail(@RequestParam(name = "id") String id) {
+        return BaseResponse.success(service.getDraftDetail(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft/update")
+    public ResponseEntity<BaseResponse<String>> update(@RequestBody PartyReinstatementRequest request) {
+        request.validate();
+        return BaseResponse.success(service.updateDraft(request), null);
+    }
 }

@@ -4,6 +4,7 @@ import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EDVStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.enums.ERecordStatus;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.party_reinstatement.PartyReinstatementClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -23,6 +24,7 @@ import com.agribank.qldvutils.request.party_reinstatement.PartyReinstatementSear
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.party_reinstatement.PartyReinstatementDtoResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -53,28 +55,10 @@ public class PartyReinstatementService implements EntityHandler {
 
     public String create(PartyReinstatementRequest request) {
         UserDetailsImpl userRequested = getUserRequested();
-        checkAuthorityService.hasAuthorityOverOrganization(userRequested.getOrganizationCode());
         DV dvInfo = dvService.findByStaffCode(request.getStaffCode());
-        if (Objects.isNull(dvInfo)) {
-            throw new CommonException("Không tìm thấy thông tin Đảng viên: " + request.getStaffCode() + ". Vui lòng kiểm tra lại sau!");
-        }
 
-        if (
-                !EDVStatus.LEAVE_PARTY.getStatus().equals(dvInfo.getDvStatus())
-                && !EDVStatus.REMOVE_NAME_PARTY.getStatus().equals(dvInfo.getDvStatus())
-                && Objects.isNull(request.getId())
-        ){
-            throw new CommonException("Đảng viên này không cần khôi phục Đảng tịch");
-        }
-
-        PartyReinstatement partyReinstatement = null;
-        if (Objects.nonNull(request.getId())){
-            partyReinstatement = findById(request.getId());
-        }
-
-        if (Objects.nonNull(request.getId()) && Objects.isNull(partyReinstatement)){
-            throw new CommonException("Không tìm thấy bản ghi cần sửa. Vui lòng kiểm tra lại dữ liệu!");
-        }
+        validate(request, userRequested, dvInfo);
+        PartyReinstatement partyReinstatement = getPartyReinstatement(request);
 
         PartyReinstatementDraft partyReinstatementDraft = modelMapper.map(request, PartyReinstatementDraft.class);
         partyReinstatementDraft.setOrganizationCode(dvInfo.getOrganizationCode());
@@ -96,6 +80,34 @@ public class PartyReinstatementService implements EntityHandler {
         requestClient.save(initializedRequest);
 
         return "Tạo yêu cầu thành công!";
+    }
+
+    private void validate(PartyReinstatementRequest request, UserDetailsImpl userRequested, DV dvInfo){
+        checkAuthorityService.hasAuthorityOverOrganization(userRequested.getOrganizationCode());
+        if (Objects.isNull(dvInfo)) {
+            throw new CommonException("Không tìm thấy thông tin Đảng viên: " + request.getStaffCode() + ". Vui lòng kiểm tra lại sau!");
+        }
+
+        if (
+                !EDVStatus.LEAVE_PARTY.getStatus().equals(dvInfo.getDvStatus())
+                        && !EDVStatus.REMOVE_NAME_PARTY.getStatus().equals(dvInfo.getDvStatus())
+                        && Objects.isNull(request.getId())
+        ){
+            throw new CommonException("Đảng viên này không cần khôi phục Đảng tịch");
+        }
+    }
+
+    private PartyReinstatement getPartyReinstatement(PartyReinstatementRequest request){
+        PartyReinstatement partyReinstatement = null;
+        if (Objects.nonNull(request.getId())){
+            partyReinstatement = findById(request.getId());
+        }
+
+        if (Objects.nonNull(request.getId()) && Objects.isNull(partyReinstatement)){
+            throw new CommonException("Không tìm thấy bản ghi cần sửa. Vui lòng kiểm tra lại dữ liệu!");
+        }
+
+        return partyReinstatement;
     }
 
     public String createDelete(String id) {
@@ -228,5 +240,68 @@ public class PartyReinstatementService implements EntityHandler {
     public PageResponse<PartyReinstatement> searchRp25(SearchRpRequest request){
         request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         return client.search25(request).getData();
+    }
+
+    public PartyReinstatementResponse getDraftDetail(String id){
+        PartyReinstatementDraft partyReinstatement = partyReinstatementDraftService.findById(id);
+        if (Objects.isNull(partyReinstatement)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        PartyReinstatementResponse response = modelMapper.map(partyReinstatement, PartyReinstatementResponse.class);
+
+        DV dv = dvService.findByStaffCode(partyReinstatement.getStaffCode());
+        if (Objects.nonNull(dv)){
+            response.setFullName(dv.getFullName());
+        }
+
+        Organization organization = organizationService.findByCode(partyReinstatement.getOrganizationCode());
+        if (Objects.nonNull(organization)){
+            response.setOrganizationName(organization.getName());
+        }
+        return response;
+    }
+
+    @SneakyThrows
+    public String updateDraft(PartyReinstatementRequest request){
+        if (Objects.isNull(request.getId())){
+            throw new CommonException("Kiểm tra lại id");
+        }
+
+        PartyReinstatementDraft draft = partyReinstatementDraftService.findById(request.getId());
+        if (Objects.isNull(draft)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        Request requestReinstatement = requestClient.findByReferenceId(request.getId()).getData();
+        if (Objects.isNull(requestReinstatement)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != requestReinstatement.getStatus()){
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
+        }
+
+        UserDetailsImpl userRequested = getUserRequested();
+        DV dvInfo = dvService.findByStaffCode(request.getStaffCode());
+        validate(request, userRequested, dvInfo);
+
+        draft.setOrganizationCode(dvInfo.getOrganizationCode());
+        draft.setStaffCode(request.getStaffCode());
+        draft.setConclusionNumber(request.getConclusionNumber());
+        draft.setConclusionDate(request.getConclusionDate());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setDecisionCommittee(request.getDecisionCommittee());
+        draft.setEffectiveDate(request.getEffectiveDate());
+        draft.setCreatedBy(userRequested.getId());
+
+        requestReinstatement.setCreatedBy(userRequested.getId());
+        requestReinstatement.setNewData(requestService.createJsonData(draft, getCombinedFieldMap()));
+
+        partyReinstatementDraftService.save(draft);
+        requestClient.save(requestReinstatement);
+
+        return "Cập nhật thông tin thành công";
     }
 }
