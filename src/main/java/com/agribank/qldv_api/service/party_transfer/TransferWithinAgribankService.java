@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.service.party_transfer;
 
 import com.agribank.qldv_api.enums.*;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DvOrgHistoryClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_within_agribank.TransferWithinAgribankClient;
@@ -8,6 +9,7 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.party_transfer.TransferWithinAgribankRequest;
 import com.agribank.qldv_api.request.party_transfer.TransferWithinAgribankUpdateRequest;
 import com.agribank.qldv_api.response.party_transfer.TransferWithinAgribankResponse;
+import com.agribank.qldv_api.response.request.RequestResponse;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.handler.EntityHandler;
@@ -27,6 +29,7 @@ import com.agribank.qldvutils.request.party_transfer.TransferWithinAgribankSearc
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp30Response;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -342,5 +345,95 @@ public class TransferWithinAgribankService implements EntityHandler {
 
     public PageResponse<DvRp30Response> search30(SearchRpRequest request){
         return client.searchRp30(request).getData();
+    }
+
+
+    public TransferWithinAgribankResponse getDraftDetail(String id){
+        TransferWithinAgribankDraft draft = transferWithinAgribankDraftService.findById(id);
+        if (Objects.isNull(draft)) {
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        return modelMapper.map(draft, TransferWithinAgribankResponse.class);
+    }
+
+    @SneakyThrows
+    public RequestResponse updateDraft(TransferWithinAgribankUpdateRequest request){
+        if (Objects.isNull(request.getId()) || request.getId().isBlank()) {
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        TransferWithinAgribankDraft transferWithinAgribankDraft = transferWithinAgribankDraftService.findById(request.getId());
+        if (Objects.isNull(transferWithinAgribankDraft)) {
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        Request requestTransferWithinAgri = requestClient.findByReferenceId(request.getId()).getData();
+        if (Objects.isNull(requestTransferWithinAgri)) {
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != requestTransferWithinAgri.getStatus()) {
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
+        }
+
+        DV dv = dvService.findByStaffCode(request.getStaffCode());
+
+        if (Objects.isNull(dv)) {
+            throw new CommonException(ExceptionMessage.MEMBER_NOT_FOUND);
+        }
+
+        Organization receivingOrganizationB = null;
+
+        if (Objects.nonNull(request.getReceivingOrgBCode())){
+            receivingOrganizationB = organizationService.findByCode(request.getReceivingOrgBCode());
+        }
+
+        Organization receivingOrganizationC = null;
+
+        if (Objects.nonNull(request.getReceivingOrgCCode())){
+            receivingOrganizationC = organizationService.findByCode(request.getReceivingOrgCCode());
+        }
+
+        UserDetailsImpl userRequested = getUserRequested();
+
+        transferWithinAgribankDraft.setOldOrganizationCode(dv.getOrganizationCode());
+        transferWithinAgribankDraft.setCreatedBy(userRequested.getId());
+
+        if (Objects.nonNull(receivingOrganizationB)) {
+            transferWithinAgribankDraft.setReceivingOrgBName(receivingOrganizationB.getName());
+        }
+
+        if (Objects.nonNull(receivingOrganizationC)) {
+            transferWithinAgribankDraft.setReceivingOrgCName(receivingOrganizationC.getName());
+        }
+
+        mapTransferWithinAgribankDraft(transferWithinAgribankDraft, request);
+
+        requestTransferWithinAgri.setNewData(requestService.createJsonData(transferWithinAgribankDraft, TransferWithinAgribankDraft.FIELD_MAP));
+        requestTransferWithinAgri.setCreatedBy(userRequested.getId());
+
+        transferWithinAgribankDraftService.save(transferWithinAgribankDraft);
+        requestClient.save(requestTransferWithinAgri);
+
+        return modelMapper.map(requestTransferWithinAgri, RequestResponse.class);
+    }
+
+    private void mapTransferWithinAgribankDraft(TransferWithinAgribankDraft transferWithinAgribankDraft, TransferWithinAgribankUpdateRequest request){
+        transferWithinAgribankDraft.setStaffCode(request.getStaffCode());
+        transferWithinAgribankDraft.setFullName(request.getFullName());
+        transferWithinAgribankDraft.setProcessId(request.getProcessId());
+        transferWithinAgribankDraft.setDecisionNumber(request.getDecisionNumber());
+        transferWithinAgribankDraft.setExpectedExpiryDate(request.getExpectedExpiryDate());
+        transferWithinAgribankDraft.setDecisionDate(request.getDecisionDate());
+        transferWithinAgribankDraft.setDecisionIssuingUnit(request.getDecisionIssuingUnit());
+        transferWithinAgribankDraft.setEffectiveDate(request.getEffectiveDate());
+        transferWithinAgribankDraft.setDateOfProposal(request.getDateOfProposal());
+        transferWithinAgribankDraft.setNumberOfDoc(request.getNumberOfDoc());
+        transferWithinAgribankDraft.setCommitteeProposalDate(request.getCommitteeProposalDate());
+        transferWithinAgribankDraft.setSecondIntroNumber(request.getSecondIntroNumber());
+        transferWithinAgribankDraft.setTransferDate(request.getTransferDate());
+        transferWithinAgribankDraft.setReceivingOrgBCode(request.getReceivingOrgBCode());
+        transferWithinAgribankDraft.setReceivingOrgCCode(request.getReceivingOrgCCode());
     }
 }
