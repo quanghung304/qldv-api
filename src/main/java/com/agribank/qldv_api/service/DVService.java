@@ -30,6 +30,7 @@ import com.agribank.qldvutils.response.bcsl_report.dv.DvRp18Response;
 import com.agribank.qldvutils.response.bcsl_report.dv.BcslDvRp10Response;
 import com.agribank.qldvutils.response.report07.Report07DtoResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -451,5 +452,94 @@ public class DVService implements EntityHandler {
 
     public PageResponse<BcslDvRp10Response> searchRp10(SearchRpRequest request){
         return organizationClient.searchRp10(request).getData();
+    }
+
+    public DVResponse getDraftDetail(String id){
+        DvDraft dvDraft = dvDraftClient.findById(id)
+                .getData().orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
+
+        return modelMapper.map(dvDraft, DVResponse.class);
+    }
+
+    @SneakyThrows
+    public DVResponse updateDraft(DVDto request){
+        if (Objects.isNull(request.getId()) || request.getId().isBlank()) {
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        DvDraft dvDraft = dvDraftClient.findById(request.getId())
+                .getData().orElseThrow(() -> new CommonException("Không tìm thấy dữ liệu"));
+
+        Request requestDv = requestClient.findByReferenceId(request.getId()).getData();
+        if (Objects.isNull(requestDv)) {
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != requestDv.getStatus()) {
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
+        }
+
+        UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        mapDVDraft(dvDraft, request);
+        dvDraft.setCreatedBy(userRequested.getId());
+
+        requestDv.setNewData(requestService.createJsonData(dvDraft, DV.FIELD_MAP));
+        requestDv.setCreatedBy(userRequested.getId());
+
+        dvDraftClient.save(dvDraft);
+        requestClient.save(requestDv);
+
+        return modelMapper.map(dvDraft, DVResponse.class);
+    }
+
+    public void mapDVDraft(DvDraft dvDraft, DVDto request) {
+        dvDraft.setStaffCode(request.getStaffCode());
+        dvDraft.setOrganizationCode(request.getOrganizationCode());
+        dvDraft.setResumeNumber(request.getResumeNumber());
+        dvDraft.setPartyCardNumber(request.getPartyCardNumber());
+        dvDraft.setIssueDate(request.getIssueDate());
+        dvDraft.setVneid(request.getVneid());
+        dvDraft.setFullName(request.getFullName());
+        dvDraft.setGender(request.getGender());
+        dvDraft.setUsingName(request.getUsingName());
+        dvDraft.setBirthday(request.getBirthday());
+        dvDraft.setBirthPlace(request.getBirthPlace());
+        dvDraft.setHometown(request.getHometown());
+        dvDraft.setPermanentResidence(request.getPermanentResidence());
+        dvDraft.setTemporaryResidence(request.getTemporaryResidence());
+        dvDraft.setEthnic(request.getEthnic());
+        dvDraft.setReligion(request.getReligion());
+        dvDraft.setFamilyComposition(request.getFamilyComposition());
+        dvDraft.setMartyrsFamily(request.getMartyrsFamily());
+        dvDraft.setRevolution(request.getRevolution());
+        dvDraft.setSocialComposition(request.getSocialComposition());
+        dvDraft.setMainJob(request.getMainJob());
+        dvDraft.setAdmissionDate(request.getAdmissionDate());
+        dvDraft.setSourceRecruitment(request.getSourceRecruitment());
+        dvDraft.setBranchPartyCode(request.getBranchPartyCode());
+        dvDraft.setSuggestionUnion(request.getSuggestionUnion());
+        dvDraft.setSuggestionYouthUnion(request.getSuggestionYouthUnion());
+        dvDraft.setReferrer1(request.getReferrer1());
+        dvDraft.setJobPosition1(request.getJobPosition1());
+        dvDraft.setReferrer2(request.getReferrer2());
+        dvDraft.setJobPosition2(request.getJobPosition2());
+        dvDraft.setOfficialRecognitionDay(request.getOfficialRecognitionDay());
+        dvDraft.setRecruitAnotherOrganization(request.getRecruitAnotherOrganization());
+        dvDraft.setAgriRecruitDate(request.getAgriRecruitDate());
+        dvDraft.setRecruitBrcd(request.getRecruitBrcd());
+        dvDraft.setYouthUnionJoinDate(request.getYouthUnionJoinDate());
+        dvDraft.setOtherSocialOrganization(request.getOtherSocialOrganization());
+        dvDraft.setEnlistmentDate(request.getEnlistmentDate());
+        dvDraft.setDischargeDate(request.getDischargeDate());
+        dvDraft.setDisabledType(request.getDisabledType());
+        dvDraft.setPoliticalIssue(request.getPoliticalIssue());
+        dvDraft.setOldRegime(request.getOldRegime());
+        dvDraft.setFormerWorker(request.getFormerWorker());
+        dvDraft.setForeignMarriage(request.getForeignMarriage());
+        dvDraft.setForeignRelated(request.getForeignRelated());
+        dvDraft.setDegree(request.getDegree());
+        dvDraft.setEducation(request.getEducation());
+        dvDraft.setHealthCondition(request.getHealthCondition());
+        dvDraft.setDateOfDeath(request.getDateOfDeath());
     }
 }
