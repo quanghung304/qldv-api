@@ -1,10 +1,12 @@
 package com.agribank.qldv_api.service.report26;
 
 import com.agribank.qldv_api.enums.*;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.report26.DeceasedClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.deceased.DeceasedRequest;
+import com.agribank.qldv_api.response.report26.DeceasedResponse;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.UserDto;
@@ -16,6 +18,7 @@ import com.agribank.qldvutils.entity.report26.Report26;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.report26.RP26DetailResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -40,16 +43,7 @@ public class DeceasedService implements EntityHandler {
     }
 
     public DeceasedDraft createDraft(DeceasedRequest request) {
-        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
-        UserDto userDto = userService.findByStaffCodeAndOrganizationCode(request.getStaffCode(), request.getOrganizationCode());
-        if (Objects.isNull(userDto)) {
-            throw new CommonException("Người dùng có mã nhân viên: " +
-                    request.getStaffCode() +
-                    " và mã tổ chức Đảng: " +
-                    request.getOrganizationCode() +
-                    " không chính xác. Vui lòng kiểm tra lại"
-            );
-        }
+        validate(request);
         UserDetailsImpl userRequested = userService.getUserRequested();
 
         Deceased deceased = null;
@@ -60,7 +54,7 @@ public class DeceasedService implements EntityHandler {
 
         DeceasedDraft requestedDraft = modelMapper.map(request, DeceasedDraft.class);
         requestedDraft.setStatus(EApprovalStatus.PENDING.getId());
-        requestedDraft.setUsernameCreated(userRequested.getUsername());
+        requestedDraft.setCreatedBy(userRequested.getId());
         requestedDraft.setDeleted(ERecordStatus.ACTIVE.getStatus());
 
         Request partActivityRequest = requestService.initializeRequest(requestedDraft, deceased, form, getCombinedFieldMap());
@@ -77,6 +71,19 @@ public class DeceasedService implements EntityHandler {
         requestClient.save(partActivityRequest);
 
         return requestedDraft;
+    }
+
+    private void validate(DeceasedRequest request){
+        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+        UserDto userDto = userService.findByStaffCodeAndOrganizationCode(request.getStaffCode(), request.getOrganizationCode());
+        if (Objects.isNull(userDto)) {
+            throw new CommonException("Người dùng có mã nhân viên: " +
+                    request.getStaffCode() +
+                    " và mã tổ chức Đảng: " +
+                    request.getOrganizationCode() +
+                    " không chính xác. Vui lòng kiểm tra lại"
+            );
+        }
     }
 
     public String createRequestDelete(String id){
@@ -104,7 +111,7 @@ public class DeceasedService implements EntityHandler {
         DeceasedDraft deceasedDraft = deceasedDraftService.findById(referenceId);
 
         deceasedDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        deceasedDraft.setUsernameAccepted(userDetails.getUsername());
+        deceasedDraft.setApprovedBy(userDetails.getId());
 
         Deceased deceased = modelMapper.map(deceasedDraft, Deceased.class);
 
@@ -131,7 +138,7 @@ public class DeceasedService implements EntityHandler {
 
         DeceasedDraft deceasedDraft = deceasedDraftService.findById(referenceId);
         deceasedDraft.setStatus(EApprovalStatus.APPROVED.getId());
-        deceasedDraft.setUsernameAccepted(userRequested.getUsername());
+        deceasedDraft.setApprovedBy(userRequested.getId());
         Deceased deceased = modelMapper.map(deceasedDraft, Deceased.class);
         deceased.setId(deceasedDraft.getRefId());
 
@@ -167,5 +174,50 @@ public class DeceasedService implements EntityHandler {
 
     public List<Deceased> findAllById(List<String> ids){
         return client.findAllById(ids).getData();
+    }
+
+    public DeceasedResponse getDraftDetail(String id){
+        DeceasedDraft deceasedDraft = deceasedDraftService.findById(id);
+
+        return modelMapper.map(deceasedDraft, DeceasedResponse.class);
+    }
+
+    @SneakyThrows
+    public DeceasedResponse updateDraft(DeceasedRequest request) {
+        if(Objects.isNull(request.getId()) || request.getId().isBlank()){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        DeceasedDraft  deceasedDraft = deceasedDraftService.findById(request.getId());
+        if(Objects.isNull(deceasedDraft)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        Request requestDeceased = requestClient.findByReferenceId(request.getId()).getData();
+        if(Objects.isNull(requestDeceased)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != requestDeceased.getStatus()){
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
+        }
+
+        validate(request);
+        UserDetailsImpl userRequested = userService.getUserRequested();
+
+        deceasedDraft.setDateOfDeath(request.getDateOfDeath());
+        deceasedDraft.setOrganizationCode(request.getOrganizationCode());
+        deceasedDraft.setStaffCode(request.getStaffCode());
+        deceasedDraft.setDecisionDate(request.getDecisionDate());
+        deceasedDraft.setDecisionNumber(request.getDecisionNumber());
+        deceasedDraft.setCreatedBy(userRequested.getId());
+
+        requestDeceased.setNewData(requestService.createJsonData(deceasedDraft, getCombinedFieldMap()));
+        requestDeceased.setCreatedBy(userRequested.getId());
+
+        deceasedDraftService.save(deceasedDraft);
+        requestClient.save(requestDeceased);
+
+        return modelMapper.map(deceasedDraft, DeceasedResponse.class);
     }
 }

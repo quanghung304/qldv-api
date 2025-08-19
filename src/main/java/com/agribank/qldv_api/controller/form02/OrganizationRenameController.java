@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.controller.form02;
 import com.agribank.qldv_api.request.form02.OrganizationRenameRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.form02.OrganizationRenameResponse;
 import com.agribank.qldv_api.service.form02.OrganizationRenameService;
 import com.agribank.qldvutils.entity.form02.rename.OrganizationRename;
 import com.agribank.qldvutils.entity.form02.rename.OrganizationRenameDraft;
@@ -38,5 +39,16 @@ public class OrganizationRenameController {
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     public ResponseEntity<DefaultResponse<OrganizationRenameDraft>> updateMergeRequest(@RequestBody @Valid OrganizationRenameRequest request) {
         return DefaultResponse.success(renameService.updateRenameRequest(request));
+    }
+
+    @GetMapping("/draft")
+    public ResponseEntity<DefaultResponse<OrganizationRenameResponse>> getDraftDetail(@RequestParam(name = "id") String id) {
+        return DefaultResponse.success(renameService.getDraftDetail(id));
+    }
+
+    @PutMapping("/update/draft")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<OrganizationRenameResponse>> updateDraftRequest(@RequestBody @Valid OrganizationRenameRequest request) {
+        return DefaultResponse.success(renameService.updateDraft(request));
     }
 }

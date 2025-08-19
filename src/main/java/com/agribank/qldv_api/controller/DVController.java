@@ -78,4 +78,15 @@ public class DVController {
     public ResponseEntity<DefaultResponse<List<DVDto>>> findActiveDVByOrganizationCode(@RequestParam(name = "organization", required = false) String organization) {
         return DefaultResponse.success(service.findActiveDVByOrganizationCode(organization));
     }
+
+    @GetMapping("/draft/detail")
+    public ResponseEntity<DefaultResponse<DVResponse>> getDraftDetail(@RequestParam(name = "id") String id ) {
+        return DefaultResponse.success(service.getDraftDetail(id));
+    }
+
+    @PutMapping("/draft/update")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<DVResponse>> updateDraft(@RequestBody @Valid DVDto request) {
+        return DefaultResponse.success("Tạo yêu cầu cập nhật đảng viên thành công", service.updateDraft(request));
+    }
 }

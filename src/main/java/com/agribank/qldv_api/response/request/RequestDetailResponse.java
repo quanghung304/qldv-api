@@ -21,6 +21,7 @@ public class RequestDetailResponse {
     Object oldData;
     Object newData;
     List<ChangedData> changedData;
+    String referenceId;
 
     @Data
     @Builder

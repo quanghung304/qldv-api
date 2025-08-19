@@ -25,13 +25,23 @@ public class LeavePartyController {
 
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @DeleteMapping("/create-request-delete/{id}")
-    public ResponseEntity<BaseResponse<String>> create(@PathVariable(name = "id") String id) {
+    public ResponseEntity<BaseResponse<String>> delete(@PathVariable(name = "id") String id) {
         return BaseResponse.success(service.createRequestDelete(id), null);
     }
-    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+
     @GetMapping("/detail/{id}")
     public ResponseEntity<BaseResponse<RP26DetailResponse>> getDetail(@PathVariable(name = "id") String id) {
         return BaseResponse.success(service.getDetail(id));
     }
 
+    @GetMapping("/draft/{id}")
+    public ResponseEntity<BaseResponse<LeavePartyDraft>> getDraftDetail(@PathVariable String id) {
+        return BaseResponse.success(service.getDraftDetail(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft")
+    public ResponseEntity<BaseResponse<String>> updateDraft(@RequestBody LeavePartyRequest request) {
+        return BaseResponse.success(service.updateDraft(request));
+    }
 }

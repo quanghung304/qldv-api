@@ -41,4 +41,15 @@ public class MembershipProposalController {
     public ResponseEntity<BaseResponse<MembershipProposalResponse>> getDetail(@PathVariable(name = "id") String id) {
         return BaseResponse.success(service.getDetail(id));
     }
+
+    @GetMapping("/draft/{id}")
+    public ResponseEntity<BaseResponse<MembershipProposalResponse>> getDraftDetail(@PathVariable String id) {
+        return BaseResponse.success(service.getDraftDetail(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft")
+    public ResponseEntity<BaseResponse<Object>> getDraftDetail(@RequestBody @Valid MembershipProposalRequest request) {
+        return BaseResponse.success(service.updateProposalDraft(request));
+    }
 }

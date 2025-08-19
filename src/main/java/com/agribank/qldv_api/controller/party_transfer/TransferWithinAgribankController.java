@@ -4,6 +4,7 @@ import com.agribank.qldv_api.request.party_transfer.TransferWithinAgribankReques
 import com.agribank.qldv_api.request.party_transfer.TransferWithinAgribankUpdateRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.party_transfer.TransferWithinAgribankResponse;
+import com.agribank.qldv_api.response.request.RequestResponse;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinAgribankService;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.request.party_transfer.TransferWithinAgribankSearch;
@@ -39,5 +40,16 @@ public class TransferWithinAgribankController {
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     public ResponseEntity<DefaultResponse<Request>> updateTransferForm(@RequestBody TransferWithinAgribankUpdateRequest request) {
         return DefaultResponse.success(service.update(request));
+    }
+
+    @GetMapping("/draft/detail")
+    public ResponseEntity<DefaultResponse<TransferWithinAgribankResponse>> getDraftDetail(@RequestParam(name = "id") String id) {
+        return DefaultResponse.success(service.getDraftDetail(id));
+    }
+
+    @PutMapping("/draft/update")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<RequestResponse>> updateDraft(@RequestBody TransferWithinAgribankUpdateRequest request) {
+        return DefaultResponse.success(service.updateDraft(request));
     }
 }

@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -46,16 +47,7 @@ public class MembershipProposalService implements EntityHandler {
     }
 
     public String create(MembershipProposalRequest request){
-        EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode());
-        if (Objects.isNull(employeeInfoDto)) {
-            throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
-        }
-
-        Organization organization = organizationService.findByCode(request.getOrganizationCode());
-        if (Objects.isNull(organization)) {
-            throw new CommonException("Không tìm thấy tổ chức Đảng vui lòng kiểm tra lại");
-        }
-        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+        validateMembershipProposal(request);
 
         MembershipProposal membershipProposal = null;
         if (Objects.nonNull(request.getId())){
@@ -86,6 +78,20 @@ public class MembershipProposalService implements EntityHandler {
 
         return "Tạo yêu cầu thành công";
     }
+
+    private void validateMembershipProposal(MembershipProposalRequest request) {
+        EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode());
+        if (Objects.isNull(employeeInfoDto)) {
+            throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
+        }
+
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+        if (Objects.isNull(organization)) {
+            throw new CommonException("Không tìm thấy tổ chức Đảng vui lòng kiểm tra lại");
+        }
+        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+    }
+
     public String createRequestDelete(String id){
         MembershipProposal membershipProposal = client.findById(id).getData()
                 .orElseThrow(()->new CommonException("Sai id, vui lòng kiểm tra lại"));
@@ -209,6 +215,45 @@ public class MembershipProposalService implements EntityHandler {
             response.setFullName(dv.getFullName());
         }
         return response;
+    }
+
+    public MembershipProposalResponse getDraftDetail(String id) {
+        MembershipProposalDraft draft = membershipProposalDraftService.findById(id);
+        MembershipProposalResponse response = modelMapper.map(draft, MembershipProposalResponse.class);
+
+        DV dv = dvService.findByStaffCode(draft.getStaffCode());
+        if (Objects.nonNull(dv)){
+            response.setFullName(dv.getFullName());
+        }
+        return response;
+    }
+
+    public String updateProposalDraft(MembershipProposalRequest request) {
+        validateMembershipProposal(request);
+
+        MembershipProposalDraft draft = membershipProposalDraftService.findById(request.getId());
+
+        if (!Objects.equals(draft.getStatus(), EApprovalStatus.PENDING.getId())) {
+            throw new CommonException("Chỉ được chỉnh sửa yêu cầu chưa được phê duyệt");
+        }
+
+        String referenceId = Objects.nonNull(draft.getRefId()) ? draft.getRefId() : null;
+        Timestamp createdAt = draft.getCreatedAt();
+        UserDetailsImpl userRequested = userService.getUserRequested();
+
+        draft = modelMapper.map(request, MembershipProposalDraft.class);
+        draft.setRefId(referenceId);
+        draft.setCreatedAt(createdAt);
+        draft.setStatus(EApprovalStatus.PENDING.getId());
+        draft.setCreatedBy(userRequested.getUsername());
+
+        Request proposalRequest = requestService.getRequestByDraftId(form.getCode(), request.getId());
+        String newData = requestService.createJsonData(draft, getCombinedFieldMap());
+        proposalRequest.setNewData(newData);
+
+        membershipProposalDraftService.save(draft);
+        requestClient.save(proposalRequest);
+        return "Cập nhật yêu cầu thành công";
     }
 
     public PageResponse<DvRp23Response> searchRp23(SearchRpRequest request){
