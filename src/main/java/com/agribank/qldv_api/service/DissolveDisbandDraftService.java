@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.*;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.form02.dissolve.DissolveDisbandClient;
 import com.agribank.qldv_api.gateway.form02.dissolve.DissolveDisbandDraftClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
@@ -8,6 +9,7 @@ import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.form02.DissolveDisbandRequest;
+import com.agribank.qldv_api.response.form02.DissolveDisbandResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldvutils.entity.*;
@@ -17,6 +19,7 @@ import com.agribank.qldvutils.entity.form02.dissolve.DissolveDisbandDraft;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.form02.dissolve.ApproveDissolveRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -264,5 +267,55 @@ public class DissolveDisbandDraftService implements EntityHandler {
 
         if (Objects.isNull(draft)) return;
         draft.setStatus(EApprovalStatus.DENIED.getId());
+    }
+
+    public DissolveDisbandResponse getDraftDetail(String id){
+        DissolveDisbandDraft draft = client.findById(id).getData();
+        if (Objects.isNull(draft)){
+            throw new RuntimeException("Không tìm thấy dữ liệu");
+        }
+
+        return modelMapper.map(draft, DissolveDisbandResponse.class);
+    }
+
+    @SneakyThrows
+    public DissolveDisbandResponse updateDraft(DissolveDisbandRequest request){
+        if(Objects.isNull(request.getId()) || request.getId().isBlank()){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        DissolveDisbandDraft draft = client.findById(request.getId()).getData();
+        if (Objects.isNull(draft)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        Request requestDissolveDisband = requestClient.findByReferenceId(request.getId()).getData();
+        if (Objects.isNull(requestDissolveDisband)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != requestDissolveDisband.getStatus()){
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
+        }
+
+        UserDetailsImpl userRequested = userService.getUserRequested();
+
+        draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setName(request.getName());
+        draft.setForm(request.getForm());
+        draft.setCreatedBy(userRequested.getId());
+        draft.setConclusionNumber(request.getConclusionNumber());
+        draft.setConclusionDate(request.getConclusionDate());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+
+        requestDissolveDisband.setOrganizationCode(request.getOrganizationCode());
+        requestDissolveDisband.setCreatedBy(userRequested.getId());
+        requestDissolveDisband.setNewData(requestService.createJsonData(draft, getCombinedFieldMap()));
+
+        requestClient.save(requestDissolveDisband);
+        client.save(draft);
+        return modelMapper.map(draft, DissolveDisbandResponse.class);
     }
 }
