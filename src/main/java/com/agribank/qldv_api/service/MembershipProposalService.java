@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service;
 import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.enums.ERecordStatus;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.MembershipProposalClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -234,7 +235,7 @@ public class MembershipProposalService implements EntityHandler {
         MembershipProposalDraft draft = membershipProposalDraftService.findById(request.getId());
 
         if (!Objects.equals(draft.getStatus(), EApprovalStatus.PENDING.getId())) {
-            throw new CommonException("Chỉ được chỉnh sửa yêu cầu chưa được phê duyệt");
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
         }
 
         String referenceId = Objects.nonNull(draft.getRefId()) ? draft.getRefId() : null;

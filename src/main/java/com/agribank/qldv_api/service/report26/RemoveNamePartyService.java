@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.service.report26;
 
 import com.agribank.qldv_api.enums.*;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.report26.RemoveNamePartyClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -23,24 +24,59 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class RemoveNamePartyService implements EntityHandler {
-    private final RemoveNamePartyClient client;
     private final ModelMapper modelMapper;
+    private final RemoveNamePartyClient client;
+    private final RequestClient requestClient;
     private final CheckAuthorityService checkAuthorityService;
     private final CommitteeDecisionService committeeDecisionService;
     private final RequestService requestService;
-    private final RequestClient requestClient;
     private final Report26Service report26Service;
     private final UserService userService;
-    private final EForm form = EForm.BIEU_26_REMOVE_NAME_PARTY;
     private final RemoveNamePartyDraftService removeNamePartyDraftService;
     private final DvHistoryService dvHistoryService;
+
+    private final EForm form = EForm.BIEU_26_REMOVE_NAME_PARTY;
 
     private Map<String, String> getCombinedFieldMap() {
         return new LinkedHashMap<>(RemoveNamePartyDraft.FIELD_MAP);
     }
 
     public RemoveNamePartyDraft createDraft(RemoveNamePartyRequest request) {
+        validateRequest(request);
+
+        RemoveNameParty removeNameParty = null;
+        if (Objects.nonNull(request.getId())){
+            removeNameParty = client.findById(request.getId()).getData()
+                    .orElseThrow(()-> new CommonException("id request không chính xác"));
+        }
+
+        RemoveNamePartyDraft requestedDraft = modelMapper.map(request, RemoveNamePartyDraft.class);
+
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        requestedDraft.setUsernameCreated(userRequested.getUsername());
+        requestedDraft.setStatus(EApprovalStatus.PENDING.getId());
+        requestedDraft.setDeleted(ERecordStatus.ACTIVE.getStatus());
+
+        if (Objects.nonNull(request.getId())){
+            requestedDraft.setRefId(requestedDraft.getId());
+        }
+
+        Request partActivityRequest = requestService.initializeRequest(requestedDraft, removeNameParty, form, getCombinedFieldMap());
+        partActivityRequest.setCreatedBy(userRequested.getId());
+        partActivityRequest.setOrganizationCode(request.getOrganizationCode());
+
+        requestedDraft = removeNamePartyDraftService.save(requestedDraft);
+
+        partActivityRequest.setReferenceId(requestedDraft.getId());
+        partActivityRequest.setStaffCode(requestedDraft.getStaffCode());
+        requestClient.save(partActivityRequest);
+
+        return requestedDraft;
+    }
+
+    private void validateRequest(RemoveNamePartyRequest request) {
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+
         UserDto dvInfo = userService.findByStaffCodeAndOrganizationCode(request.getStaffCode(), request.getOrganizationCode());
         if (Objects.isNull(dvInfo)) {
             throw new CommonException("Người dùng có mã nhân viên: " +
@@ -50,38 +86,11 @@ public class RemoveNamePartyService implements EntityHandler {
                     " không chính xác. Vui lòng kiểm tra lại"
             );
         }
-        UserDetailsImpl userRequested = userService.getUserRequested();
 
         CommitteeDecision committeeDecision = committeeDecisionService.findByCode(request.getCommitteeDecision());
         if (Objects.isNull(committeeDecision)){
             throw new CommonException("Sai code cấp ủy quyết định. Vui lòng kiểm tra lại");
         }
-
-        RemoveNameParty removeNameParty = null;
-        if (Objects.nonNull(request.getId())){
-            removeNameParty = client.findById(request.getId()).getData()
-                    .orElseThrow(()-> new CommonException("id request không chính xác"));
-        }
-
-        RemoveNamePartyDraft requestedDraft = modelMapper.map(request, RemoveNamePartyDraft.class);
-        requestedDraft.setStatus(EApprovalStatus.PENDING.getId());
-        requestedDraft.setUsernameCreated(userRequested.getUsername());
-        requestedDraft.setDeleted(ERecordStatus.ACTIVE.getStatus());
-
-        Request partActivityRequest = requestService.initializeRequest(requestedDraft, removeNameParty, form, getCombinedFieldMap());
-        partActivityRequest.setCreatedBy(userRequested.getId());
-
-        if (Objects.nonNull(request.getId())){
-            requestedDraft.setRefId(requestedDraft.getId());
-        }
-        requestedDraft = removeNamePartyDraftService.save(requestedDraft);
-
-        partActivityRequest.setReferenceId(requestedDraft.getId());
-        partActivityRequest.setStaffCode(requestedDraft.getStaffCode());
-        partActivityRequest.setOrganizationCode(request.getOrganizationCode());
-        requestClient.save(partActivityRequest);
-
-        return requestedDraft;
     }
 
     public String createRequestDelete(String id){
@@ -169,5 +178,39 @@ public class RemoveNamePartyService implements EntityHandler {
 
     public List<RemoveNameParty> findAllById(List<String> ids){
         return client.findAllById(ids).getData();
+    }
+
+    public RemoveNamePartyDraft getDraftDetail(String id) {
+        return removeNamePartyDraftService.findById(id);
+    }
+
+    public String updateDraft(RemoveNamePartyRequest request) {
+        validateRequest(request);
+
+        RemoveNamePartyDraft draft = removeNamePartyDraftService.findById(request.getId());
+
+        if (!Objects.equals(draft.getStatus(), EApprovalStatus.PENDING.getId())) {
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
+        }
+
+        Request removeNameRequest = requestService.getRequestByDraftId(form.getCode(), request.getId());
+
+        draft.setStaffCode(request.getStaffCode());
+        draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setCommitteeDecision(request.getCommitteeDecision());
+        draft.setReason(request.getReason());
+        draft.setResolutionNumber(request.getResolutionNumber());
+        draft.setResolutionDate(request.getResolutionDate());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+
+        String newData = requestService.createJsonData(draft, getCombinedFieldMap());
+        removeNameRequest.setNewData(newData);
+
+        removeNamePartyDraftService.save(draft);
+        requestClient.save(removeNameRequest);
+
+        return "Cập nhật yêu cầu thành công";
     }
 }
