@@ -28,6 +28,7 @@ public class MembershipProposalController {
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     @PostMapping("/create")
     public ResponseEntity<BaseResponse<String>> create(@RequestBody @Valid MembershipProposalRequest request) {
+        request.validate();
         return BaseResponse.success(service.create(request), null);
     }
 
@@ -49,6 +50,7 @@ public class MembershipProposalController {
 
     @PutMapping("/draft")
     public ResponseEntity<BaseResponse<Object>> getDraftDetail(@RequestBody @Valid MembershipProposalRequest request) {
+        request.validate();
         return BaseResponse.success(service.updateProposalDraft(request));
     }
 }

@@ -178,14 +178,6 @@ public class CommonUtils {
         return null;
     }
 
-    public static String getCurrentDate(){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-        LocalDate today = LocalDate.now();
-
-        return today.format(formatter);
-    }
-
 
     public static LocalDate convertDateIntoLocalDate(Date date){
         Instant instant = date.toInstant();
@@ -294,5 +286,10 @@ public class CommonUtils {
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }
+    }
+
+    public static Date getCurrentDate(){
+        LocalDate today = LocalDate.now(); // date without time
+        return Date.from(today.atStartOfDay( ZoneId.systemDefault()).toInstant());
     }
 }
