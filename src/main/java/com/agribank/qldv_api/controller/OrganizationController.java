@@ -114,4 +114,9 @@ public class OrganizationController {
     public ResponseEntity<BaseResponse<OrganizationResponse>> getDraftDetail(@RequestParam(name = "id") String id) {
         return BaseResponse.success(null, service.getDraftDetail(id));
     }
+
+    @GetMapping("/all-by-party-branch")
+    public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getAllByPartyBranch() {
+        return BaseResponse.success("Success", service.getAllByPartyBranch());
+    }
 }
