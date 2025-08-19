@@ -103,4 +103,10 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
     DefaultResponse<PageResponse<BcslDvRp10Response>> searchRp10(
             @RequestBody SearchRpRequest request
     );
+
+
+    @GetMapping("/all-by-party-branch")
+    DefaultResponse<List<Organization>> getAllByPartyBranch(
+            @RequestParam(name = "code", required = false) String code
+    );
 }

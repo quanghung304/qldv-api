@@ -619,4 +619,16 @@ public class OrganizationService implements EntityHandler {
 
         return modelMapper.map(organizationDraft, OrganizationResponse.class);
     }
+
+    public List<OrganizationResponse> getAllByPartyBranch(){
+        UserDetailsImpl userRequested = getUserRequested();
+        String code = getOrganizationCode(null, userRequested);
+
+        List<Organization> organizations = client.getAllByPartyBranch(code).getData();
+        if (organizations.isEmpty()){
+            return new  ArrayList<>();
+        }
+
+        return organizations.stream().map(organization -> modelMapper.map(organization, OrganizationResponse.class)).toList();
+    }
 }
