@@ -1,14 +1,13 @@
 package com.agribank.qldv_api.service.development_plan;
 
-import com.agribank.qldv_api.enums.EApprovalStatus;
-import com.agribank.qldv_api.enums.EExcelImport;
-import com.agribank.qldv_api.enums.EForm;
-import com.agribank.qldv_api.enums.ERecordStatus;
+import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.development_plan.DevelopmentPlanDetailClient;
+import com.agribank.qldv_api.gateway.development_plan.DevelopmentPlanDetailDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.develop_plan.*;
 import com.agribank.qldv_api.response.develop_plan.DevelopPlanDetailResponse;
+import com.agribank.qldv_api.response.develop_plan.DevelopPlanDraftResponse;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
@@ -35,6 +34,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,6 +48,7 @@ public class DevelopPlanDetailService implements EntityHandler {
     private final CheckAuthorityService checkAuthorityService;
     private final DevelopmentPlanDetailDraftService developPlanDetailDraftService;
     private final DevelopPlanDraftService developPlanDraftService;
+    private final DevelopmentPlanDetailDraftClient developmentPlanDetailDraftClient;
     private final RequestService requestService;
     private final DevelopmentPlanDetailDraftService developmentPlanDetailDraftService;
     private final OrganizationService organizationService;
@@ -515,5 +516,99 @@ public class DevelopPlanDetailService implements EntityHandler {
 
     public List<BcslDvRp10Response> searchRp10(SearchRp10DataRequest request){
         return developmentPlanDetailClient.searchRp10(request).getData();
+    }
+
+    public DevelopPlanDraftResponse getDraft(String id) {
+        DevelopmentPlanDraft developPlan = developPlanDraftService.findById(id);
+
+        List<DevelopmentPlanDetailDraft> planDetail = developmentPlanDetailDraftClient.findByRefId(id).getData();
+        planDetail.sort(Comparator.comparingInt(DevelopmentPlanDetailDraft::getYear));
+
+        DevelopPlanDraftResponse draft = new DevelopPlanDraftResponse();
+        draft.setDevelopPlan(developPlan);
+        draft.setPlanDetail(planDetail);
+
+        return draft;
+    }
+
+    public String updateDraft(DevelopPlanDetailUpdateRequest request) {
+        checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
+
+        if (Objects.isNull(request.getRefId())) {
+            throw new CommonException("Không được để trống trường id");
+        }
+
+        List<DevelopmentPlanDetailDraft> developmentPlanDetailDraft = developPlanDetailDraftService.findByRefId(request.getRefId());
+        if (Objects.isNull(developmentPlanDetailDraft) || developmentPlanDetailDraft.isEmpty()) {
+            throw new CommonException("Không tìm thấy thông tin yêu cầu kế hoạch phát triển Đảng viên cần chỉnh sửa! Vui lòng kiểm tra lại.");
+        }
+
+        Request requestDetail = requestClient.findByReferenceId(request.getRefId()).getData();
+
+        if (Objects.isNull(requestDetail)) {
+            throw new CommonException("Yêu cầu phê duyệt không tồn tại!");
+        }
+
+        if (requestDetail.getStatus() != EApprovalStatus.PENDING.getId()) {
+            throw new CommonException("Yêu cầu đã được phê duyệt hoặc bị từ chối!");
+        }
+
+        DevelopmentPlanDraft developmentPlanDraft = developPlanDraftService.findById(request.getRefId());
+        if (Objects.isNull(developmentPlanDraft)) {
+            throw new CommonException("Không tìm thấy yêu cầu kế hoạch phát triển Đảng viên cần chỉnh sửa! Vui lòng kiểm tra lại.");
+        }
+        developmentPlanDraft.setName(request.getName());
+        developmentPlanDraft.setStart(request.getStart());
+        developmentPlanDraft.setEnd(request.getEnd());
+        developmentPlanDraft.setTarget(request.getData().stream().mapToInt(DevelopPlanDetailRequest::getTarget).sum());
+        developmentPlanDraft = developPlanDraftService.save(developmentPlanDraft);
+
+        Request developRequest = getDraftRequest(new UpdateRequestDraft(request, developmentPlanDraft, developmentPlanDetailDraft, requestDetail));
+        requestClient.save(developRequest);
+
+        return "Sửa yêu cầu thành công";
+    }
+
+    private Request getDraftRequest(UpdateRequestDraft data){
+        Map<Integer, DevelopmentPlanDetailDraft> oldDevelopPlanDetailDraft = new HashMap<>();
+
+        for (DevelopmentPlanDetailDraft developmentPlanDetail: data.getDevelopmentPlanDetailDraft()) {
+            oldDevelopPlanDetailDraft.put(developmentPlanDetail.getYear(), developmentPlanDetail);
+        }
+
+        List<Map<String, Object>> newDevelopPlanDetail = new ArrayList<>();
+
+        List<DevelopmentPlanDetailDraft> developmentPlanDetailDraftList = new ArrayList<>();
+        for (DevelopPlanDetailRequest developmentPlanDetail : data.getRequest().getData()) {
+            Map<String, Object> map = CommonUtils.createFilteredDataMap(developmentPlanDetail, getCombinedFieldMap());
+            newDevelopPlanDetail.add(map);
+            DevelopmentPlanDetailDraft developmentPlanDetailDraftData = oldDevelopPlanDetailDraft.get(developmentPlanDetail.getYear());
+            if (Objects.nonNull(developmentPlanDetailDraftData)) {
+                developmentPlanDetailDraftData.setRefId(data.getDevelopmentPlanDraft().getId());
+                developmentPlanDetailDraftData.setMin(developmentPlanDetail.getMin());
+                developmentPlanDetailDraftData.setTarget(developmentPlanDetail.getTarget());
+                developmentPlanDetailDraftData.setStrive(developmentPlanDetail.getStrive());
+                developmentPlanDetailDraftList.add(developmentPlanDetailDraftData);
+            } else {
+                DevelopmentPlanDetailDraft newData = DevelopmentPlanDetailDraft.builder()
+                        .min(developmentPlanDetail.getMin())
+                        .year(developmentPlanDetail.getYear())
+                        .refId(data.getDevelopmentPlanDraft().getId())
+                        .target(developmentPlanDetail.getTarget())
+                        .strive(developmentPlanDetail.getStrive())
+                        .build();
+                newData.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                newData.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+                newData.setId(UUID.randomUUID().toString());
+                developmentPlanDetailDraftList.add(newData);
+            }
+        }
+
+        String newData = getJsonData(data.getDevelopmentPlanDraft(), newDevelopPlanDetail);
+        developPlanDetailDraftService.saveAll(developmentPlanDetailDraftList);
+
+        data.getRequestDetail().setNewData(newData);
+
+        return data.getRequestDetail();
     }
 }

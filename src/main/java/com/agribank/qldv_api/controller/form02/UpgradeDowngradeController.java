@@ -41,4 +41,15 @@ public class UpgradeDowngradeController {
     public ResponseEntity<DefaultResponse<Request>> update(@RequestBody @Valid OrganizationUpDownRequest request) {
         return DefaultResponse.success(updownService.update(request));
     }
+
+    @GetMapping("draft")
+    public ResponseEntity<DefaultResponse<OrganizationUpDownDraft>> getDraft(@RequestParam String id) {
+        return DefaultResponse.success(updownService.getDraft(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("draft/update")
+    public ResponseEntity<DefaultResponse<OrganizationUpDownDraft>> updateDraft(@RequestBody @Valid OrganizationUpDownRequest request) {
+        return DefaultResponse.success(updownService.updateDraft(request));
+    }
 }

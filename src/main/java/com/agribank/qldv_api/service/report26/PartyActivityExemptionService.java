@@ -4,11 +4,14 @@ import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.report26.PartyActivityExemptionClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.request.form02.OrganizationUpDownRequest;
 import com.agribank.qldv_api.request.party_activity_exemption.PartyActivityExemptionRequest;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.*;
+import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
+import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDownDraft;
 import com.agribank.qldvutils.entity.report26.PartyActivityExemption;
 import com.agribank.qldvutils.entity.report26.PartyActivityExemptionDraft;
 import com.agribank.qldvutils.entity.report26.Report26;
@@ -19,6 +22,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 
@@ -183,5 +187,44 @@ public class PartyActivityExemptionService implements EntityHandler {
 
     public List<PartyActivityExemption> findAllById(List<String> ids){
         return client.findAllById(ids).getData();
+    }
+
+    public PartyActivityExemptionDraft getDraft(String id) {
+        return partyActivityExemptionDraftService.findById(id);
+    }
+
+    public PartyActivityExemptionDraft updateDraft(PartyActivityExemptionRequest request) {
+        if (Objects.isNull(request.getId())) {
+            throw new CommonException("Không được để trống trường id");
+        }
+
+        Request requestDetail = requestClient.findByReferenceId(request.getId()).getData();
+
+        if (Objects.isNull(requestDetail)) {
+            throw new CommonException("Yêu cầu phê duyệt không tồn tại!");
+        }
+
+        if (requestDetail.getStatus() != EApprovalStatus.PENDING.getId()) {
+            throw new CommonException("Yêu cầu đã được phê duyệt hoặc bị từ chối!");
+        }
+
+        PartyActivityExemptionDraft draft = partyActivityExemptionDraftService.findById(request.getId());
+
+        if (Objects.isNull(draft)) {
+            throw new CommonException("Không tồn tại yêu cầu này!");
+        }
+
+        draft.setStaffCode(request.getStaffCode());
+        draft.setCommitteeDecision(request.getCommitteeDecision());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setEffectiveDate(request.getEffectiveDate());
+        draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setReason(request.getReason());
+
+        requestDetail.setNewData(requestService.createJsonData(draft, getCombinedFieldMap()));
+        requestClient.save(requestDetail);
+
+        return partyActivityExemptionDraftService.save(draft);
     }
 }
