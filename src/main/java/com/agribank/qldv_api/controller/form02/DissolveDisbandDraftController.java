@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.controller.form02;
 
 import com.agribank.qldv_api.request.form02.DissolveDisbandRequest;
+import com.agribank.qldv_api.response.form02.DissolveDisbandResponse;
 import com.agribank.qldv_api.service.DissolveDisbandDraftService;
 import com.agribank.qldvutils.entity.form02.dissolve.DissolveDisbandDraft;
 import com.agribank.qldvutils.response.BaseResponse;
@@ -35,5 +36,17 @@ public class DissolveDisbandDraftController {
     public ResponseEntity<BaseResponse<DissolveDisbandDraft>> update(@RequestBody @Valid DissolveDisbandRequest request) {
         request.validate();
         return BaseResponse.success(service.update(request));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<DissolveDisbandResponse>> getDetail(@PathVariable(name = "id") String id) {
+        return BaseResponse.success(service.getDraftDetail(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft/update")
+    public ResponseEntity<BaseResponse<DissolveDisbandResponse>> updateDraft(@RequestBody @Valid DissolveDisbandRequest request) {
+        request.validate();
+        return BaseResponse.success(service.updateDraft(request));
     }
 }

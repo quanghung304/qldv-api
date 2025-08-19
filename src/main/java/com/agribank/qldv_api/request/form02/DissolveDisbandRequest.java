@@ -23,7 +23,7 @@ public class DissolveDisbandRequest extends BaseFormDto {
 
     public void validate(){
         super.validate();
-        if (Objects.isNull(organizationCode)) {
+        if (Objects.isNull(organizationCode) || organizationCode.isBlank()) {
             throw new CommonException("Code is required");
         }
 
