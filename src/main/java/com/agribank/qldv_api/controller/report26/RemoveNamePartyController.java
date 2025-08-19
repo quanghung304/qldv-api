@@ -35,4 +35,15 @@ public class RemoveNamePartyController {
         return BaseResponse.success(service.getDetail(id));
     }
 
+    @GetMapping("/draft/{id}")
+    public ResponseEntity<BaseResponse<RemoveNamePartyDraft>> getDraftDetail(@PathVariable(name = "id") String id) {
+        return BaseResponse.success(service.getDraftDetail(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft")
+    public ResponseEntity<BaseResponse<String>> getDraftDetail(@RequestBody RemoveNamePartyRequest request) {
+        request.validate();
+        return BaseResponse.success(service.updateDraft(request));
+    }
 }
