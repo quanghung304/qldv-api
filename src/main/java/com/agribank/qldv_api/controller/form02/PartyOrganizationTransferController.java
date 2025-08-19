@@ -42,4 +42,15 @@ public class PartyOrganizationTransferController {
     public ResponseEntity<DefaultResponse<PageResponse<PartyOrganizationTransferResponse>>> search(@RequestBody @Valid SearchPartyOrgTransferRequest request) {
         return DefaultResponse.success(service.search(request));
     }
+
+    @GetMapping("draft")
+    public ResponseEntity<DefaultResponse<PartyOrgTranResponse>> getDraft(@RequestParam String id) {
+        return DefaultResponse.success(service.getDraft(id));
+    }
+
+    @PutMapping("draft/update")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<Boolean>> updateDraft(@RequestBody @Valid PartyOrgTransferRequest request) {
+        return DefaultResponse.success(service.updateDraft(request));
+    }
 }

@@ -283,4 +283,63 @@ public class TransferToAgribankService implements EntityHandler {
     public PageResponse<DvRp28Response> searchRp28(SearchRpRequest request){
         return transferToAgribankClient.searchRp28(request).getData();
     }
+
+    public TransferToAgribankDraft getDraft(String id){
+        return transferToDraftClient.findById(id).getData().orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu chuyển sinh hoạt đảng."));
+    }
+
+    public TransferToAgribankDraft updateDraft(TransferToAgribankRequest request) {
+        if (Objects.isNull(request.getId())) {
+            throw new CommonException("Không được để trống trường id");
+        }
+
+        Request requestDetail = requestClient.findByReferenceId(request.getId()).getData();
+
+        if (Objects.isNull(requestDetail)) {
+            throw new CommonException("Yêu cầu phê duyệt không tồn tại!");
+        }
+
+        if (requestDetail.getStatus() != EApprovalStatus.PENDING.getId()) {
+            throw new CommonException("Yêu cầu đã được phê duyệt hoặc bị từ chối!");
+        }
+
+        Organization receivingOrganizationB = organizationClient.findByCode(request.getReceivingOrgBCode()).getData();
+
+        if (Objects.isNull(receivingOrganizationB)) {
+            throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
+        }
+
+        Organization receivingOrganizationC = null;
+        if (Objects.nonNull(request.getReceivingOrgCCode()) && !request.getReceivingOrgCCode().isEmpty()) {
+            receivingOrganizationC = organizationClient.findByCode(request.getReceivingOrgCCode()).getData();
+
+            if (Objects.isNull(receivingOrganizationC)) {
+                throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
+            }
+        }
+
+        TransferToAgribankDraft draft = transferToDraftClient.findById(request.getId()).getData().orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu chuyển sinh hoạt đảng."));
+        draft.setStaffCode(request.getStaffCode());
+        draft.setFullName(request.getFullName());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setIssueDate(request.getIssueDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+        draft.setIssuingOrganization(request.getIssuingOrganization());
+        draft.setExpectedExpiryDate(request.getExpectedExpiryDate());
+        draft.setFirstIntroNumber(request.getFirstIntroNumber());
+        draft.setFirstIntroDate(request.getFirstIntroDate());
+        draft.setTransferringPartyName(request.getTransferringPartyName());
+        draft.setSecondIntroNumber(request.getSecondIntroNumber());
+        draft.setTransferDate(request.getTransferDate());
+        draft.setReceivingOrgBCode(request.getReceivingOrgBCode());
+        draft.setReceivingOrgBName(receivingOrganizationB.getName());
+        draft.setReceivingOrgCCode(request.getReceivingOrgCCode());
+        draft.setReceivingOrgCName(receivingOrganizationC != null ? receivingOrganizationC.getName() : null);
+
+        requestDetail.setNewData(requestService.createJsonData(draft, TransferToAgribankDraft.FIELD_MAP));
+
+        requestClient.save(requestDetail);
+
+        return transferToDraftClient.save(draft).getData();
+    }
 }

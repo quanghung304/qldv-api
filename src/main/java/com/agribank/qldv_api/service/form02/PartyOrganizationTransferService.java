@@ -1,7 +1,9 @@
 package com.agribank.qldv_api.service.form02;
 
+import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.enums.EReport01Type;
+import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.gateway.form02.transfer.PartyOrgTransferDetailClient;
 import com.agribank.qldv_api.gateway.form02.transfer.PartyOrgTransferDetailDraftClient;
 import com.agribank.qldv_api.gateway.form02.transfer.PartyOrganizationTransferClient;
@@ -44,10 +46,11 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PartyOrganizationTransferService implements EntityHandler {
     private final PartyOrganizationTransferClient client;
-    private final RequestService requestService;
+    private final RequestClient requestClient;
     private final PartyOrganizationTransferDraftClient partyOrganizationTransferDraftClient;
     private final PartyOrgTransferDetailClient partyOrgTransferDetailClient;
     private final PartyOrgTransferDetailDraftClient partyOrgTransferDetailDraftClient;
+    private final RequestService requestService;
     private final OrganizationService organizationService;
     private final DVService dvService;
     private final DvOrgService dvOrgService;
@@ -577,5 +580,86 @@ public class PartyOrganizationTransferService implements EntityHandler {
         response.setData(pageResponse.getData().stream()
                 .map(p -> modelMapper.map(p, PartyOrganizationTransferResponse.class)).toList());
         return response;
+    }
+
+    public PartyOrgTranResponse getDraft(String id) {
+        PartyOrganizationTransferDraft partyOrganizationTransferDraft = partyOrganizationTransferDraftClient.findById(id).getData()
+                .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu chuyển giao."));
+        PartyOrgTranResponse response = modelMapper.map(partyOrganizationTransferDraft, PartyOrgTranResponse.class);
+
+        Organization organizationReference = organizationService.findByCode(response.getDecisionCommittee());
+        if (Objects.nonNull(organizationReference)){
+            response.setDecisionCommitteeName(organizationReference.getName());
+        }
+
+        List<PartyOrgTransferDetailDraft> partyOrgTransferDetails = partyOrgTransferDetailDraftClient.findByRefId(partyOrganizationTransferDraft.getId()).getData();
+        List<PartyOrgTranDetailResponse> detailResponses = new ArrayList<>();
+        if (!partyOrgTransferDetails.isEmpty()){
+            detailResponses = partyOrgTransferDetails.stream().map(
+                    p -> PartyOrgTranDetailResponse.builder()
+                            .organizationCode(p.getOrganizationCode())
+                            .organizationName(p.getOrganizationName())
+                            .build()).toList();
+        }
+        response.setPartyOrgTranDetails(detailResponses);
+
+        return response;
+    }
+
+    public Boolean updateDraft(PartyOrgTransferRequest request) {
+        PartyOrgTranDraftRequest entity = new PartyOrgTranDraftRequest();
+
+        if (Objects.isNull(request.getId())) {
+            throw new CommonException("Không được để trống trường id");
+        }
+
+        Organization organization = organizationService.findByCode(request.getReceivingOrgCode());
+
+        if (Objects.isNull(organization)){
+            throw new CommonException("Không tồn tại TCD có mã: " + request.getReceivingOrgCode());
+        }
+
+        Request requestDetail = requestClient.findByReferenceId(request.getId()).getData();
+
+        if (Objects.isNull(requestDetail)) {
+            throw new CommonException("Yêu cầu phê duyệt không tồn tại!");
+        }
+
+        if (requestDetail.getStatus() != EApprovalStatus.PENDING.getId()) {
+            throw new CommonException("Yêu cầu đã được phê duyệt hoặc bị từ chối!");
+        }
+
+        PartyOrganizationTransferDraft draft = partyOrganizationTransferDraftClient.findById(request.getId()).getData()
+                .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu chuyển giao."));
+
+        List<PartyOrgTransferDetailDraft> oldPartyOrgTransferDetails = new ArrayList<>();
+        if (Objects.nonNull(draft.getId())) {
+            oldPartyOrgTransferDetails = partyOrgTransferDetailDraftClient.findByRefId(draft.getId()).getData();
+        }
+        List<PartyOrgTransferDetailDraft> partyOrgTransferDetailDrafts = new ArrayList<>();
+
+        PartyOrganizationTransferDraft partyOrganizationTransferDraft = getPartyOrganizationTransferDraft(request, partyOrgTransferDetailDrafts);
+        partyOrganizationTransferDraft.setRefId(draft.getRefId());
+
+        draft.setReceivingOrgCode(request.getReceivingOrgCode());
+        draft.setReceivingOrgName(organization.getName());
+        draft.setConclusionDate(request.getConclusionDate());
+        draft.setConclusionNumber(request.getConclusionNumber());
+        draft.setDecisionCommittee(request.getDecisionCommittee());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+
+        requestDetail.setNewData(requestService.createJsonData(draft, getCombinedFieldMap()));
+
+        entity.setPartyOrganizationTransferDraft(draft);
+        entity.setPartyOrgTransferDetailDrafts(partyOrgTransferDetailDrafts);
+        entity.setRequest(requestDetail);
+
+        if (!oldPartyOrgTransferDetails.isEmpty()) {
+            partyOrgTransferDetailDraftClient.deleteAll(oldPartyOrgTransferDetails);
+        }
+
+        return client.saveEntityDraft(entity).getData();
     }
 }
