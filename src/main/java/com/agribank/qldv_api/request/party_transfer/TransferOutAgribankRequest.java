@@ -15,9 +15,9 @@ public class TransferOutAgribankRequest {
     Date effectiveDate;
     String reason;
     String issuingOrganization;
-    String orgCProposeDate;
+    Date orgCProposeDate;
     String orgCProposeNumber;
-    String orgBProposeDate;
+    Date orgBProposeDate;
     String orgBProposeNumber;
     Date expectedExpiryDate;
     String introDocumentNumber;
