@@ -650,7 +650,7 @@ public class PartyOrganizationTransferService implements EntityHandler {
         draft.setDecisionDate(request.getDecisionDate());
         draft.setEffectiveDate(request.getEffectiveDate());
 
-        requestDetail.setNewData(requestService.createJsonData(draft, getCombinedFieldMap()));
+        requestDetail.setNewData(CommonUtils.createJsonData(partyOrganizationTransferDraft, partyOrgTransferDetailDrafts, PartyOrgTransferDetailDraft.BASE_FIELD_MAP, getCombinedFieldMap()));
 
         entity.setPartyOrganizationTransferDraft(draft);
         entity.setPartyOrgTransferDetailDrafts(partyOrgTransferDetailDrafts);
