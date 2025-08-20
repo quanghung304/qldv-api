@@ -254,4 +254,55 @@ public class TransferWithinBaseService implements EntityHandler {
         return response;
     }
 
+    public TransferWithinBaseDraft getDraft(String id) {
+        return draftClient.findById(id).getData().orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu chuyển sinh hoạt đảng."));
+    }
+
+    public TransferWithinBaseDraft updateDraft(TransferWithinBaseRequest request) {
+        if (Objects.isNull(request.getId())) {
+            throw new CommonException("Không được để trống trường id");
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Request requestDetail = requestClient.findByReferenceId(request.getId()).getData();
+
+        if (Objects.isNull(requestDetail)) {
+            throw new CommonException("Yêu cầu phê duyệt không tồn tại!");
+        }
+
+        if (requestDetail.getStatus() != EApprovalStatus.PENDING.getId()) {
+            throw new CommonException("Yêu cầu đã được phê duyệt hoặc bị từ chối!");
+        }
+
+        Organization organization = organizationClient.findByCode(request.getOrganizationCode()).getData();
+
+        if (Objects.isNull(organization)) {
+            throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
+        }
+
+        if (!organization.getCode().contains(userDetails.getOrganizationCode())) {
+            throw new CommonException("Chi bộ chuyển đến không trực thuộc đảng bộ cơ sở");
+        }
+
+        DV dv = dvClient.findByStaffCode(request.getStaffCode()).getData();
+
+        TransferWithinBaseDraft draft = draftClient.findById(request.getId()).getData().orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu chuyển sinh hoạt đảng."));
+        draft.setStaffCode(request.getStaffCode());
+        draft.setFullName(dv.getFullName());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setIssueDate(request.getIssueDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+        draft.setIssuingOrganization(request.getIssuingOrganization());
+        draft.setIntroDocumentNumber(request.getIntroDocumentNumber());
+        draft.setIntroDocumentDate(request.getIntroDocumentDate());
+        draft.setTransferDate(request.getTransferDate());
+        draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setOrganizationName(organization.getName());
+
+        requestDetail.setNewData(requestService.createJsonData(draft, TransferWithinBaseDraft.FIELD_MAP));
+        requestClient.save(requestDetail);
+
+        return draftClient.save(draft).getData();
+    }
 }

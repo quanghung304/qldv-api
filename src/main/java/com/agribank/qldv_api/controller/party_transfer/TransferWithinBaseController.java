@@ -5,6 +5,7 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.service.party_transfer.TransferWithinBaseService;
 import com.agribank.qldvutils.entity.Request;
 import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBase;
+import com.agribank.qldvutils.entity.party_transfer.transfer_within_base.TransferWithinBaseDraft;
 import com.agribank.qldvutils.request.party_transfer.TransferToFilterRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,5 +39,16 @@ public class TransferWithinBaseController {
     @PreAuthorize("hasAuthority('QLDV_TELLER')")
     public ResponseEntity<DefaultResponse<Request>> update(@RequestBody TransferWithinBaseRequest request) {
         return DefaultResponse.success(service.createOrUpdate(request));
+    }
+
+    @GetMapping("draft")
+    public ResponseEntity<DefaultResponse<TransferWithinBaseDraft>> getDraft(@RequestParam String id) {
+        return DefaultResponse.success(service.getDraft(id));
+    }
+
+    @PutMapping("draft/update")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<TransferWithinBaseDraft>> updateDraft(@RequestBody TransferWithinBaseRequest request) {
+        return DefaultResponse.success(service.updateDraft(request));
     }
 }

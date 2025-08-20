@@ -119,6 +119,48 @@ public class OrganizationUpDownService implements EntityHandler {
                 .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
     }
 
+    public OrganizationUpDownDraft updateDraft(OrganizationUpDownRequest request) {
+        if (Objects.isNull(request.getId())) {
+            throw new CommonException("Không được để trống trường id");
+        }
+
+        Organization organization = organizationService.findByCode(request.getOrganizationCode());
+
+        if (Objects.isNull(organization)){
+            throw new CommonException("Không tồn tại TCD có mã: " + request.getOrganizationCode());
+        }
+
+        Request requestDetail = requestClient.findByReferenceId(request.getId()).getData();
+
+        if (Objects.isNull(requestDetail)) {
+            throw new CommonException("Yêu cầu phê duyệt không tồn tại!");
+        }
+
+        if (requestDetail.getStatus() != EApprovalStatus.PENDING.getId()) {
+            throw new CommonException("Yêu cầu đã được phê duyệt hoặc bị từ chối!");
+        }
+
+        OrganizationUpDownDraft draft = updownDraftClient.findById(request.getId()).getData()
+                .orElseThrow(() -> new CommonException("Không tìm thấy yêu cầu nâng/hạ cấp."));
+        draft.setOrganizationCode(request.getOrganizationCode());
+        draft.setOldForm(request.getOldForm());
+        draft.setOldName(request.getOldName());
+        draft.setNewForm(request.getNewForm());
+        draft.setNewName(request.getNewName());
+        draft.setType(request.getType());
+        draft.setConclusionDate(request.getConclusionDate());
+        draft.setConclusionNumber(request.getConclusionNumber());
+        draft.setDecisionCommittee(request.getDecisionCommittee());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setDecisionDate(request.getDecisionDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+
+        requestDetail.setNewData(requestService.createJsonData(draft, getCombinedFieldMap()));
+        requestClient.save(requestDetail);
+
+        return updownDraftClient.save(draft).getData();
+    }
+
     public Request update(OrganizationUpDownRequest request) {
         if (Objects.isNull(request.getId())) {
             throw new CommonException("Không được để trống trường id");

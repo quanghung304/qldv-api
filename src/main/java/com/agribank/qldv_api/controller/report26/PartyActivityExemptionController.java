@@ -35,4 +35,15 @@ public class PartyActivityExemptionController {
     public ResponseEntity<BaseResponse<RP26DetailResponse>> getDetail(@PathVariable(name = "id") String id) {
         return BaseResponse.success(service.getDetail(id));
     }
+
+    @GetMapping("/draft")
+    public ResponseEntity<BaseResponse<PartyActivityExemptionDraft>> getDraft(@RequestParam String id) {
+        return BaseResponse.success(service.getDraft(id));
+    }
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft/update")
+    public ResponseEntity<BaseResponse<PartyActivityExemptionDraft>> updateDraft(@RequestBody PartyActivityExemptionRequest request) {
+        return BaseResponse.success(service.updateDraft(request));
+    }
 }

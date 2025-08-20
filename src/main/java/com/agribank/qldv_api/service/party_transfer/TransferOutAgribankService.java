@@ -268,6 +268,49 @@ public class TransferOutAgribankService implements EntityHandler {
         transfer.setReceivedOrganization(draft.getReceivedOrganization());
     }
 
+    public TransferOutAgribankDraft getDraft(String id) {
+        return draftOutClient.findById(id).getData().orElseThrow(() -> new CommonException(ExceptionMessage.NO_DATA));
+    }
+
+    public String updateDraft(TransferOutAgribankRequest request) {
+        DV dv = dvClient.findByStaffCode(request.getStaffCode()).getData();
+
+        if (Objects.isNull(dv)) {
+            throw new CommonException("Không tìm thấy thông tin đảng viên");
+        }
+
+        TransferOutAgribankDraft draft = getDraft(request.getId());
+
+        if (!Objects.equals(draft.getStatus(), EApprovalStatus.PENDING.getId())) {
+            throw new CommonException("Chỉ được chỉnh sửa yêu cầu chưa được phê duyệt");
+        }
+
+        draft.setStaffCode(request.getStaffCode());
+        draft.setFullName(dv.getFullName());
+        draft.setDecisionNumber(request.getDecisionNumber());
+        draft.setIssueDate(request.getIssueDate());
+        draft.setEffectiveDate(request.getEffectiveDate());
+        draft.setReason(request.getReason());
+        draft.setIssuingOrganization(request.getIssuingOrganization());
+        draft.setOrgCProposeDate(request.getOrgCProposeDate());
+        draft.setOrgCProposeNumber(request.getOrgCProposeNumber());
+        draft.setOrgBProposeDate(request.getOrgBProposeDate());
+        draft.setOrgBProposeNumber(request.getOrgBProposeNumber());
+        draft.setExpectedExpiryDate(request.getExpectedExpiryDate());
+        draft.setIntroDocumentNumber(request.getIntroDocumentNumber());
+        draft.setTransferDate(request.getTransferDate());
+        draft.setReceivedOrganization(request.getReceivedOrganization());
+
+        Request transferRequest = requestService.getRequestByDraftId(form.getCode(), request.getId());
+        String newData = requestService.createJsonData(draft, TransferOutAgribankDraft.FIELD_MAP);
+        transferRequest.setNewData(newData);
+
+        draftOutClient.save(draft);
+        requestClient.save(transferRequest);
+
+        return "Cập nhật yêu cầu thành công";
+    }
+
     public PageResponse<TransferOutAgribank> search29(SearchRpRequest request) {
         return outAgribankClient.search29(request).getData();
     }

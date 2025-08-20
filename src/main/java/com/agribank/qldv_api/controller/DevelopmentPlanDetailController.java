@@ -2,13 +2,14 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.develop_plan.DevelopPlanDataRequest;
 import com.agribank.qldv_api.request.develop_plan.DevelopPlanDetailUpdateRequest;
-import com.agribank.qldv_api.request.develop_plan.GetDevelopmentPlanRequest;
 import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.develop_plan.DevelopPlanDetailResponse;
+import com.agribank.qldv_api.response.develop_plan.DevelopPlanDraftResponse;
 import com.agribank.qldv_api.service.development_plan.DevelopPlanDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,5 +50,16 @@ public class DevelopmentPlanDetailController {
             (@RequestParam(name = "file") MultipartFile file
             ) {
         return success(developPlanDetailService.importExcel(file), null);
+    }
+
+    @GetMapping("draft")
+    public ResponseEntity<DefaultResponse<DevelopPlanDraftResponse>> getDraft(@RequestParam String id) {
+        return DefaultResponse.success(developPlanDetailService.getDraft(id));
+    }
+
+    @PutMapping("draft/update")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<String>> updateDraft(@RequestBody DevelopPlanDetailUpdateRequest request) {
+        return DefaultResponse.success(developPlanDetailService.updateDraft(request));
     }
 }
