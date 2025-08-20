@@ -143,22 +143,22 @@ public class OrganizationService implements EntityHandler {
         }
 
         //Tìm tcd để thực hiện việc tăng mã tcd
-        Organization organizationDb = getByParentCodeMax(organizationRequest.getParentCode());
+        String maxChildCode = client.getMaxChildCode(organizationRequest.getParentCode()).getData();
 
         int ascii = organizationRequest.getForm().charAt(0) - organization.getForm().charAt(0);
         if (ascii != 1){
             throw new CommonException("Chưa thể tạo hình thức Tổ chức Đảng này. Vui lòng chọn Hình thức khác!");
         }
+
         //set giá trị mã tcd nếu nó chưa có thằng con thì + 01
         if (
-                Objects.isNull(organizationDb) ||
-                (Objects.nonNull(organizationDb.getCode()) && Constants.FORM_B_NAME_LENGTH.equals(organizationDb.getCode().length()))
-        ){
+                Objects.isNull(maxChildCode) || Constants.FORM_B_NAME_LENGTH.equals(maxChildCode.length())
+        ) {
             organizationRequest.setCode(organizationRequest.getParentCode()+"01");
             return;
         }
 
-        Integer code = Integer.parseInt(organizationDb.getCode()) + 1;
+        Integer code = Integer.parseInt(maxChildCode) + 1;
         organizationRequest.setCode(code+"");
     }
 
@@ -236,10 +236,6 @@ public class OrganizationService implements EntityHandler {
         request.setOrganizationCode(organizationDraft.getCode());
         request.setReferenceId(organizationDraft.getId());
         requestClient.save(request);
-    }
-
-    public Organization getByParentCodeMax(String parentCode){
-        return  client.getByParentCodeMax(parentCode).getData();
     }
 
     public Organization findByCode(String organizationId) {
