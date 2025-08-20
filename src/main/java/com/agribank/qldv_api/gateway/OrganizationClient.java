@@ -26,8 +26,8 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
             @PathVariable(name = "id") String id
     );
 
-    @GetMapping("/find-by-parent-code-max")
-    DefaultResponse<Organization> getByParentCodeMax(
+    @GetMapping("/max-child-code")
+    DefaultResponse<String> getMaxChildCode(
             @RequestParam(name = "parentCode") String parentCode
     );
 
