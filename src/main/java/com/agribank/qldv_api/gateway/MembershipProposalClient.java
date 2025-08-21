@@ -8,7 +8,7 @@ import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
-import com.agribank.qldvutils.response.membershipProposal.MembershipProposalResponse;
+import com.agribank.qldvutils.response.membershipProposal.MembershipProposalSearchResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
         configuration = DatabaseFeignConfiguration.class)
 public interface MembershipProposalClient extends BaseClient<MembershipProposal, String>{
     @PostMapping("/search")
-    DefaultResponse<PageResponse<MembershipProposalResponse>> search(
+    DefaultResponse<PageResponse<MembershipProposalSearchResponse>> search(
             @RequestBody MPSearchRequest requests
     );
 

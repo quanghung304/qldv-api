@@ -20,6 +20,7 @@ import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
 import com.agribank.qldvutils.response.membershipProposal.MembershipProposalResponse;
+import com.agribank.qldvutils.response.membershipProposal.MembershipProposalSearchResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -108,7 +109,7 @@ public class MembershipProposalService implements EntityHandler {
         return "Tạo yêu cầu thành công";
     }
 
-    public PageResponse<MembershipProposalResponse> search(MPSearchRequest request){
+    public PageResponse<MembershipProposalSearchResponse> search(MPSearchRequest request){
         checkAuthorityService.hasAuthorityOverOrganization(request.getOrganizationCode());
         return client.search(request).getData();
     }
