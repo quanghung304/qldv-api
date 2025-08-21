@@ -6,6 +6,7 @@ import com.agribank.qldvutils.request.membershipProposal.MPSearchRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.membershipProposal.MembershipProposalResponse;
+import com.agribank.qldvutils.response.membershipProposal.MembershipProposalSearchResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class MembershipProposalController {
     private final MembershipProposalService service;
 
     @PostMapping("/search")
-    public ResponseEntity<BaseResponse<PageResponse<MembershipProposalResponse>>> search(@RequestBody @Valid MPSearchRequest request) {
+    public ResponseEntity<BaseResponse<PageResponse<MembershipProposalSearchResponse>>> search(@RequestBody @Valid MPSearchRequest request) {
         return BaseResponse.success(service.search(request));
     }
 
