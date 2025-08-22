@@ -14,7 +14,7 @@ public class TransferWithinAgribankResponse {
     String fullName;
     String processId;
     String decisionNumber;
-    String decisionDate;
+    Date decisionDate;
     String decisionIssuingUnit;
     Date effectiveDate;
     Date dateOfProposal;
