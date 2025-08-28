@@ -34,13 +34,18 @@ public class SplitOrganizationController {
     }
 
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<OrganizationSplitResponse>>> search(@RequestBody @Valid SearchOrganizationSplitRequest request) {;
+    public ResponseEntity<DefaultResponse<PageResponse<OrganizationSplitResponse>>> search(@RequestBody @Valid SearchOrganizationSplitRequest request) {
         return DefaultResponse.success(splitOrganizationService.search(request));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultResponse<OrganizationSplitDetailResponse>> getDetail(@PathVariable(name = "id") String id) {;
+    public ResponseEntity<DefaultResponse<OrganizationSplitDetailResponse>> getDetail(@PathVariable(name = "id") String id) {
         return DefaultResponse.success(splitOrganizationService.getDetail(id));
+    }
+
+    @GetMapping("/draft/{id}")
+    public ResponseEntity<DefaultResponse<OrganizationSplitDetailResponse>> getDraftDetail(@PathVariable(name = "id") String id) {
+        return DefaultResponse.success(splitOrganizationService.getDraftDetail(id));
     }
 
     @PutMapping("/update")
@@ -48,5 +53,12 @@ public class SplitOrganizationController {
     public ResponseEntity<DefaultResponse<RequestResponse>> update(@RequestBody @Valid SplitOrganizationUpdateRequest request) {
         request.validate();
         return DefaultResponse.success(splitOrganizationService.update(request));
+    }
+
+    @PutMapping("/update-draft")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<String>> updateDraft(@RequestBody @Valid SplitOrganizationUpdateRequest request) {
+        request.validate();
+        return DefaultResponse.success(splitOrganizationService.updateDraft(request));
     }
 }

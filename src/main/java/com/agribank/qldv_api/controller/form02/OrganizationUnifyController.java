@@ -5,6 +5,7 @@ import com.agribank.qldv_api.request.form02.UnifyOrganizationRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.form02.OrganizationMerResponse;
 import com.agribank.qldv_api.response.form02.OrganizationMergeResponse;
+import com.agribank.qldv_api.response.form02.OrganizationUnifyResponse;
 import com.agribank.qldv_api.response.request.RequestResponse;
 import com.agribank.qldv_api.service.form02.OrganizationUnifyService;
 import com.agribank.qldvutils.entity.Request;
@@ -30,13 +31,18 @@ public class OrganizationUnifyController {
     }
 
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<OrganizationMerResponse>>> search(@RequestBody @Valid SearchOrganizationUnionRequest request) {;
+    public ResponseEntity<DefaultResponse<PageResponse<OrganizationMerResponse>>> search(@RequestBody @Valid SearchOrganizationUnionRequest request) {
         return DefaultResponse.success(unifyService.getList(request));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultResponse<OrganizationMergeResponse>> search(@PathVariable(name = "id") String id) {;
+    public ResponseEntity<DefaultResponse<OrganizationMergeResponse>> search(@PathVariable(name = "id") String id) {
         return DefaultResponse.success(unifyService.getDetail(id));
+    }
+
+    @GetMapping("/draft/{id}")
+    public ResponseEntity<DefaultResponse<OrganizationUnifyResponse>> getDraftDetail(@PathVariable(name = "id") String id) {
+        return DefaultResponse.success(unifyService.getDraftDetail(id));
     }
 
     @PutMapping("/update")
@@ -44,5 +50,12 @@ public class OrganizationUnifyController {
     public ResponseEntity<DefaultResponse<RequestResponse>> updateUnifyRequest(@RequestBody @Valid UnifyOrgUpdateRequest request) {
         request.validate();
         return DefaultResponse.success(unifyService.update(request));
+    }
+
+    @PutMapping("/update-draft")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<String>> updateDraft(@RequestBody @Valid UnifyOrgUpdateRequest request) {
+        request.validate();
+        return DefaultResponse.success(unifyService.updateDraft(request));
     }
 }

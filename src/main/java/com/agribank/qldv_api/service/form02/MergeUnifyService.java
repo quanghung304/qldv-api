@@ -2,7 +2,6 @@ package com.agribank.qldv_api.service.form02;
 
 
 import com.agribank.qldv_api.enums.EApprovalStatus;
-import com.agribank.qldv_api.enums.EReport01Type;
 import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeClient;
@@ -17,7 +16,6 @@ import com.agribank.qldv_api.service.DvOrgService;
 import com.agribank.qldv_api.service.RequestService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
-import com.agribank.qldvutils.dto.OrganizationDto;
 import com.agribank.qldvutils.entity.DV;
 import com.agribank.qldvutils.entity.DvOrgHistory;
 import com.agribank.qldvutils.entity.DvOrgHistoryDraft;
@@ -40,6 +38,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -86,31 +85,6 @@ public abstract class MergeUnifyService {
                 .stream()
                 .map(o -> modelMapper.map(o, OrganizationMerResponse.class)).toList());
 
-        return response;
-    }
-
-    public OrganizationMergeResponse getDetail(String id) {
-        OrganizationMerge organizationMerge = mergeClient.findById(id).getData().orElse(null);
-
-        if (Objects.isNull(organizationMerge)) {
-            throw new CommonException("Không tìm thấy yêu cầu sáp nhập");
-        }
-
-        OrganizationMergeResponse response = modelMapper.map(organizationMerge, OrganizationMergeResponse.class);
-
-        Organization organization = organizationService.findByCode(organizationMerge.getDecisionCommittee());
-        if (Objects.nonNull(organization)) {
-            response.setDecision(modelMapper.map(organization, OrganizationDto.class));
-        }
-        List<OrganizationMergeDetail> mergeDetails = mergeDetailClient.findByRefId(id).getData();
-        List<OrganizationMergeResponse.MergeDetailResponse> detailResponses = new ArrayList<>();
-
-        for (OrganizationMergeDetail mergeDetail: mergeDetails) {
-            OrganizationMergeResponse.MergeDetailResponse detailResponse = modelMapper.map(mergeDetail, OrganizationMergeResponse.MergeDetailResponse.class);
-            detailResponses.add(detailResponse);
-        }
-
-        response.setMergeDetails(detailResponses);
         return response;
     }
 
@@ -241,5 +215,74 @@ public abstract class MergeUnifyService {
         }
 
         return oldDVs;
+    }
+
+    public OrganizationMergeResponse getDetail(String id) {
+        OrganizationMerge organizationMerge = mergeClient.findById(id).getData().orElse(null);
+
+        if (Objects.isNull(organizationMerge)) {
+            throw new CommonException("Không tìm thấy yêu cầu sáp nhập");
+        }
+
+        OrganizationMergeResponse response = modelMapper.map(organizationMerge, OrganizationMergeResponse.class);
+        Organization mergeOrganization = organizationClient.findByCode(organizationMerge.getOrganizationCode()).getData();
+        response.setOrganizationMerge(mergeOrganization);
+
+        List<OrganizationMergeDetail> mergeDetails = mergeDetailClient.findByRefId(id).getData();
+
+        List<String> organizations = new ArrayList<>();
+        for (OrganizationMergeDetail mergeDetail: mergeDetails) {
+            organizations.add(mergeDetail.getOldCode());
+        }
+
+        List<Organization> oldOrganizations = organizationClient.findAllByCode(organizations).getData();
+
+        Map<String, Organization> oldOrganizationMaps = new HashMap<>();
+
+        for (Organization organization : oldOrganizations) {
+            oldOrganizationMaps.put(organization.getCode(), organization);
+        }
+
+        List<DvOrgHistory> dvOrgHistories = dvOrgHistoryClient.findByRefId(id).getData();
+
+        Map<String, List<DvOrgHistory>> dvOrgHistoryMap = dvOrgHistories.stream()
+                .collect(Collectors.groupingBy(DvOrgHistory::getOldOrgCode));
+
+        if (dvOrgHistoryMap.isEmpty()) {
+            throw new CommonException("Không có dữ liệu đảng bộ sáp nhập");
+        }
+
+        Map<String, DV> dvOfOldOrgMap = new HashMap<>();
+        List<String> staffCodes = new ArrayList<>();
+
+        for (DvOrgHistory dvOrgHistory : dvOrgHistories) {
+            staffCodes.add(dvOrgHistory.getStaffCode());
+        }
+        List<DV> dvs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
+
+        for (DV dv : dvs) {
+            dvOfOldOrgMap.put(dv.getStaffCode(), dv);
+        }
+
+        List<OrganizationMergeResponse.MergeDetailResponse> detailResponses = new ArrayList<>();
+
+        for (OrganizationMergeDetail mergeDetail: mergeDetails) {
+            OrganizationMergeResponse.MergeDetailResponse detailResponse = new OrganizationMergeResponse.MergeDetailResponse();
+            List<DvOrgHistory> items = dvOrgHistoryMap.get(mergeDetail.getOldCode());
+            List<DV> dvsOfOldOrg = new ArrayList<>();
+
+            if (!Objects.isNull(items)) {
+                for (DvOrgHistory dvOrgHistory : items) {
+                    dvsOfOldOrg.add(dvOfOldOrgMap.get(dvOrgHistory.getStaffCode()));
+                }
+            }
+
+            detailResponse.setOrganization(oldOrganizationMaps.get(mergeDetail.getOldCode()));
+            detailResponse.setMembers(dvsOfOldOrg);
+            detailResponses.add(detailResponse);
+        }
+
+        response.setMergeDetails(detailResponses);
+        return response;
     }
 }

@@ -9,9 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -24,19 +22,18 @@ public class UnifyOrganizationRequest extends BaseFormRequest {
     String organizationCode;
     String organizationName;
     String form;
-    List<String> unifyCodes;
-    List<String> staffCodes;
+    private List<UnifyDetailRequest> detailRequests;
 
-    @Override
+    @Data
+    public static class UnifyDetailRequest {
+        @NotNull(message = "không để trống trường tổ chức đảng bi sáp nhap")
+        private String unifiedCode;
+        private List<String> staffCodes;
+    }
+
     public void validate() {
-        if (unifyCodes.isEmpty() || unifyCodes.size() > MAX_SIZE) {
+        if (detailRequests.isEmpty() || detailRequests.size() > MAX_SIZE) {
             throw new CommonException("Số lượng chi, đảng bộ không hợp lệ");
-        }
-
-        unifyCodes.remove(organizationCode);
-
-        if (Objects.isNull(staffCodes)){
-            staffCodes = new ArrayList<>();
         }
     }
 }
