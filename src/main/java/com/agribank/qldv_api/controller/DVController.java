@@ -1,6 +1,5 @@
 package com.agribank.qldv_api.controller;
 
-
 import com.agribank.qldv_api.enums.EExcelImport;
 import com.agribank.qldv_api.request.dv.DVDto;
 import com.agribank.qldv_api.response.DefaultResponse;
@@ -13,7 +12,6 @@ import com.agribank.qldvutils.request.SearchDVRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -74,7 +72,7 @@ public class DVController {
         return BaseResponse.success(response.getMessage(), null);
     }
 
-    @GetMapping("/split-organization")
+    @GetMapping("/find-active-by-organization")
     public ResponseEntity<DefaultResponse<List<DVDto>>> findActiveDVByOrganizationCode(@RequestParam(name = "organization", required = false) String organization) {
         return DefaultResponse.success(service.findActiveDVByOrganizationCode(organization));
     }

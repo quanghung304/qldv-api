@@ -26,6 +26,12 @@ public interface OrganizationMergeClient extends BaseClient<OrganizationMerge, S
     @PutMapping("/save-entities")
     BaseResponse<Boolean> saveEntities(@RequestBody @Valid ApproveMergeRequest request);
 
+    @PutMapping("/save-draft-entities")
+    BaseResponse<Boolean> saveDraftEntities(@RequestBody @Valid MergeDraftRequest request);
+
+    @PutMapping("/save-update-draft-entities")
+    BaseResponse<Boolean> saveUpdateDraftEntities(@RequestBody @Valid MergeUpdateDraftRequest request);
+
     @PutMapping("/save-unify-entities")
     BaseResponse<Boolean> saveUnifyEntities(@RequestBody @Valid ApproveUnifyRequest request);
 

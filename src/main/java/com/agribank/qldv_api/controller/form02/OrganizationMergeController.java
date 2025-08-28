@@ -33,8 +33,13 @@ public class OrganizationMergeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultResponse<OrganizationMergeResponse>> getDetail(@PathVariable String id) {
+    public ResponseEntity<DefaultResponse<OrganizationMergeResponse>> getDetail(@PathVariable(name = "id") String id) {
         return DefaultResponse.success(mergeService.getDetail(id));
+    }
+
+    @GetMapping("/draft/{id}")
+    public ResponseEntity<DefaultResponse<OrganizationMergeResponse>> getDraftDetail(@PathVariable String id) {
+        return DefaultResponse.success(mergeService.getDraftDetail(id));
     }
 
     @PutMapping("update")
@@ -42,5 +47,12 @@ public class OrganizationMergeController {
     public ResponseEntity<DefaultResponse<Request>> updateMergeRequest(@RequestBody @Valid MergeOrganizationRequest request) {
         request.validate();
         return DefaultResponse.success(mergeService.update(request));
+    }
+
+    @PutMapping("update-draft")
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    public ResponseEntity<DefaultResponse<String>> updateDraft(@RequestBody @Valid MergeOrganizationRequest request) {
+        request.validate();
+        return DefaultResponse.success(mergeService.updateDraft(request));
     }
 }

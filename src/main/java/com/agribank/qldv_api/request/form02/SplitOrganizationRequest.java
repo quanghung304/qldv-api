@@ -18,10 +18,11 @@ public class SplitOrganizationRequest extends BaseFormRequest {
 
     @NotNull(message = "không để trống trường mã tổ chức đảng cũ")
     private String oldCode;
-    private List<SplitDetailRequest> detailRequests;
+    private List<SplitDetailRequestNew> detailRequestsNew;
+    private List<SplitDetailRequestOld> detailRequestsOld;
 
     @Data
-    public static class SplitDetailRequest {
+    public static class SplitDetailRequestNew {
         @NotNull(message = "không để trống trường mã tổ chức đảng mới")
         private String newCode;
         @NotNull(message = "không để trống trường tên tổ chức đảng mới")
@@ -31,8 +32,15 @@ public class SplitOrganizationRequest extends BaseFormRequest {
         private List<String> members;
     }
 
+    @Data
+    public static class SplitDetailRequestOld {
+        @NotNull(message = "không để trống trường mã tổ chức đảng mới")
+        private String organizationCode;
+        private List<String> members;
+    }
+
     public void validate() {
-        if (detailRequests.isEmpty() || detailRequests.size() > MAX_SIZE) {
+        if (detailRequestsNew.isEmpty() || detailRequestsNew.size() > MAX_SIZE) {
             throw new CommonException("Số lượng chi, đảng bộ không hợp lệ");
         }
     }

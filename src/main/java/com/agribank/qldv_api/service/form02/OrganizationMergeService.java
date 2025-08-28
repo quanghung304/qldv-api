@@ -9,8 +9,10 @@ import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDetailClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDetailDraftClient;
 import com.agribank.qldv_api.gateway.form02.merge.OrganizationMergeDraftClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.request.form02.MergeDraftTempRequest;
 import com.agribank.qldv_api.request.form02.MergeOrganizationRequest;
 import com.agribank.qldv_api.response.form02.OrganizationMerResponse;
+import com.agribank.qldv_api.response.form02.OrganizationMergeResponse;
 import com.agribank.qldv_api.service.CheckAuthorityService;
 import com.agribank.qldv_api.service.DvOrgService;
 import com.agribank.qldv_api.service.RequestService;
@@ -23,9 +25,7 @@ import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetail;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDetailDraft;
 import com.agribank.qldvutils.entity.form02.merge.OrganizationMergeDraft;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.form02.ApproveMergeRequest;
-import com.agribank.qldvutils.request.form02.ApproveUpdateMergeRequest;
-import com.agribank.qldvutils.request.form02.SearchOrganizationUnionRequest;
+import com.agribank.qldvutils.request.form02.*;
 import com.agribank.qldvutils.response.PageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -34,6 +34,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OrganizationMergeService extends MergeUnifyService implements EntityHandler {
@@ -80,72 +81,68 @@ public class OrganizationMergeService extends MergeUnifyService implements Entit
             throw new CommonException("Chi bộ nhận sáp nhập không tồn tại");
         }
 
-        List<Organization> mergedOrganizations = organizationClient.findAllByCode(request.getMergedCodes()).getData();
-        mergedOrganizations = mergedOrganizations.stream()
-                .filter(x -> Objects.equals(x.getStatus(), EOrganizationStatus.YES.getStatus()))
-                .toList();
-
-        if (mergedOrganizations.isEmpty()) {
-            throw new CommonException("Danh sách chi bộ nhận sáp nhập không hợp lệ");
-        }
-
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        OrganizationMergeDraft organizationMerge = modelMapper.map(request, OrganizationMergeDraft.class);
-        organizationMerge.setType(EReport01Type.MERGE.getId());
-        organizationMerge.setOrganizationName(mergingOrganization.getName());
-        organizationMerge.setForm(mergingOrganization.getForm());
-        organizationMerge.setCreatedBy(userDetails.getStaffCode());
-        organizationMerge = mergeDraftClient.save(organizationMerge).getData();
+        OrganizationMergeDraft organizationMergeDraft = modelMapper.map(request, OrganizationMergeDraft.class);
+        organizationMergeDraft.setType(EReport01Type.MERGE.getId());
+        organizationMergeDraft.setOrganizationName(mergingOrganization.getName());
+        organizationMergeDraft.setForm(mergingOrganization.getForm());
+        organizationMergeDraft.setCreatedBy(userDetails.getStaffCode());
+        organizationMergeDraft = mergeDraftClient.save(organizationMergeDraft).getData();
 
-        List<OrganizationMergeDetailDraft> mergeDetails = new ArrayList<>();
-        for (Organization mergedOrganization : mergedOrganizations) {
-            OrganizationMergeDetailDraft detail = OrganizationMergeDetailDraft.builder()
-                    .referenceId(organizationMerge.getId())
-                    .oldCode(mergedOrganization.getCode())
-                    .oldName(mergedOrganization.getName())
-                    .build();
+        MergeDraftTempRequest draftRequest = new MergeDraftTempRequest();
+        List<OrganizationMergeDetailDraft> mergeDetailDrafts = createMergeDetailAndDvOrgHistoryDrafts(request, organizationMergeDraft, draftRequest);
 
-            mergeDetails.add(detail);
-        }
-        mergeDetailDraftClient.saveAll(mergeDetails);
-
-        createDvOrgHistoryDraft(request, organizationMerge);
-
-        Request mergeRequest = requestService.initializeRequest(organizationMerge, null, form, getCombinedFieldMap());
-        String jsonData = createJsonData(organizationMerge, mergeDetails, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
+        Request mergeRequest = requestService.initializeRequest(organizationMergeDraft, null, form, getCombinedFieldMap());
+        String jsonData = createJsonData(organizationMergeDraft, mergeDetailDrafts, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
         mergeRequest.setNewData(jsonData);
-        mergeRequest.setReferenceId(organizationMerge.getId());
+        mergeRequest.setReferenceId(organizationMergeDraft.getId());
         mergeRequest.setCreatedBy(userDetails.getId());
         mergeRequest.setOrganizationCode(mergingOrganization.getCode());
-        requestClient.save(mergeRequest);
+
+        MergeDraftRequest mergeDraftRequest = MergeDraftRequest.builder()
+                .mergeDetailDrafts(draftRequest.getMergeDetailDrafts())
+                .membersDraft(draftRequest.getMembersDraft())
+                .mergeRequest(mergeRequest)
+                .build();
+
+        mergeClient.saveDraftEntities(mergeDraftRequest);
 
         return mergeRequest;
     }
 
-    private void createDvOrgHistoryDraft(MergeOrganizationRequest request, OrganizationMergeDraft organizationUnify){
-        if (request.getStaffCodes().isEmpty()){
-            return;
+    private List<OrganizationMergeDetailDraft> createMergeDetailAndDvOrgHistoryDrafts(MergeOrganizationRequest request, OrganizationMergeDraft organizationMergeDraft, MergeDraftTempRequest draftRequest){
+        if (request.getDetailRequests().isEmpty()){
+            return new ArrayList<>();
         }
 
-        List<DV> dvs = dvClient.findByStaffCodes(request.getStaffCodes()).getData();
-        if (dvs.isEmpty()){
-            return;
-        }
+        List<OrganizationMergeDetailDraft> mergeDetailDrafts = new ArrayList<>();
+        List<DvOrgHistoryDraft> membersDraft = new ArrayList<>();
 
-        List<DvOrgHistoryDraft> dvOrgHistoryDrafts = new ArrayList<>();
-        for (DV dv : dvs) {
-            DvOrgHistoryDraft dvOrgHistoryDraft = DvOrgHistoryDraft.builder()
-                    .refId(organizationUnify.getId())
-                    .staffCode(dv.getStaffCode())
-                    .oldOrgCode(dv.getOrganizationCode())
-                    .newOrgCode(request.getOrganizationCode())
+        for (MergeOrganizationRequest.MergeDetailRequest detailRequest : request.getDetailRequests()) {
+            Organization mergedOrganization = organizationClient.findByCode(detailRequest.getMergedCode()).getData();
+            OrganizationMergeDetailDraft detail = OrganizationMergeDetailDraft.builder()
+                    .referenceId(organizationMergeDraft.getId())
+                    .oldCode(mergedOrganization.getCode())
+                    .oldName(mergedOrganization.getName())
                     .build();
 
-            dvOrgHistoryDrafts.add(dvOrgHistoryDraft);
+            mergeDetailDrafts.add(detail);
+
+            for (String staffCode : detailRequest.getStaffCodes()) {
+                DvOrgHistoryDraft memDraft = new DvOrgHistoryDraft();
+                memDraft.setStaffCode(staffCode);
+                memDraft.setOldOrgCode(detailRequest.getMergedCode());
+                memDraft.setNewOrgCode(request.getOrganizationCode());
+                memDraft.setRefId(organizationMergeDraft.getId());
+                membersDraft.add(memDraft);
+            }
         }
 
-        dvOrgHistoryDraftClient.saveAll(dvOrgHistoryDrafts);
+        draftRequest.setMembersDraft(membersDraft);
+        draftRequest.setMergeDetailDrafts(mergeDetailDrafts);
+
+        return mergeDetailDrafts;
     }
 
     @Override
@@ -170,11 +167,6 @@ public class OrganizationMergeService extends MergeUnifyService implements Entit
             throw new CommonException("Chi bộ nhận sáp nhập không tồn tại");
         }
 
-        List<Organization> mergedOrganizations = organizationClient.findAllByCode(request.getMergedCodes()).getData();
-        if (mergedOrganizations.isEmpty()) {
-            throw new CommonException("Danh sách chi bộ nhận sáp nhập không hợp lệ");
-        }
-
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         OrganizationMergeDraft draft = modelMapper.map(request, OrganizationMergeDraft.class);
@@ -185,31 +177,26 @@ public class OrganizationMergeService extends MergeUnifyService implements Entit
         draft.setRefId(merge.getId());
         draft = mergeDraftClient.save(draft).getData();
 
-        List<OrganizationMergeDetailDraft> draftDetails = new ArrayList<>();
-        for (Organization mergedOrganization : mergedOrganizations) {
-            OrganizationMergeDetailDraft detail = OrganizationMergeDetailDraft.builder()
-                    .referenceId(draft.getId())
-                    .oldCode(mergedOrganization.getCode())
-                    .oldName(mergedOrganization.getName())
-                    .build();
-
-            draftDetails.add(detail);
-        }
-        mergeDetailDraftClient.saveAll(draftDetails);
+        MergeDraftTempRequest draftRequest = new MergeDraftTempRequest();
+        List<OrganizationMergeDetailDraft> draftDetails = createMergeDetailAndDvOrgHistoryDrafts(request, draft, draftRequest);
 
         Request mergeRequest = requestService.initializeRequest(draft, merge, form, getCombinedFieldMap());
-
-        createDvOrgHistoryDraft(request, draft);
 
         String newData = createJsonData(draft, draftDetails, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
         mergeRequest.setNewData(newData);
         String oldData = createJsonData(merge, mergeDetails, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
         mergeRequest.setOldData(oldData);
-
         mergeRequest.setReferenceId(draft.getId());
         mergeRequest.setCreatedBy(userDetails.getId());
         mergeRequest.setOrganizationCode(mergingOrganization.getCode());
-        requestClient.save(mergeRequest);
+
+        MergeDraftRequest mergeDraftRequest = MergeDraftRequest.builder()
+                .mergeDetailDrafts(draftRequest.getMergeDetailDrafts())
+                .membersDraft(draftRequest.getMembersDraft())
+                .mergeRequest(mergeRequest)
+                .build();
+
+        mergeClient.saveDraftEntities(mergeDraftRequest);
 
         return mergeRequest;
     }
@@ -420,5 +407,127 @@ public class OrganizationMergeService extends MergeUnifyService implements Entit
     @Override
     public void setDenied(String referenceId) {
         denyMergeRequest(referenceId);
+    }
+
+    public OrganizationMergeResponse getDraftDetail(String draftId) {
+        OrganizationMergeDraft mergeDraft = mergeDraftClient.findById(draftId).getData().orElse(null);
+
+        if (Objects.isNull(mergeDraft)) {
+            throw new CommonException("Không tìm thấy yêu cầu sáp nhập");
+        }
+
+        OrganizationMergeResponse response = modelMapper.map(mergeDraft, OrganizationMergeResponse.class);
+        Organization mergeOrganization = organizationClient.findByCode(mergeDraft.getOrganizationCode()).getData();
+        response.setOrganizationMerge(mergeOrganization);
+
+        List<OrganizationMergeDetailDraft> mergeDetailDrafts = mergeDetailDraftClient.findByRefId(draftId).getData();
+
+        List<String> organizations = new ArrayList<>();
+        for (OrganizationMergeDetailDraft mergeDetailDraft: mergeDetailDrafts) {
+            organizations.add(mergeDetailDraft.getOldCode());
+        }
+
+        List<Organization> oldOrganizationDrafts = organizationClient.findAllByCode(organizations).getData();
+
+        Map<String, Organization> oldOrganizationDraftMaps = new HashMap<>();
+
+        for (Organization organization : oldOrganizationDrafts) {
+            oldOrganizationDraftMaps.put(organization.getCode(), organization);
+        }
+
+        List<DvOrgHistoryDraft> dvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(draftId).getData();
+
+        Map<String, List<DvOrgHistoryDraft>> dvOrgHistoryDraftMap = dvOrgHistoryDrafts.stream()
+                .collect(Collectors.groupingBy(DvOrgHistoryDraft::getOldOrgCode));
+
+        if (dvOrgHistoryDraftMap.isEmpty()) {
+            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
+        }
+
+        Map<String, DV> dvOfOldOrgMap = new HashMap<>();
+        List<String> staffCodes = new ArrayList<>();
+
+        for (DvOrgHistoryDraft dvOrgHistoryDraft : dvOrgHistoryDrafts) {
+            staffCodes.add(dvOrgHistoryDraft.getStaffCode());
+        }
+        List<DV> dvs = dvClient.findByStaffCodeActiveIn(staffCodes).getData();
+
+        for (DV dv : dvs) {
+            dvOfOldOrgMap.put(dv.getStaffCode(), dv);
+        }
+
+        List<OrganizationMergeResponse.MergeDetailResponse> detailResponses = new ArrayList<>();
+
+        for (OrganizationMergeDetailDraft mergeDetailDraft: mergeDetailDrafts) {
+            OrganizationMergeResponse.MergeDetailResponse detailResponse = new OrganizationMergeResponse.MergeDetailResponse();
+            List<DvOrgHistoryDraft> items = dvOrgHistoryDraftMap.get(mergeDetailDraft.getOldCode());
+            List<DV> dvsOfOldOrg = new ArrayList<>();
+
+            if (!Objects.isNull(items)) {
+                for (DvOrgHistoryDraft dvOrgHistoryDraft : items) {
+                    dvsOfOldOrg.add(dvOfOldOrgMap.get(dvOrgHistoryDraft.getStaffCode()));
+                }
+            }
+
+            detailResponse.setOrganization(oldOrganizationDraftMaps.get(mergeDetailDraft.getOldCode()));
+            detailResponse.setMembers(dvsOfOldOrg);
+            detailResponses.add(detailResponse);
+        }
+
+        response.setMergeDetails(detailResponses);
+        return response;
+    }
+
+    public String updateDraft(MergeOrganizationRequest request) {
+        OrganizationMergeDraft mergeDraft = mergeDraftClient.findById(request.getId()).getData().orElseThrow(() -> new CommonException(ExceptionMessage.NO_DATA));;
+
+        if (!Objects.equals(mergeDraft.getStatus(), EApprovalStatus.PENDING.getId())) {
+            throw new CommonException("Chỉ được chỉnh sửa yêu cầu chưa được phê duyệt");
+        }
+
+        Organization mergeOrganization = organizationClient.findByCode(request.getOrganizationCode()).getData();
+
+        if (Objects.isNull(mergeOrganization)) {
+            throw new CommonException(ExceptionMessage.ORGANIZATION_NOT_FOUND);
+        }
+
+        mergeDraft.setOrganizationCode(request.getOrganizationCode());
+        mergeDraft.setOrganizationName(mergeOrganization.getName());
+        mergeDraft.setForm(mergeOrganization.getForm());
+        mergeDraft.setDecisionDate(request.getDecisionDate());
+        mergeDraft.setConclusionNumber(request.getConclusionNumber());
+        mergeDraft.setDecisionNumber(request.getDecisionNumber());
+        mergeDraft.setConclusionDate(request.getConclusionDate());
+        mergeDraft.setDecisionCommittee(request.getDecisionCommittee());
+        mergeDraft.setEffectiveDate(request.getEffectiveDate());
+
+        List<OrganizationMergeDetailDraft> oldOrganizationMergeDetailDrafts = mergeDetailDraftClient.findByRefId(mergeDraft.getId()).getData();
+
+        if (oldOrganizationMergeDetailDrafts.isEmpty()) {
+            throw new CommonException("Không tìm thấy thông tin tổ chức Đảng bị sáp nhâp");
+        }
+
+        List<DvOrgHistoryDraft> oldDvOrgHistoryDrafts = dvOrgHistoryDraftClient.findByRefId(mergeDraft.getId()).getData();
+
+        MergeDraftTempRequest draftRequest = new MergeDraftTempRequest();
+        List<OrganizationMergeDetailDraft> mergeDetailDrafts = createMergeDetailAndDvOrgHistoryDrafts(request, mergeDraft, draftRequest);
+
+        Request mergeRequest = requestService.getRequestByDraftId(form.getCode(), request.getId());
+        String jsonData = createJsonData(mergeDraft, mergeDetailDrafts, OrganizationMergeDetailDraft.FIELD_MAP_MERGE);
+        mergeRequest.setNewData(jsonData);
+        mergeRequest.setOrganizationCode(request.getOrganizationCode());
+
+        MergeUpdateDraftRequest mergeUpdateDraftRequest = MergeUpdateDraftRequest.builder()
+                .mergeDetailDrafts(draftRequest.getMergeDetailDrafts())
+                .membersDraft(draftRequest.getMembersDraft())
+                .mergeRequest(mergeRequest)
+                .mergeDraft(mergeDraft)
+                .oldOrganizationMergeDetailDrafts(oldOrganizationMergeDetailDrafts)
+                .oldDvOrgHistoryDrafts(oldDvOrgHistoryDrafts)
+                .build();
+
+        mergeClient.saveUpdateDraftEntities(mergeUpdateDraftRequest);
+
+        return "Cập nhật yêu cầu thành công";
     }
 }

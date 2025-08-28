@@ -3,9 +3,7 @@ package com.agribank.qldv_api.gateway.form02.split;
 import com.agribank.qldv_api.gateway.BaseClient;
 import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.form02.split.OrganizationSplit;
-import com.agribank.qldvutils.request.form02.ApproveSplitRequest;
-import com.agribank.qldvutils.request.form02.ApproveUpdateSplitRequest;
-import com.agribank.qldvutils.request.form02.SearchOrganizationSplitRequest;
+import com.agribank.qldvutils.request.form02.*;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -26,4 +24,10 @@ public interface OrganizationSplitClient extends BaseClient<OrganizationSplit, S
 
     @PutMapping("/update-entities")
     BaseResponse<Boolean> updateEntities(@RequestBody @Valid ApproveUpdateSplitRequest request);
+
+    @PutMapping("/save-draft-entities")
+    BaseResponse<Boolean> saveDraftEntities(@RequestBody @Valid SplitDraftRequest request);
+
+    @PutMapping("/save-update-draft-entities")
+    BaseResponse<Boolean> saveUpdateDraftEntities(@RequestBody @Valid SplitUpdateDraftRequest request);
 }
