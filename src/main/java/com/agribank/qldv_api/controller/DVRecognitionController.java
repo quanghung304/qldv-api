@@ -2,6 +2,7 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.dvRecognition.DVRecognitionRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.dvRecognition.DVRecognitionDraftResponse;
 import com.agribank.qldv_api.response.dvRecognition.DVRecognitionResponse;
 import com.agribank.qldv_api.service.DVRecognitionService;
 import com.agribank.qldvutils.request.SearchDVRecognitionRequest;
@@ -41,5 +42,17 @@ public class DVRecognitionController {
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<DVRecognitionResponse>> getDetail(@PathVariable(name = "id") String id) {
         return BaseResponse.success(service.getDetail(id));
+    }
+
+    @GetMapping("/draft/detail")
+    public ResponseEntity<BaseResponse<DVRecognitionDraftResponse>> getDraftDetail(@RequestParam(name = "id") String id) {
+        return BaseResponse.success(service.getDraftDetail(id));
+    }
+
+
+    @PreAuthorize("hasAuthority('QLDV_TELLER')")
+    @PutMapping("/draft/update")
+    public ResponseEntity<DefaultResponse<String>> updateDraft(@RequestBody DVRecognitionRequest request) {
+        return success(service.updateDraft(request));
     }
 }
