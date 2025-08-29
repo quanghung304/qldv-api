@@ -3,12 +3,14 @@ package com.agribank.qldv_api.service;
 import com.agribank.qldv_api.enums.EApprovalStatus;
 import com.agribank.qldv_api.enums.EForm;
 import com.agribank.qldv_api.enums.ERecordStatus;
+import com.agribank.qldv_api.exception.ExceptionMessage;
 import com.agribank.qldv_api.gateway.DVClient;
 import com.agribank.qldv_api.gateway.DVRecognitionClient;
 import com.agribank.qldv_api.gateway.DVRecognitionDraftClient;
 import com.agribank.qldv_api.gateway.RequestClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.dvRecognition.DVRecognitionRequest;
+import com.agribank.qldv_api.response.dvRecognition.DVRecognitionDraftResponse;
 import com.agribank.qldv_api.response.dvRecognition.DVRecognitionResponse;
 import com.agribank.qldv_api.service.handler.EntityHandler;
 import com.agribank.qldvutils.dto.DVRecognitionDto;
@@ -207,5 +209,41 @@ public class DVRecognitionService implements EntityHandler {
 
     public List<DVRecognition> getDvRByStaffCodeIn(List<String> staffCodes){
         return client.getDvRByStaffCodeIn(staffCodes).getData();
+    }
+
+    public String updateDraft(DVRecognitionRequest request){
+        DVRecognitionDraft dvRecognitionDraft = dvRecognitionDraftService.findById(request.getId());
+
+        Request requestDvRecognition = requestClient.findByReferenceId(dvRecognitionDraft.getId()).getData();
+        if (Objects.isNull(requestDvRecognition)){
+            throw new CommonException("Không tìm thấy dữ liệu");
+        }
+
+        if (EApprovalStatus.PENDING.getId() != requestDvRecognition.getStatus()){
+            throw new CommonException(ExceptionMessage.REQUEST_NOT_PENDING);
+        }
+
+        UserDetailsImpl userRequested = userService.getUserRequested();
+
+        dvRecognitionDraft.setStaffCode(request.getDvCode());
+        dvRecognitionDraft.setStaffName(request.getDvName());
+        dvRecognitionDraft.setConclusionNumber(request.getConclusionNumber());
+        dvRecognitionDraft.setConclusionDate(request.getConclusionDate());
+        dvRecognitionDraft.setDecisionNumber(request.getDecisionNumber());
+        dvRecognitionDraft.setDecisionDate(request.getDecisionDate());
+        dvRecognitionDraft.setEffectiveDate(request.getEffectiveDate());
+        dvRecognitionDraft.setCreatedBy(userRequested.getId());
+
+        requestDvRecognition.setNewData(requestService.createJsonData(dvRecognitionDraft, getCombinedFieldMap()));
+        requestDvRecognition.setCreatedBy(userRequested.getId());
+
+        dvRecognitionDraftService.save(dvRecognitionDraft);
+        requestClient.save(requestDvRecognition);
+        return "Sửa yêu cầu thành công";
+    }
+
+    public DVRecognitionDraftResponse getDraftDetail(String id){
+        DVRecognitionDraft dvRecognitionDraft = dvRecognitionDraftService.findById(id);
+        return modelMapper.map(dvRecognitionDraft, DVRecognitionDraftResponse.class);
     }
 }
