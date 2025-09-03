@@ -8,7 +8,7 @@ import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.ImportDVService;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DvDraft;
-import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.dv.SearchDVRequest;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.DVSearchResponse;
 import com.agribank.qldvutils.response.PageResponse;

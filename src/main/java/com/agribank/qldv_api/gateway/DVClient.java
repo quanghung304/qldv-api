@@ -4,7 +4,8 @@ import com.agribank.qldv_api.response.DefaultListResponse;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.dv.SaveDVRequest;
+import com.agribank.qldvutils.request.dv.SearchDVRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
@@ -117,5 +118,10 @@ public interface DVClient {
     @PostMapping("/report-18")
     DefaultResponse<PageResponse<DvRp18Response>> searchRp18(
             @RequestBody SearchRequest request
+    );
+
+    @PostMapping("/save-entities")
+    DefaultResponse<Boolean> saveEntities(
+            @RequestBody SaveDVRequest request
     );
 }
