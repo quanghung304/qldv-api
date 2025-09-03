@@ -19,7 +19,8 @@ import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.DVCodeNameDto;
 import com.agribank.qldvutils.entity.*;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.SearchDVRequest;
+import com.agribank.qldvutils.request.dv.SaveDVRequest;
+import com.agribank.qldvutils.request.dv.SearchDVRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.report_dv.SearchRp07Request;
@@ -174,8 +175,12 @@ public class DVService implements EntityHandler {
         dv.setCreatedBy(dvDraft.getCreatedBy());
         dv.setApprovedBy(userDetails.getId());
 
-        dvClient.save(dv);
-        dvDraftClient.save(dvDraft);
+        SaveDVRequest saveDVRequest = SaveDVRequest.builder()
+                .dv(dv)
+                .dvDraft(dvDraft)
+                .build();
+
+        dvClient.saveEntities(saveDVRequest);
 
         return true;
     }
@@ -197,8 +202,12 @@ public class DVService implements EntityHandler {
         DV dv = dvClient.findByStaffCode(dvDraft.getStaffCode()).getData();
         mapDVDraftToDV(dv, dvDraft);
 
-        dvClient.save(dv);
-        dvDraftClient.save(dvDraft);
+        SaveDVRequest saveDVRequest = SaveDVRequest.builder()
+                .dv(dv)
+                .dvDraft(dvDraft)
+                .build();
+
+        dvClient.saveEntities(saveDVRequest);
 
         return true;
     }
@@ -219,14 +228,6 @@ public class DVService implements EntityHandler {
 
     public void mapDVDraftToDV(DV dv, DvDraft dvDraft) {
         dv.setStaffCode(dvDraft.getStaffCode());
-        if (Objects.nonNull(dvDraft.getOrganizationCode()) && !Objects.equals(dvDraft.getOrganizationCode(), dv.getOrganizationCode())) {
-            DvOrgHistory dvOrgHistory = DvOrgHistory.builder()
-                    .oldOrgCode(dv.getOrganizationCode())
-                    .newOrgCode(dvDraft.getOrganizationCode())
-                    .build();
-
-            dvOrgService.save(dvOrgHistory);
-        }
         dv.setOrganizationCode(dvDraft.getOrganizationCode());
         dv.setResumeNumber(dvDraft.getResumeNumber());
         dv.setPartyCardNumber(dvDraft.getPartyCardNumber());
