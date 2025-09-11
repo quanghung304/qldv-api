@@ -57,7 +57,7 @@ public class DVService implements EntityHandler {
     private static final EForm form = EForm.BIEU_15;
 
     public PageResponse<DVSearchResponse> search(SearchDVRequest request){
-        if (Objects.isNull(request.getOrganizationCode())) {
+        if (Objects.isNull(request.getOrganizationCode()) || request.getOrganizationCode().isEmpty()) {
             request.setOrganizationCode(CommonUtils.getOrganizationByRequestedUser());
         } else {
             authorityService.hasAuthorityOverOrganization(request.getOrganizationCode());

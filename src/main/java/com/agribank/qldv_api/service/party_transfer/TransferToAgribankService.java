@@ -76,6 +76,7 @@ public class TransferToAgribankService implements EntityHandler {
        Request transferToAgribankRequest = requestService.initializeRequest(transferToAgribank, null, form, TransferToAgribankDraft.FIELD_MAP);
        transferToAgribankRequest.setOrganizationCode(userDetails.getOrganizationCode());
        transferToAgribankRequest.setStaffCode(request.getStaffCode());
+       transferToAgribankRequest.setStaffName(request.getFullName());
        transferToAgribankRequest.setCreatedBy(userDetails.getId());
        transferToAgribankRequest.setReferenceId(transferToAgribank.getId());
        requestClient.save(transferToAgribankRequest);

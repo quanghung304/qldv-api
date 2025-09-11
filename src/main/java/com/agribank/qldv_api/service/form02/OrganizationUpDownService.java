@@ -272,12 +272,11 @@ public class OrganizationUpDownService implements EntityHandler {
 
         if (Objects.isNull(history)) {
             history = OrganizationHistory.builder()
+                    .code(organization.getCode())
                     .name(organization.getName())
                     .type(draft.getType())
-                    .refId(updown.getId())
                     .effectiveDate(updown.getEffectiveDate())
                     .build();
-            history.setCode(updown.getId());
         } else {
             history.setCode(organization.getCode());
             history.setName(organization.getName());
