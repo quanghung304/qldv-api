@@ -75,6 +75,8 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
     @GetMapping("/all-parent")
     DefaultResponse<List<Organization>> getOrganizationAllParent(@RequestParam(name = "code") String code);
 
+    @GetMapping("/form-cd")
+    DefaultResponse<List<Organization>> getOrganizationAllCD(@RequestParam(name = "code") String code);
 
     @GetMapping("/form-b")
     DefaultResponse<List<Organization>> getOrganizationFormB();

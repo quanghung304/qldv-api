@@ -17,7 +17,7 @@ public class DissolveDisbandRequest extends BaseFormDto {
     String id;
     String organizationCode;
     String name;
-    @ValidOrganizationForm(message = "Sai hình thức tổ chức đảng")
+    //@ValidOrganizationForm(message = "Sai hình thức tổ chức đảng")
     String form;
     Integer type;
 

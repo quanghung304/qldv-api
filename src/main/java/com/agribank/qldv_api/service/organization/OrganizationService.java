@@ -535,6 +535,34 @@ public class OrganizationService implements EntityHandler {
                 .toList();
     }
 
+    public List<OrganizationHierarchyResponse> getAllCD(){
+        UserDetailsImpl userRequested = getUserRequested();
+        String code = getOrganizationCode(null, userRequested);
+        List<Organization> organizations = client.getOrganizationAllCD(code).getData();
+        if (Objects.isNull(organizations) || organizations.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        List<OrganizationHierarchyResponse> response = organizations.stream().map(
+                o -> modelMapper.map(o, OrganizationHierarchyResponse.class)
+        ).toList();
+
+        Map<String, List<OrganizationHierarchyResponse>> groupedByParent = response.stream()
+                .filter(o -> (!Objects.equals(o.getParentCode(), o.getCode()) && !Objects.equals(o.getParentCode(), Constants.DANG_UY_AGRIBANK_CODE)))
+                .collect(Collectors.groupingBy(OrganizationHierarchyResponse::getParentCode));
+
+        for (OrganizationHierarchyResponse org : response) {
+            List<OrganizationHierarchyResponse> children = groupedByParent.get(org.getCode());
+            if (children != null) {
+                org.setChilds(children);
+            }
+        }
+
+        return response.stream()
+                .filter(o -> o.getParentCode().length() == 4)
+                .toList();
+    }
+
     public List<Organization> findAll(){
         return client.findAll().getData();
     }

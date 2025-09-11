@@ -92,6 +92,11 @@ public class OrganizationController {
         return BaseResponse.success(service.getAll());
     }
 
+    @GetMapping("/get/all/cd")
+    public ResponseEntity<BaseResponse<List<OrganizationHierarchyResponse>>> getAllCD() {
+        return BaseResponse.success(service.getAllCD());
+    }
+
     @GetMapping("/get/form-b")
     public ResponseEntity<BaseResponse<List<OrganizationResponse>>> getOrganizationFormB() {
         return BaseResponse.success(service.getOrganizationFormB());

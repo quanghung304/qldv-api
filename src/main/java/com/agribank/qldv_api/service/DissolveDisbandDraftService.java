@@ -80,6 +80,7 @@ public class DissolveDisbandDraftService implements EntityHandler {
         establishmentDissolve.setName(organization.getName());
         establishmentDissolve.setForm(organization.getForm());
         establishmentDissolve.setType(request.getType());
+        establishmentDissolve.setDecisionCommittee(request.getForm());
         establishmentDissolve.setConclusionNumber(request.getConclusionNumber());
         establishmentDissolve.setConclusionDate(request.getConclusionDate());
         establishmentDissolve.setDecisionNumber(request.getDecisionNumber());
