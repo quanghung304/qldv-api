@@ -76,6 +76,7 @@ public class MembershipProposalService implements EntityHandler {
         membershipProposalRequest.setCreatedBy(userRequested.getId());
         membershipProposalRequest.setOrganizationCode(request.getOrganizationCode());
         membershipProposalRequest.setStaffCode(membershipProposalDraft.getStaffCode());
+        membershipProposalRequest.setStaffName(membershipProposalDraft.getFullName());
         requestClient.save(membershipProposalRequest);
 
         return "Tạo yêu cầu thành công";

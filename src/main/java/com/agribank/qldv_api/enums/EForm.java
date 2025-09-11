@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum EForm {
-    BIEU_01("B01", "THÔNG TIN TÊN, HÌNH THỨC CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
+    BIEU_01("B01", "THÀNH LẬP CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
     BIEU_02_DIS("B02_ESTA", "GIẢI THỂ/GIẢI TÁN CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
     BIEU_02_UP("B02_UP", "NÂNG CẤP CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
     BIEU_02_DOWN("B02_DOWN", "HẠ CẤP CHI, ĐẢNG BỘ", ERequestType.TO_CHUC_DANG.getId()),
