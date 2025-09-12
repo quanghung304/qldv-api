@@ -1,12 +1,10 @@
 package com.agribank.qldv_api.controller.report;
 
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
-import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.tcd_report.TcdReportService;
 import com.agribank.qldvutils.dto.Report05BcdsDto;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
-import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import jakarta.validation.Valid;
@@ -35,9 +33,5 @@ public class TcdReportController {
         return BaseResponse.success(service.searchRp05(request));
     }
 
-    @PostMapping("/search/report-17")
-    public ResponseEntity<BaseResponse<PageResponse<Rp17Response>>> search(@RequestBody @Valid SearchRp17Request request) {
-        request.validate();
-        return BaseResponse.success(service.searchRp17(request));
-    }
+
 }
