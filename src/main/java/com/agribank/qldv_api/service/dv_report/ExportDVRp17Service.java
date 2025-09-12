@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.service.tcd_report;
+package com.agribank.qldv_api.service.dv_report;
 
 import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.DVService;
@@ -17,14 +17,14 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class ExportTcdRp17Service extends ExportService {
+public class ExportDVRp17Service extends ExportService {
     @Lazy
     @Autowired
     private DVService dvService;
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
 
-    public ExportTcdRp17Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
+    public ExportDVRp17Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
         super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 

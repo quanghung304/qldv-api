@@ -40,6 +40,7 @@ import static com.agribank.qldv_api.enums.EExcelColumnInfo.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ExportHandlerService {
     TcdReportService tcdReportService;
+    DVReportService dvReportService;
     ExportBcslTcdRp01Service exportBcslTcdRp01Service;
     ExportBcslTcdRp02Service exportBcslTcdRp02Service;
     ExportBcslDvRp18Service exportBcslDvRp18Service;
@@ -107,7 +108,7 @@ public class ExportHandlerService {
                     break;
                 case BC_17_DSDV:
                     SearchRp17Request searchRp17Request = gson.fromJson(paramString, SearchRp17Request.class);
-                    exportResult = tcdReportService.exportExcelRp17(searchRp17Request);
+                    exportResult = dvReportService.exportExcelRp17(searchRp17Request);
                     break;
                 case BC_21_DSDV:
                     SearchRpRequest searchRp21Request = gson.fromJson(paramString, SearchRpRequest.class);
@@ -217,7 +218,7 @@ public class ExportHandlerService {
                     SearchRp17Request searchRp17Request = gson.fromJson(paramString, SearchRp17Request.class);
                     JsonObject jsonObject = JsonParser.parseString(paramString).getAsJsonObject();
                     searchRp17Request.setOrganizationCode(jsonObject.get("organizationCode").getAsString());
-                    exportResult = tcdReportService.exportPDFRp17(searchRp17Request);
+                    exportResult = dvReportService.exportPDFRp17(searchRp17Request);
                     break;
                 case BC_21_DSDV:
                     SearchRpRequest searchRp21Request = gson.fromJson(paramString, SearchRpRequest.class);

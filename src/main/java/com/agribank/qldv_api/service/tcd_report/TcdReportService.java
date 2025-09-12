@@ -6,8 +6,6 @@ import com.agribank.qldv_api.gateway.form02.OrganizationHistoryClient;
 import com.agribank.qldv_api.response.export.ExportResponse;
 import com.agribank.qldv_api.response.pdf.PDFContentResult;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
-import com.agribank.qldv_api.response.tcd.Rp17Response;
-import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.form02.OrganizationUpDownService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.utils.CommonUtils;
@@ -17,7 +15,6 @@ import com.agribank.qldvutils.entity.form02.updown.OrganizationUpDown;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.form02.OrganizationUpDownRpRequest;
 import com.agribank.qldvutils.request.organization.OrganizationRpSearchRequest;
-import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,8 +27,6 @@ public class TcdReportService {
     private final OrganizationService organizationService;
     private final OrganizationUpDownService OrganizationUpDownService;
     private final ExportTcdReport03Service exportTcdReport03Service;
-    private final DVService dvService;
-    private final ExportTcdRp17Service exportTcdRp17Service;
     private final OrganizationHistoryClient historyClient;
 
     public PageResponse<Rp0304Response> search0304(OrganizationRpSearchRequest request){
@@ -134,19 +129,6 @@ public class TcdReportService {
         return null;
     }
 
-    public PageResponse<Rp17Response> searchRp17(SearchRp17Request request) {
-        return dvService.searchRp17(request);
-    }
-
-    public ExportResponse exportExcelRp17(SearchRp17Request request) {
-        try {
-            return exportTcdRp17Service.exportData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.name(), 1, EExcelColumnInfo.BC_17_DSDV.getName());
-        }
-        catch (Exception exception){
-            System.out.println(exception.getMessage());
-        }
-        return null;
-    }
 
     public PDFContentResult exportPDFRp0304(OrganizationRpSearchRequest request) {
         try {
@@ -158,15 +140,6 @@ public class TcdReportService {
         return null;
     }
 
-    public PDFContentResult exportPDFRp17(SearchRp17Request request) {
-        try {
-            return exportTcdRp17Service.exportPDFData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.getName(), 1, EExcelColumnInfo.BC_17_DSDV.getPageType());
-        }
-        catch (Exception exception){
-            System.out.println(exception.getMessage());
-        }
-        return null;
-    }
 
     public PageResponse<Report05BcdsDto> searchRp05(SearchRpRequest request) {
         String organizationCode = Objects.nonNull(request.getOrganizationCode()) ? request.getOrganizationCode() : CommonUtils.getOrganizationByRequestedUser();

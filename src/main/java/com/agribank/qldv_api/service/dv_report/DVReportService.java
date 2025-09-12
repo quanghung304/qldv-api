@@ -1,13 +1,13 @@
 package com.agribank.qldv_api.service.dv_report;
 
-import com.agribank.qldv_api.enums.Constants;
-import com.agribank.qldv_api.enums.EOrganizationReference;
-import com.agribank.qldv_api.enums.EReport26;
-import com.agribank.qldv_api.enums.EReport29Type;
+import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.party_transfer.transfer_temporary.TransferTemporaryClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.dv_report.SearchReport29Request;
 import com.agribank.qldv_api.response.dv_report.*;
+import com.agribank.qldv_api.response.export.ExportResponse;
+import com.agribank.qldv_api.response.pdf.PDFContentResult;
+import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.*;
 import com.agribank.qldv_api.service.development_plan.DevelopPlanDetailService;
 import com.agribank.qldv_api.service.organization.OrganizationService;
@@ -23,9 +23,11 @@ import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.party_reinstatement.PartyReinstatement;
 import com.agribank.qldvutils.entity.party_transfer.transfer_out.TransferOutAgribank;
 import com.agribank.qldvutils.entity.report26.*;
+import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.bcsl_report.dv.SearchRp10DataRequest;
 import com.agribank.qldvutils.request.bcsl_report.tcd.SearchRpRequest;
 import com.agribank.qldvutils.request.report_dv.*;
+import com.agribank.qldvutils.request.report_tcd.SearchRp17Request;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.dv_report.DvRp22Response;
 import com.agribank.qldvutils.response.dv_report.DvRp23Response;
@@ -65,6 +67,7 @@ public class DVReportService {
     private final TransferWithinBaseService transferWithinBaseService;
     private final TransferTemporaryClient transferTemporaryClient;
     private final TransferProcessService transferProcessService;
+    private final ExportDVRp17Service exportDVRp17Service;
     private final ModelMapper modelMapper;
     private final CheckAuthorityService checkAuthorityService;
 
@@ -857,5 +860,38 @@ public class DVReportService {
                 0 : (bcslRp10Response.getAdmissionCount().doubleValue() / bcslRp10Response.getDevelopPlan().doubleValue()) * 100;
         bcslRp10Response.setAdmissionPercent(admissionPercent);
         return bcslRp10Response;
+    }
+
+    public PageResponse<Rp17Response> searchRp17(SearchRp17Request request) {
+        if (Objects.isNull(request.getFromDate())) {
+            throw new CommonException("Vui lòng chọn từ thời điểm báo cáo");
+        }
+
+        if (Objects.isNull(request.getToDate())) {
+            throw new CommonException("Vui lòng chọn đến thời điểm báo cáo");
+        }
+        String organizationCode = Objects.nonNull(request.getOrganizationCode()) ? request.getOrganizationCode() : CommonUtils.getOrganizationByRequestedUser();
+        request.setOrganizationCode(organizationCode);
+        return dvService.searchRp17(request);
+    }
+
+    public ExportResponse exportExcelRp17(SearchRp17Request request) {
+        try {
+            return exportDVRp17Service.exportData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.name(), 1, EExcelColumnInfo.BC_17_DSDV.getName());
+        }
+        catch (Exception exception){
+            System.out.println(exception.getMessage());
+        }
+        return null;
+    }
+
+    public PDFContentResult exportPDFRp17(SearchRp17Request request) {
+        try {
+            return exportDVRp17Service.exportPDFData(request, EExcelColumnInfo.BC_17_DSDV.getName(), "", EExcelColumnInfo.BC_17_DSDV.getName(), 1, EExcelColumnInfo.BC_17_DSDV.getPageType());
+        }
+        catch (Exception exception){
+            System.out.println(exception.getMessage());
+        }
+        return null;
     }
 }
