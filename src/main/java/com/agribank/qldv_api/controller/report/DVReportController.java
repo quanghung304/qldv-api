@@ -58,6 +58,11 @@ public class DVReportController {
         return BaseResponse.success(service.searchRp21(request));
     }
 
+    @PostMapping("/search/report-21-b")
+    public ResponseEntity<BaseResponse<PageResponse<DvRp21Response>>> searchRp21b(@RequestBody @Valid SearchRpRequest request) {
+        return BaseResponse.success(service.searchRp21b(request));
+    }
+
     @PostMapping("/search/report-23")
     public ResponseEntity<BaseResponse<PageResponse<DvRp23Response>>> searchRp23(@RequestBody @Valid SearchRpRequest request) {
         return BaseResponse.success(service.searchRp23(request));

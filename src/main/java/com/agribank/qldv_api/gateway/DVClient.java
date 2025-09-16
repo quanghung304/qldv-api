@@ -96,6 +96,11 @@ public interface DVClient {
             @RequestBody SearchRpRequest request
     );
 
+    @PostMapping("/search-report-21-b")
+    DefaultResponse<PageResponse<DV>> searchRp21b(
+            @RequestBody SearchRpRequest request
+    );
+
     @GetMapping("/find-active-dv-by-organization-code")
     DefaultResponse<List<DV>> findActiveDVByOrganizationCode(
             @RequestParam(name = "organization") String organization
