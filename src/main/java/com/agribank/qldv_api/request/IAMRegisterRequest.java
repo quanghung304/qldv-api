@@ -11,7 +11,6 @@ public class IAMRegisterRequest {
     private String username;
     private Integer brcd;
     private String email;
-    private String password;
     private List<Integer> roleIds;
     private List<Integer> applicationIds;
     private String vneid;

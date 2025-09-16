@@ -14,8 +14,7 @@ import java.util.Objects;
 public class ResetPasswordRequest {
     Integer appId;
     String username;
-    @Builder.Default
-    String password = "Agribank@123";
+    String password;
 
     public void validate(){
         if (Objects.isNull(appId)){

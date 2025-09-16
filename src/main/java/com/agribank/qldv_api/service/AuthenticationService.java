@@ -64,7 +64,6 @@ public class AuthenticationService {
                 .staffCode(request.getStaffCode())
                 .depId(request.getDepId())
                 .userKind(request.getUserKind())
-                .password(CommonUtils.handleEncryptPassword(request.getPassword(), publicKeyPath))
                 .build();
 
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();

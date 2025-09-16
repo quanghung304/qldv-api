@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.import_file;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EExcelImport;
 import com.agribank.qldv_api.request.ColumnValidate;
 import com.agribank.qldv_api.utils.CommonUtils;
@@ -57,6 +58,20 @@ public class ImportFileService {
             throw new CommonException("OutOfSize");
         }
 
+        // 2. Validate file name & extension
+        String originalName = file.getOriginalFilename();
+        if (Objects.isNull(originalName) || !originalName.matches("^[a-zA-Z0-9._-]+\\.(xls|xlsx)$")) {
+            throw new CommonException("InvalidFileNameOrExtension");
+        }
+
+        // 3. Validate MIME type
+        String contentType = file.getContentType();
+        if (!Constants.EXCEL_CONTENT_TYPE.equals(contentType)
+                && !"application/vnd.ms-excel".equals(contentType)) {
+            throw new CommonException("InvalidFileType");
+        }
+
+        // 4. Validate template
         ImportFileConfig importFileConfig = importFileConfigService.findByCode(code);
         if(Objects.isNull(importFileConfig)){
             throw new CommonException("TemplateNotFound");
@@ -67,14 +82,26 @@ public class ImportFileService {
             throw new CommonException("TemplateNotFound");
         }
 
+        // 5. Validate workbook
         ZipSecureFile.setMinInflateRatio(0.00007);
         InputStream is = file.getInputStream();
         Workbook workbook = WorkbookFactory.create(is);
+        if (workbook.getNumberOfSheets() == 0) {
+            throw new CommonException("EmptyWorkbook");
+        }
+
         Sheet sheet = workbook.getSheetAt(0);
+        if (sheet == null || sheet.getLastRowNum() == 0) {
+            throw new CommonException("EmptySheet");
+        }
+
+        // 6. Validate headers
         Map<Integer, ImportFileConfigDetail> headers = handleValidateHeader(sheet, importFileConfig, importFileConfigDetails);
         if(headers == null){
             throw new CommonException("InvalidHeader");
         }
+
+        // 7. Process data
         handleInitCheckData();
         RecordUploadData uploadData = handleReadData(sheet, importFileConfig, importFileConfigDetails, headers);
         initCheckData = null;

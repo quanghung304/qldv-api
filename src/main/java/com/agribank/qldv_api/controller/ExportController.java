@@ -34,6 +34,9 @@ public class ExportController {
                 throw new IOException();
             }
 
+            // Add security header
+            response.setHeader("X-Content-Type-Options", "nosniff");
+
             if(Objects.nonNull(exportResult.getWorkbook()) ){
                 Workbook workbook = exportResult.getWorkbook();
                 response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
