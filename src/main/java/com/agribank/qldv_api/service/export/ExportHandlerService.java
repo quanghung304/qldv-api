@@ -47,6 +47,7 @@ public class ExportHandlerService {
     ExportBcslTcdRp09Service exportBcslTcdRp09Service;
     ExportBcslDvRp10Service exportBcslDvRp10Service;
     ExportDVRp21Service exportDVRp21Service;
+    ExportDVRp21bService exportDVRp21bService;
     ExportDVRp22Service exportDVRp22Service;
     ExportDVRp23Service exportDVRp23Service;
     ExportDVRp24Service exportDVRp24Service;
@@ -113,6 +114,10 @@ public class ExportHandlerService {
                 case BC_21_DSDV:
                     SearchRpRequest searchRp21Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp21Service.exportData(searchRp21Request, EExcelColumnInfo.BC_21_DSDV.getName(), "", EExcelColumnInfo.BC_21_DSDV.name(), 1, EExcelColumnInfo.BC_21_DSDV.getName());
+                    break;
+                case BC_21B_DSDV:
+                    SearchRpRequest searchRp21bRequest = gson.fromJson(paramString, SearchRpRequest.class);
+                    exportResult = exportDVRp21bService.exportData(searchRp21bRequest, EExcelColumnInfo.BC_21B_DSDV.getName(), "", EExcelColumnInfo.BC_21B_DSDV.name(), 1, EExcelColumnInfo.BC_21B_DSDV.getName());
                     break;
                 case BC_22_DSDV:
                     SearchRpRequest searchRp22Request = gson.fromJson(paramString, SearchRpRequest.class);

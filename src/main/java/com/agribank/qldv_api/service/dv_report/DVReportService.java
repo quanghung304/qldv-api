@@ -544,9 +544,19 @@ public class DVReportService {
     }
 
     public PageResponse<DvRp21Response> searchRp21(SearchRpRequest request) {
-        PageResponse<DvRp21Response> response = new PageResponse<>();
-        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
         PageResponse<DV> dvPageResponse = dvService.searchRp21(request);
+
+        return convertDvPageToRp21Response(dvPageResponse);
+    }
+
+    public PageResponse<DvRp21Response> searchRp21b(SearchRpRequest request) {
+        PageResponse<DV> dvPageResponse = dvService.searchRp21b(request);
+
+        return convertDvPageToRp21Response(dvPageResponse);
+    }
+
+    private PageResponse<DvRp21Response> convertDvPageToRp21Response(PageResponse<DV> dvPageResponse){
+        PageResponse<DvRp21Response> response = new PageResponse<>();
         if (Objects.isNull(dvPageResponse) || dvPageResponse.getData().isEmpty()){
             return response;
         }
@@ -576,6 +586,7 @@ public class DVReportService {
 
         return makeResponse21(organizationCodes, dvRp21Respons, response);
     }
+
 
     private PageResponse<DvRp21Response> makeResponse21(List<String> organizationCodes, List<DvRp21Response> dvRp21Respons, PageResponse<DvRp21Response> response){
         List<Organization> organizations = organizationService.findAllByCode(organizationCodes);

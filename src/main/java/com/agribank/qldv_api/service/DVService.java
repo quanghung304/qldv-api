@@ -414,6 +414,11 @@ public class DVService implements EntityHandler {
         return dvClient.searchRp21(request).getData();
     }
 
+    public PageResponse<DV> searchRp21b(SearchRpRequest request){
+        request.setOrganizationCode(organizationService.getOrganizationCode(request.getOrganizationCode(), getUserRequested()));
+        return dvClient.searchRp21b(request).getData();
+    }
+
     public List<DV> saveAll(List<DV> dvs){
         return dvClient.saveAll(dvs).getData();
     }
