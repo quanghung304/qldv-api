@@ -49,7 +49,7 @@ public class DVResponse {
     //Ngày kết nạp Đảng
     Date admissionDate;
     //nguồn kết nạp
-    Integer sourceRecruitment;
+    String sourceRecruitment;
     String externalParty;
     //Kết nạp tại chi bộ
     String branchPartyCode;
