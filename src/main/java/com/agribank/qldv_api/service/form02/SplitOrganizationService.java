@@ -525,9 +525,9 @@ public class SplitOrganizationService implements EntityHandler {
         Map<String, List<DvOrgHistory>> dvOrgHistoryMap = dvOrgHistories.stream()
                 .collect(Collectors.groupingBy(DvOrgHistory::getNewOrgCode));
 
-        if (dvOrgHistoryMap.isEmpty()) {
-            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
-        }
+//        if (dvOrgHistoryMap.isEmpty()) {
+//            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
+//        }
 
         Map<String, DV> dvOfNewOrgMap = new HashMap<>();
         List<String> staffCodes = new ArrayList<>();
@@ -602,9 +602,9 @@ public class SplitOrganizationService implements EntityHandler {
         Map<String, List<DvOrgHistoryDraft>> dvOrgHistoryMap = dvOrgHistoryDrafts.stream()
                 .collect(Collectors.groupingBy(DvOrgHistoryDraft::getNewOrgCode));
 
-        if (dvOrgHistoryMap.isEmpty()) {
-            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
-        }
+//        if (dvOrgHistoryMap.isEmpty()) {
+//            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
+//        }
 
         Map<String, DV> dvOfNewOrgMap = new HashMap<>();
         List<String> staffCodes = new ArrayList<>();
