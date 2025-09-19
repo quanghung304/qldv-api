@@ -248,9 +248,9 @@ public abstract class MergeUnifyService {
         Map<String, List<DvOrgHistory>> dvOrgHistoryMap = dvOrgHistories.stream()
                 .collect(Collectors.groupingBy(DvOrgHistory::getOldOrgCode));
 
-        if (dvOrgHistoryMap.isEmpty()) {
-            throw new CommonException("Không có dữ liệu đảng bộ sáp nhập");
-        }
+//        if (dvOrgHistoryMap.isEmpty()) {
+//            throw new CommonException("Không có dữ liệu đảng bộ sáp nhập");
+//        }
 
         Map<String, DV> dvOfOldOrgMap = new HashMap<>();
         List<String> staffCodes = new ArrayList<>();

@@ -440,9 +440,9 @@ public class OrganizationMergeService extends MergeUnifyService implements Entit
         Map<String, List<DvOrgHistoryDraft>> dvOrgHistoryDraftMap = dvOrgHistoryDrafts.stream()
                 .collect(Collectors.groupingBy(DvOrgHistoryDraft::getOldOrgCode));
 
-        if (dvOrgHistoryDraftMap.isEmpty()) {
-            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
-        }
+//        if (dvOrgHistoryDraftMap.isEmpty()) {
+//            throw new CommonException("Không có dữ liệu đảng bộ chia tách");
+//        }
 
         Map<String, DV> dvOfOldOrgMap = new HashMap<>();
         List<String> staffCodes = new ArrayList<>();
