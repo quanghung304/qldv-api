@@ -455,9 +455,9 @@ public class OrganizationUnifyService extends MergeUnifyService implements Entit
         Map<String, List<DvOrgHistoryDraft>> dvOrgHistoryDraftMap = dvOrgHistoryDrafts.stream()
                 .collect(Collectors.groupingBy(DvOrgHistoryDraft::getOldOrgCode));
 
-        if (dvOrgHistoryDraftMap.isEmpty()) {
-            throw new CommonException("Không có dữ liệu đảng bộ hợp nhất");
-        }
+//        if (dvOrgHistoryDraftMap.isEmpty()) {
+//            throw new CommonException("Không có dữ liệu đảng bộ hợp nhất");
+//        }
 
         Map<String, DV> dvOfOldOrgMap = new HashMap<>();
         List<String> staffCodes = new ArrayList<>();
