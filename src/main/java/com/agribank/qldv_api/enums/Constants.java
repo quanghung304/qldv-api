@@ -12,4 +12,5 @@ public class Constants {
     public static final String FORM_B1_NAME = "B1";
     public static final List<Integer> ORGANIZATION_NAME_LENGTH = List.of(FORM_B_NAME_LENGTH,6,8);
     public static final String EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    public static final long MAX_FILE_SIZE = 4 * 1024 * 1024; //4MB
 }
