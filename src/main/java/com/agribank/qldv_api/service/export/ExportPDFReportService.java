@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.export;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.layoutConfig.LayoutConfigItem;
 import com.agribank.qldv_api.response.organization.OrganizationResponse;
@@ -30,7 +31,6 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class ExportPDFReportService {
-
     @Value("${export.pdf.service.url}")
     private String pdfServiceUrl;
     private final LayoutConfigService layoutConfigService;
@@ -250,6 +250,12 @@ public class ExportPDFReportService {
 
     private static String handleReadFile(String path) throws IOException {
         ClassPathResource xmlTemplate = new ClassPathResource(path);
+
+        long size = xmlTemplate.contentLength();
+        if (size > Constants.MAX_FILE_SIZE) {
+            throw new IOException("File size exceeds limit: " + size);
+        }
+
         InputStream inputStream = xmlTemplate.getInputStream();
         Scanner s = new Scanner(inputStream).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";

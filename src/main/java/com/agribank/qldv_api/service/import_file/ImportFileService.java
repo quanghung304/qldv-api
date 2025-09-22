@@ -43,8 +43,7 @@ public class ImportFileService {
             return true;
         }
 
-        long MAX_FILE_SIZE = 4 * 1024 * 1024;
-        return file.getSize() > MAX_FILE_SIZE;
+        return file.getSize() > Constants.MAX_FILE_SIZE;
     }
 
     public record RecordUploadData(List<Map<String, Object>> dataImport, List<Map<String, Object>> dataError) {
@@ -54,6 +53,7 @@ public class ImportFileService {
     }
 
     public BaseResponse handleReadFileUpload(MultipartFile file, String code) throws IOException {
+        // 1. validate file size
         if(handleCheckFileSize(file)){
             throw new CommonException("OutOfSize");
         }
