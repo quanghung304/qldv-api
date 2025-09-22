@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.export;
 
+import com.agribank.qldv_api.enums.EExportType;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.export.ExportParam;
 import com.agribank.qldv_api.response.export.ExportResponse;
@@ -56,14 +57,14 @@ public class ExportService {
         exportParam.setServiceParameter(serviceParam);
         exportParam.setNumberTableHeaderRows(numberTableHeaderRows);
         initBeforeExport();
-        int totalRecords = handleGetTotalRecord(serviceParam);
+        int totalRecords = handleGetTotalRecord(serviceParam, EExportType.EXCEL.getType());
         int totalPage = (int) Math.ceil((double) totalRecords / MAX_ROWS_EXPORT);
         Gson gson = new Gson();
         String fileName = CommonUtils.removeVietnameseDiacritics(title.toUpperCase());
         fileName = String.join("_", fileName.split(" "));
         if(totalPage == 1){
             int pageIndex = 0;
-            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex);
+            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex, EExportType.EXCEL.getType());
             try {
                 //Tao workbook
                 Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), false);
@@ -82,7 +83,7 @@ public class ExportService {
             List<FileInputStream> fileInputStreams = new ArrayList<>();
             boolean success = true;
             for(int i=0; i<totalPage; i++){
-                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i);
+                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i, EExportType.EXCEL.getType());
                 try {
                     //Tao workbook
                     Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), false);
@@ -119,14 +120,14 @@ public class ExportService {
         exportParam.setServiceParameter(serviceParam);
         exportParam.setNumberTableHeaderRows(numberTableHeaderRows);
         initBeforeExport();
-        int totalRecords = handleGetTotalRecord(serviceParam);
+        int totalRecords = handleGetTotalRecord(serviceParam, EExportType.EXCEL.getType());
         int totalPage = (int) Math.ceil((double) totalRecords / MAX_ROWS_EXPORT);
         Gson gson = new Gson();
         String fileName = CommonUtils.removeVietnameseDiacritics(title.toUpperCase());
         fileName = String.join("_", fileName.split(" "));
         if(totalPage == 1){
             int pageIndex = 0;
-            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex);
+            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex, EExportType.EXCEL.getType());
             try {
                 //Tao workbook
                 Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), true);
@@ -145,7 +146,7 @@ public class ExportService {
             List<FileInputStream> fileInputStreams = new ArrayList<>();
             boolean success = true;
             for(int i=0; i<totalPage; i++){
-                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i);
+                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i, EExportType.EXCEL.getType());
                 try {
                     //Tao workbook
                     Workbook workbook = handleExportData(exportParam, exportData, recordColumnExport.layoutConfigItems(), true);
@@ -179,11 +180,11 @@ public class ExportService {
         exportParam.setServiceParameter(serviceParam);
         exportParam.setNumberTableHeaderRows(numberTableHeaderRows);
         initBeforeExport();
-        int totalRecords = handleGetTotalRecord(serviceParam);
+        int totalRecords = handleGetTotalRecord(serviceParam, "pdf");
         int totalPage = (int) Math.ceil((double) totalRecords / MAX_ROWS_PDF_EXPORT);
         if(totalPage == 1){
             int pageIndex = 0;
-            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex);
+            List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, pageIndex, EExportType.PDF.getType());
             try {
                 return exportPDFReportService.exportReportPdf(exportData, reportName, pageType);
             }
@@ -195,7 +196,7 @@ public class ExportService {
         else if (totalPage <= 100) {
             List<byte[]> fileDatas = new ArrayList<>();
             for(int i=0; i<totalPage; i++){
-                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i);
+                List<Map<String, Object>> exportData = handleGetDataExport(serviceParam, i, EExportType.PDF.getType());
                 try {
                     PDFContentResult data = exportPDFReportService.exportReportPdf(exportData, reportName, pageType);
                     fileDatas.add(data.getPdfContent());
@@ -249,11 +250,11 @@ public class ExportService {
     }
 
 
-    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
+    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex, String type) {
         return new ArrayList<>();
     }
 
-    public int handleGetTotalRecord(Object serviceParam) {
+    public int handleGetTotalRecord(Object serviceParam, String type) {
         return 0;
     }
 

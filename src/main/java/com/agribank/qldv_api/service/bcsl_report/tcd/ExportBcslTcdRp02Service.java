@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.bcsl_report.tcd;
 
+import com.agribank.qldv_api.enums.EExportType;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldv_api.service.export.ExportService;
@@ -20,14 +21,22 @@ public class ExportBcslTcdRp02Service extends ExportService {
     private BcslTcdReportService bcslTcdReportService;
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
+    @Value("${app.max.rows.pdf.export}")
+    private Integer MAX_ROWS_PDF_EXPORT;
 
     public ExportBcslTcdRp02Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
         super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
-    public int handleGetTotalRecord(Object serviceParam) {
+    public int handleGetTotalRecord(Object serviceParam, String type) {
         SearchRequest requestParam = (SearchRequest) serviceParam;
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<BcslTcdRp02Response> dataDto = bcslTcdReportService.searchRp02(requestParam);
         if(dataDto == null){
             return 0;
@@ -36,10 +45,16 @@ public class ExportBcslTcdRp02Service extends ExportService {
     }
 
 
-    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
+    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex, String type) {
         SearchRequest requestParam = (SearchRequest) serviceParam;
         requestParam.setPage(pageIndex);
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<BcslTcdRp02Response> dataDto = bcslTcdReportService.searchRp02(requestParam);
 
         if(Objects.isNull(dataDto)){
@@ -58,6 +73,7 @@ public class ExportBcslTcdRp02Service extends ExportService {
             item.put("upgrade", bcslRp01Response.getUpgrade());
             item.put("downgrade", bcslRp01Response.getDowngrade());
             item.put("dissolve", bcslRp01Response.getDissolve());
+            item.put("disband", bcslRp01Response.getDisband());
 
             if (totalItem.isEmpty()) {
                 totalItem.put("code", null);
@@ -67,6 +83,7 @@ public class ExportBcslTcdRp02Service extends ExportService {
                 totalItem.put("upgrade", bcslRp01Response.getUpgrade());
                 totalItem.put("downgrade", bcslRp01Response.getDowngrade());
                 totalItem.put("dissolve", bcslRp01Response.getDissolve());
+                totalItem.put("disband", bcslRp01Response.getDisband());
             }
 
             exportData.add(item);

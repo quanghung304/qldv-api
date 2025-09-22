@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.tcd_report;
 
+import com.agribank.qldv_api.enums.EExportType;
 import com.agribank.qldv_api.response.tcd.Rp0304Response;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportPDFReportService;
@@ -31,9 +32,15 @@ public class ExportTcdReport03Service extends ExportService {
     }
 
 
-    public int handleGetTotalRecord(Object serviceParam) {
+    public int handleGetTotalRecord(Object serviceParam, String type) {
         OrganizationRpSearchRequest requestParam = (OrganizationRpSearchRequest) serviceParam;
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Rp0304Response> dataDto = organizationService.search0304(requestParam);
         if(dataDto == null){
             return 0;
@@ -42,10 +49,16 @@ public class ExportTcdReport03Service extends ExportService {
     }
 
 
-    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
+    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex, String type) {
         OrganizationRpSearchRequest requestParam = (OrganizationRpSearchRequest) serviceParam;
         requestParam.setPage(pageIndex);
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Rp0304Response> dataDto = organizationService.search0304(requestParam);
         if(Objects.isNull(dataDto)){
             return new ArrayList<>();

@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.dv_report;
 
+import com.agribank.qldv_api.enums.EExportType;
 import com.agribank.qldv_api.enums.ETransferType;
 import com.agribank.qldv_api.response.dv_report.DvRp34Response;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
@@ -22,14 +23,22 @@ public class ExportDVRp32Service extends ExportService {
     private DVReportService dvReportService;
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
+    @Value("${app.max.rows.pdf.export}")
+    private Integer MAX_ROWS_PDF_EXPORT;
 
     public ExportDVRp32Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
         super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
-    public int handleGetTotalRecord(Object serviceParam) {
+    public int handleGetTotalRecord(Object serviceParam, String type) {
         SearchRp32Request requestParam = (SearchRp32Request) serviceParam;
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Report32Response> dataDto = dvReportService.searchRp32(requestParam);
         if (dataDto == null) {
             return 0;
@@ -38,10 +47,16 @@ public class ExportDVRp32Service extends ExportService {
     }
 
 
-    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
+    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex, String type) {
         SearchRp32Request requestParam = (SearchRp32Request) serviceParam;
         requestParam.setPage(pageIndex);
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Report32Response> dvRp32ResponsePageResponse = dvReportService.searchRp32(requestParam);
         if (Objects.isNull(dvRp32ResponsePageResponse)) {
             return new ArrayList<>();

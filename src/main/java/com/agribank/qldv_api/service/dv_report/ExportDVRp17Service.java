@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.dv_report;
 
+import com.agribank.qldv_api.enums.EExportType;
 import com.agribank.qldv_api.response.tcd.Rp17Response;
 import com.agribank.qldv_api.service.DVService;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
@@ -23,14 +24,22 @@ public class ExportDVRp17Service extends ExportService {
     private DVService dvService;
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
+    @Value("${app.max.rows.pdf.export}")
+    private Integer MAX_ROWS_PDF_EXPORT;
 
     public ExportDVRp17Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
         super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
-    public int handleGetTotalRecord(Object serviceParam) {
+    public int handleGetTotalRecord(Object serviceParam, String type) {
         SearchRp17Request requestParam = (SearchRp17Request) serviceParam;
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Rp17Response> dataDto = dvService.searchRp17(requestParam);
         if(dataDto == null){
             return 0;
@@ -39,10 +48,16 @@ public class ExportDVRp17Service extends ExportService {
     }
 
 
-    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
+    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex, String type) {
         SearchRp17Request requestParam = (SearchRp17Request) serviceParam;
         requestParam.setPage(pageIndex);
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Rp17Response> rp17ResponsePageResponse = dvService.searchRp17(requestParam);
         if(Objects.isNull(rp17ResponsePageResponse)){
             return new ArrayList<>();
