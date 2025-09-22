@@ -229,6 +229,10 @@ public class ExportHandlerService {
                     SearchRpRequest searchRp21Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp21Service.exportPDFData(searchRp21Request, EExcelColumnInfo.BC_21_DSDV.getName(), "", EExcelColumnInfo.BC_21_DSDV.getName(), 1, EExcelColumnInfo.BC_21_DSDV.getPageType());
                     break;
+                case BC_21B_DSDV:
+                    SearchRpRequest searchRp21bRequest = gson.fromJson(paramString, SearchRpRequest.class);
+                    exportResult = exportDVRp21bService.exportPDFData(searchRp21bRequest, EExcelColumnInfo.BC_21B_DSDV.getName(), "", EExcelColumnInfo.BC_21B_DSDV.getName(), 1, EExcelColumnInfo.BC_21B_DSDV.getPageType());
+                    break;
                 case BC_22_DSDV:
                     SearchRpRequest searchRp22Request = gson.fromJson(paramString, SearchRpRequest.class);
                     exportResult = exportDVRp22Service.exportPDFData(searchRp22Request, EExcelColumnInfo.BC_22_DSDV.getName(), "", EExcelColumnInfo.BC_22_DSDV.getName(), 1, EExcelColumnInfo.BC_22_DSDV.getPageType());

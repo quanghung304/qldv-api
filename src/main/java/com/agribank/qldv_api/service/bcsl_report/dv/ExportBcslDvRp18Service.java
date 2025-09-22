@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.bcsl_report.dv;
 
+import com.agribank.qldv_api.enums.EExportType;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldv_api.service.export.ExportService;
@@ -20,14 +21,22 @@ public class ExportBcslDvRp18Service extends ExportService {
     private BcslDvReportService bcslDvReportService;
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
+    @Value("${app.max.rows.pdf.export}")
+    private Integer MAX_ROWS_PDF_EXPORT;
 
     public ExportBcslDvRp18Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
         super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
-    public int handleGetTotalRecord(Object serviceParam) {
+    public int handleGetTotalRecord(Object serviceParam, String type) {
         SearchRequest requestParam = (SearchRequest) serviceParam;
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<DvRp18Response> dataDto = bcslDvReportService.searchRp18(requestParam);
         if(dataDto == null){
             return 0;
@@ -37,9 +46,15 @@ public class ExportBcslDvRp18Service extends ExportService {
         return data.size();
     }
 
-    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
+    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex, String type) {
         SearchRequest requestParam = (SearchRequest) serviceParam;
-        requestParam.setPage(pageIndex);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         requestParam.setPageSize(MAX_ROWS_EXPORT);
         PageResponse<DvRp18Response> dataDto = bcslDvReportService.searchRp18(requestParam);
         if(Objects.isNull(dataDto)){

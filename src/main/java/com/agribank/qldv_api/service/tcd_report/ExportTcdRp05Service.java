@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service.tcd_report;
 
+import com.agribank.qldv_api.enums.EExportType;
 import com.agribank.qldv_api.service.export.ExcelColumnInfoService;
 import com.agribank.qldv_api.service.export.ExportPDFReportService;
 import com.agribank.qldv_api.service.export.ExportService;
@@ -24,13 +25,22 @@ public class ExportTcdRp05Service extends ExportService {
 
     @Value("${app.max.rows.export}")
     private Integer MAX_ROWS_EXPORT;
+    @Value("${app.max.rows.pdf.export}")
+    private Integer MAX_ROWS_PDF_EXPORT;
+
     public ExportTcdRp05Service(ExcelColumnInfoService excelColumnInfoService, ZipHelper zipHelper, ExportPDFReportService exportPDFReportService) {
         super(excelColumnInfoService, zipHelper, exportPDFReportService);
     }
 
-    public int handleGetTotalRecord(Object serviceParam) {
+    public int handleGetTotalRecord(Object serviceParam, String type) {
         SearchRpRequest requestParam = (SearchRpRequest) serviceParam;
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Report05BcdsDto> dataDto = tcdReportService.searchRp05(requestParam);
         if(dataDto == null){
             return 0;
@@ -39,10 +49,16 @@ public class ExportTcdRp05Service extends ExportService {
     }
 
 
-    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex) {
+    public List<Map<String, Object>> handleGetDataExport(Object serviceParam, int pageIndex, String type) {
         SearchRpRequest requestParam = (SearchRpRequest) serviceParam;
         requestParam.setPage(pageIndex);
-        requestParam.setPageSize(MAX_ROWS_EXPORT);
+
+        if (Objects.equals(type, EExportType.PDF.getType())) {
+            requestParam.setPageSize(MAX_ROWS_PDF_EXPORT);
+        } else {
+            requestParam.setPageSize(MAX_ROWS_EXPORT);
+        }
+
         PageResponse<Report05BcdsDto> dataDto = tcdReportService.searchRp05(requestParam);
         if(Objects.isNull(dataDto)){
             return new ArrayList<>();
