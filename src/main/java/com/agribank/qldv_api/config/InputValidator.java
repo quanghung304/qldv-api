@@ -33,20 +33,20 @@ public class InputValidator {
     );
 
     /**Validate 1 chuỗi đầu vào */
-    public static void validate(String input, String fieldName) {
+    public static void validate(String input) {
         if (input == null) return;
         String value = input.trim();
 
         // Phát hiện XSS
         for (Pattern p : XSS_PATTERNS) {
             if (p.matcher(value).find()) {
-                throw new SecurityException("Trường '" + fieldName + "' chứa nội dung nguy hiểm (XSS).");
+                throw new SecurityException("Trường '" +  "' chứa nội dung nguy hiểm (XSS).");
             }
         }
 
         // Kiểm tra ký tự không hợp lệ
         if (!WHITELIST_PATTERN.matcher(value).matches()) {
-            throw new SecurityException("Trường '" + fieldName + "' chứa ký tự không hợp lệ.");
+            throw new SecurityException("Trường '" +  "' chứa ký tự không hợp lệ.");
         }
 
         //  Kiểm tra tràn số nếu toàn bộ ký tự là số
@@ -54,7 +54,7 @@ public class InputValidator {
             try {
                 new BigInteger(value); // test parse để đảm bảo không tràn
             } catch (NumberFormatException ex) {
-                throw new SecurityException("Trường '" + fieldName + "' có giá trị số vượt giới hạn cho phép.");
+                throw new SecurityException("Trường '" + "' có giá trị số vượt giới hạn cho phép.");
             }
         }
 
@@ -63,7 +63,7 @@ public class InputValidator {
             try {
                 new BigDecimal(value);
             } catch (NumberFormatException ex) {
-                throw new SecurityException("Trường '" + fieldName + "' có giá trị số thập phân không hợp lệ.");
+                throw new SecurityException("Trường '" + "' có giá trị số thập phân không hợp lệ.");
             }
         }
     }
@@ -83,7 +83,7 @@ public class InputValidator {
         }
 
         if (obj instanceof String s) {
-            validate(s, "unknown");
+            validate(s);
             return;
         }
 
@@ -96,7 +96,7 @@ public class InputValidator {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
                 Object key = entry.getKey();
                 Object val = entry.getValue();
-                if (key instanceof String s) validate(s, "Map.key");
+                if (key instanceof String s) validate(s);
                 validateObject(val);
             }
             return;
@@ -114,7 +114,7 @@ public class InputValidator {
                 Object val = f.get(obj);
                 if (val == null) continue;
                 if (val instanceof String s) {
-                    validate(s, f.getName());
+                    validate(s);
                 } else {
                     validateObject(val);
                 }
