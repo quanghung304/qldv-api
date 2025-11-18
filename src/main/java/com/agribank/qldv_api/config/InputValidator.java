@@ -74,11 +74,16 @@ public class InputValidator {
 
         Class<?> cls = obj.getClass();
 
+        // Primitive, Number, Boolean, Character, Enum -> bỏ qua
         if (cls.isPrimitive() ||
                 Number.class.isAssignableFrom(cls) ||
                 Boolean.class.isAssignableFrom(cls) ||
                 Character.class.isAssignableFrom(cls) ||
                 cls.isEnum()) {
+            return;
+        }
+
+        if (obj instanceof java.util.Date || obj instanceof java.time.temporal.TemporalAccessor) {
             return;
         }
 
@@ -108,11 +113,13 @@ public class InputValidator {
             return;
         }
 
+        // Xử lý các field trong object
         for (Field f : cls.getDeclaredFields()) {
             try {
                 f.setAccessible(true);
                 Object val = f.get(obj);
                 if (val == null) continue;
+
                 if (val instanceof String s) {
                     validate(s);
                 } else {
