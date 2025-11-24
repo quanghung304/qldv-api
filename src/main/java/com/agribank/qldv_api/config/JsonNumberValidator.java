@@ -43,11 +43,11 @@ public class JsonNumberValidator {
                         return;
                     } else if (bi.bitLength() <= 63) {
                         throw new SecurityException(
-                                String.format("JSON tại %s chứa số nguyên quá lớn cho long: %s", path, bi.toString())
+                                String.format("JSON chứa số nguyên quá lớn cho int: %s. Vui lòng nhập giá trị nhỏ hơn 10 số", bi.toString())
                         );
                     } else {
                         throw new SecurityException(
-                                String.format("JSON tại %s chứa số nguyên quá lớn cho long: %s", path, bi.toString())
+                                String.format("JSON chứa số nguyên quá lớn cho int: %s. Vui lòng nhập giá trị nhỏ hơn hơn 10 số", bi.toString())
                         );
                     }
                 }
