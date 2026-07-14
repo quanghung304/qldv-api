@@ -269,7 +269,7 @@ public class UserService {
     }
 
     public String delete(String id){
-        User user = userClient.findById(id).getData();
+        User user = userClient.findById(id).getData().orElse(null);
         if(Objects.isNull(user)){
             throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
@@ -288,7 +288,7 @@ public class UserService {
     }
 
     public User findById(String id){
-        return userClient.findById(id).getData();
+        return userClient.findById(id).getData().orElse(null);
     }
 
     public UserResponse getUserInfo(String userId){
@@ -315,7 +315,7 @@ public class UserService {
             List<String> roleNames = new ArrayList<>();
             List<String> roleIds = new ArrayList<>();
             for(Role role : roles){
-                roleNames.add(role.getName());
+                roleNames.add(role.getRoleName());
                 roleIds.add(role.getId());
             }
             userResponse.setRoles(roleNames);
