@@ -1,7 +1,7 @@
 package com.agribank.qldv_api.gateway.import_file;
 
 import com.agribank.qldv_api.gateway.BaseClient;
-import com.agribank.qldv_api.gateway.DatabaseFeignConfiguration;
+import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.import_file.ImportFileConfigDetail;
 import org.springframework.cloud.openfeign.FeignClient;

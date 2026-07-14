@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.gateway;
 
+import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.response.BaseResponse;
 import org.springframework.cloud.openfeign.FeignClient;

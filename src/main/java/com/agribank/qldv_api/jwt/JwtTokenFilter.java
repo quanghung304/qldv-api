@@ -9,6 +9,7 @@ import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.response.BaseResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -69,7 +70,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             List<Role> roles = roleService.getRoleByUserId(user.getId());
             List<GrantedAuthority> roleNames = new ArrayList<>();
             if (!roles.isEmpty()) {
-                roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+                roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleName())).collect(Collectors.toList());
             }
 
             UserDetailsImpl userDetails = new UserDetailsImpl();
@@ -119,7 +120,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
                 .vneid(userIamResponse.getVneid())
                 .build();
 
-        DefaultResponse<User> response = userClient.save(admin);
+        BaseResponse<User> response = userClient.save(admin);
         return response.getData();
     }
 }

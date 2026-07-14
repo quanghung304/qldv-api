@@ -324,12 +324,6 @@ public class ImportFileService {
         String fileName;
         if(type.equals(EExcelImport.USERS.name())) {
             fileName = "Template_Upload_User";
-        } else if(type.equals(EExcelImport.BIEU_1.name())) {
-            fileName = "Template_Upload_Organization";
-        } else if(type.equals(EExcelImport.BIEU_12.name())) {
-            fileName = "Template_Upload_Develop_Plan";
-        } else if (type.equals(EExcelImport.BIEU_15.name())) {
-            fileName = "Template_Upload_DV";
         } else {
             return null;
         }

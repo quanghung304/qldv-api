@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.gateway;
 
+import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.request.role.RoleSearchRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @FeignClient(name = "roleClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
-public interface RoleClient {
+public interface RoleClient extends BaseClient<Role, String> {
     @GetMapping("api/v1/role/get-by-id")
     DefaultResponse<Role> findRoleById(
             @RequestParam String id
