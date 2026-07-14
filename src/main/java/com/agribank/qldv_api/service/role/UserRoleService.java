@@ -10,6 +10,7 @@ import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.entity.UserRole;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.response.DefaultListResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class UserRoleService {
     private final RoleService roleService;
 
     public String assignUserRole(UserRoleRequest userRoleRequest) {
-        User user = userClient.findById(userRoleRequest.getUserId()).getData();
+        User user = userClient.findById(userRoleRequest.getUserId()).getData().orElse(null);
         if (Objects.isNull(user)) {
             throw new CommonException("User not found");
         }
@@ -94,7 +95,7 @@ public class UserRoleService {
                 }
                 listUserRole.addAll(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), data.getUserId(), role)).toList());
             }
-            DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(listUserRole);
+            DefaultListResponse<UserRole> roleDefaultResponse = userRoleClient.saveAll(listUserRole);
             if (!roleDefaultResponse.getSuccess()) {
                 addError.addAll(userRoles.stream().map(UserRoleRequest::getUserId).toList());
             }
@@ -125,7 +126,7 @@ public class UserRoleService {
                 return updateError;
             }
             List<UserRole> listRole = new ArrayList<>(roles.stream().map(role -> new UserRole(UUID.randomUUID().toString(), userRoles.getUserId(), role)).toList());
-            DefaultResponse<List<UserRole>> roleDefaultResponse = userRoleClient.saveAll(listRole);
+            DefaultListResponse<UserRole> roleDefaultResponse = userRoleClient.saveAll(listRole);
             if (!roleDefaultResponse.getSuccess()) {
                 updateError.add(userRoles.getUserId());
             }

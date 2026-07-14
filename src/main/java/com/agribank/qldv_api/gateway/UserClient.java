@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.gateway;
 
+import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.User;
@@ -10,15 +11,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "userClient", url = "${qldv.database.url}" + "/api/v1/user", configuration = DatabaseFeignConfiguration.class)
-public interface UserClient {
+public interface UserClient extends BaseClient<User, String> {
     @GetMapping("/get-by-email")
     DefaultResponse<User> getUserByEmail(
             @RequestParam String email
-    );
-
-    @PostMapping("/save")
-    DefaultResponse<User> save(
-            @RequestBody User user
     );
 
     @PostMapping("/search")
@@ -35,12 +31,6 @@ public interface UserClient {
     DefaultResponse<User> findByIdIAM(
             @RequestParam(name = "idIam") Integer idIam
     );
-
-    @GetMapping("/find-by-id/{id}")
-    DefaultResponse<User> findById(
-            @PathVariable(name = "id") String id
-    );
-
     @GetMapping("/get-info")
     DefaultResponse<UserDto> getUserInfo(
             @RequestParam(name = "email") String email

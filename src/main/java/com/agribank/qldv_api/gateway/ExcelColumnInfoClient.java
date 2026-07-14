@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.gateway;
 
 
+import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.entity.ExcelColumnInfo;
 import org.springframework.cloud.openfeign.FeignClient;

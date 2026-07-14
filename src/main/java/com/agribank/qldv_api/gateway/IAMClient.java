@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.gateway;
 
+import com.agribank.qldv_api.gateway.config.IamFeignConfiguration;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;

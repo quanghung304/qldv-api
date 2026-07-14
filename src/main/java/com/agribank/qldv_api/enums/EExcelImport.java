@@ -7,10 +7,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum EExcelImport {
-    USERS( "Import User"),
-    BIEU_1("Thành lập Tổ chức Đảng"),
-    BIEU_12( "Phát triển Đảng viên"),
-    BIEU_15("Import Đảng viên");
+    USERS( "Import User");
 
 
     final String value;

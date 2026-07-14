@@ -12,12 +12,9 @@ import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
 import com.agribank.qldv_api.service.log.UserLogService;
-import com.agribank.qldv_api.service.organization.OrganizationService;
 import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
-import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,12 +41,10 @@ public class AuthenticationService {
 
     private final IAMClient iamClient;
     private final UserClient userClient;
-    private final DVService dvService;
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
     private final AuthenticationLogService authenticationLogService;
     private final EmployeeInfoService employeeInfoService;
-    private final OrganizationService organizationService;
 
     public UserResponse register(RegisterRequest request) {
         IAMRegisterRequest registerRequest = IAMRegisterRequest.builder()
@@ -80,11 +75,6 @@ public class AuthenticationService {
             EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode()+"");
             if (Objects.isNull(employeeInfoDto)) {
                 throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
-            }
-
-            Organization organization = organizationService.findByCode(request.getOrganizationCode());
-            if (Objects.isNull(organization)) {
-                throw new CommonException("Kiểm tra lại mã TCD");
             }
 
             User userNew = userClient.getUserByEmail(request.getEmail()).getData();
@@ -136,36 +126,11 @@ public class AuthenticationService {
             userNew.setIdIam(userIamResponse.getId());
             userNew.setDeleted(0);
             savedUserResponse = userClient.save(userNew);
-            createDV(request, userIamResponse, employeeInfoDto);
 
             writeLog(action, userNew, userOld, registerRequest);
             return modelMapper.map(savedUserResponse.getData(), UserResponse.class);
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
-        }
-    }
-
-    private void createDV(RegisterRequest request, UserIamResponse userIamResponse, EmployeeInfoDto employeeInfoDto){
-        DV dv = dvService.findByStaffCode(String.valueOf(request.getStaffCode()));
-        if (Objects.isNull(dv)){
-            dv = new DV();
-            dv.setStaffCode(String.valueOf(request.getStaffCode()));
-        }
-
-        dv.setOrganizationCode(request.getOrganizationCode());
-        dv.setFullName(userIamResponse.getFullName());
-        dv.setUsingName(employeeInfoDto.getUsingName());
-        dv.setVneid(String.valueOf(userIamResponse.getVneid()));
-        dv.setBirthday(CommonUtils.timestampConvert(employeeInfoDto.getBirthday()));
-        dv.setBirthPlace(employeeInfoDto.getBirthPlace());
-        dv.setHometown(employeeInfoDto.getHometown());
-        dv.setPermanentResidence(employeeInfoDto.getPermanentResidence());
-        dv.setTemporaryResidence(employeeInfoDto.getTemporaryResidence());
-
-        try {
-            dvService.save(dv);
-        }catch (Exception e){
-            System.out.println(e.getMessage());
         }
     }
 

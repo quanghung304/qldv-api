@@ -14,8 +14,6 @@ import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.UserDto;
-import com.agribank.qldvutils.entity.DV;
-import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
@@ -48,9 +46,7 @@ public class UserService {
     private final UserClient userClient;
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
-    private final OrganizationClient organizationClient;
     private final UserRoleService userRoleService;
-    private final DVService dvService;
 
     @Value("${app.service.publicKeyPath}")
     private String publicKeyPath;
@@ -211,14 +207,6 @@ public class UserService {
             throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
-        Organization organization = null;
-        if (Objects.nonNull(userUpdateRequest.getOrganizationCode())){
-            organization = organizationClient.findByCode(userUpdateRequest.getOrganizationCode()).getData();
-        }
-
-        if(Objects.nonNull(userUpdateRequest.getOrganizationCode()) && Objects.isNull(organization)){
-            throw new CommonException("Kiểm tra lại mã TCD");
-        }
         User userOld = (User) CommonUtils.handleCloneObject(user);
 
         UserIAMUpdate userIAMUpdate = UserIAMUpdate.builder()
@@ -235,18 +223,6 @@ public class UserService {
 
         try {
             DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
-
-            DV dv = null;
-            if (Objects.nonNull(organization)){
-                dv = dvService.findByStaffCode(userOld.getStaffCode());
-            }
-
-            if (Objects.nonNull(organization) && Objects.nonNull(dv)) {
-                dv.setFullName(user.getFullName());
-                dv.setOrganizationCode(userUpdateRequest.getOrganizationCode());
-
-                dvService.save(dv);
-            }
 
             userClient.save(user);
 
@@ -324,11 +300,6 @@ public class UserService {
             throw new CommonException("Không tìm thấy người dùng. Vui lòng kiểm tra lại!");
         }
         UserResponse userResponse = modelMapper.map(user, UserResponse.class);
-
-        Organization o = organizationClient.findByUserId(userResponse.getId()).getData();
-        if (Objects.nonNull(o)) {
-            userResponse.setOrganizationCode(o.getCode());
-        }
 
         List<Integer> brcds = new ArrayList<>();
         brcds.add(user.getBrcd());
