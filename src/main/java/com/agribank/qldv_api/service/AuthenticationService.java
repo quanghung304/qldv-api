@@ -17,6 +17,7 @@ import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
+import com.agribank.qldvutils.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -109,7 +110,7 @@ public class AuthenticationService {
 
             userNew.setStaffCode(String.valueOf(request.getStaffCode()));
 
-            DefaultResponse<User> savedUserResponse = userClient.save(userNew);
+            BaseResponse<User> savedUserResponse = userClient.save(userNew);
             if (!savedUserResponse.getSuccess() || Objects.isNull(savedUserResponse.getData())) {
                 throw new CommonException(savedUserResponse.getMessage());
             }
