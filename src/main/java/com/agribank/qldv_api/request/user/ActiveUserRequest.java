@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.user;
 
+import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.exception.ValidationException;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -11,15 +12,19 @@ import java.util.Objects;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ActiveUserRequest {
     String id;
-    String type;
+    String accountStatus;
 
     public void validate(){
         if(Objects.isNull(id)){
-            throw new ValidationException("id is null");
+            throw new ValidationException("Thiếu userId");
         }
 
-        if (Objects.isNull(type)) {
-            throw new ValidationException("type is required");
+        if (Objects.isNull(accountStatus)) {
+            throw new ValidationException("Thếu trạng thái user");
+        }
+
+        if (!EUserStatus.ACTIVE.name().equals(accountStatus) && !EUserStatus.INACTIVE.name().equals(accountStatus)) {
+            throw new ValidationException("Truyền sai giá trị");
         }
     }
 }

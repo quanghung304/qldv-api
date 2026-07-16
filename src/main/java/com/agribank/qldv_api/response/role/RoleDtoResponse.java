@@ -9,5 +9,6 @@ import lombok.experimental.FieldDefaults;
 public class RoleDtoResponse {
     String userId;
     String roleId;
+    String roleCode;
     String roleName;
 }

@@ -28,10 +28,9 @@ public class AuthenticationLogService extends ApiLogBaseService{
             try {
                 List<String> content = new ArrayList<>();
                 for (IAMRegisterRequest registerRequest : registerRequests) {
-                    content.add(String.format("Thêm mới User: username: <%s>, email: <%s>, fullName: <%s>, staffCode: <%s>, " +
-                                    "jobPosition: <%s>, depId: <%s>, userKind: <%s>", registerRequest.getUsername(), registerRequest.getEmail(),
-                            registerRequest.getFullName(), registerRequest.getStaffCode(),
-                            registerRequest.getJobPosition(), registerRequest.getDepId(), registerRequest.getUserKind()));
+                    content.add(String.format("Thêm mới User: username: <%s>, email: <%s>, fullName: <%s>," +
+                                    " depId: <%d>, brcd: <%d>", registerRequest.getUsername(), registerRequest.getEmail(),
+                            registerRequest.getFullName(),  registerRequest.getDepId(), registerRequest.getBrcd()));
                 }
                 apiLog.setDescription(String.join("\n", content));
                 save(apiLog);

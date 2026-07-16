@@ -10,20 +10,17 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserResponse {
     String id;
-    String dvCode;
+    String staffCode;
     Integer idIam;
     String username;
     String fullName;
-    String email;
     Integer brcd;
     Integer depId;
-    String phone;
-    String vneid;
-    String staffCode;
-    Integer active;
+    String accountStatus;
     Integer deleted;
     String branchName;
     List<String> roles;
     List<String> roleIds;
     String organizationCode;
+    String createdBy;
 }

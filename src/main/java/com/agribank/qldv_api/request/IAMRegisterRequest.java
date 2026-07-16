@@ -13,12 +13,7 @@ public class IAMRegisterRequest {
     private String email;
     private List<Integer> roleIds;
     private List<Integer> applicationIds;
-    private String vneid;
-    private String phone;
-    private Integer staffCode;
     private String fullName;
-    private String address;
-    private String jobPosition;
     private Integer depId;
-    private String userKind;
+    private Integer staffCode;
 }

@@ -50,7 +50,7 @@ public class UserLogService extends ApiLogBaseService{
         ExecutorService executor = Executors.newFixedThreadPool(5);
         executor.submit(() -> {
             try {
-                String content = String.format("User: id: <%s>, username: <%s>, email: <%s>", user.getId(), user.getUsername(), user.getEmail());
+                String content = String.format("User: id: <%s>, username: <%s>", user.getId(), user.getUsername());
                 apiLog.setDescription(content);
                 save(apiLog);
             }catch (Exception e) {

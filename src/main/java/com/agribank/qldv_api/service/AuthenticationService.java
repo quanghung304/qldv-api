@@ -1,27 +1,28 @@
 package com.agribank.qldv_api.service;
 
-import com.agribank.qldv_api.enums.EApiLogType;
+import com.agribank.qldv_api.enums.*;
 import com.agribank.qldv_api.gateway.IAMClient;
+import com.agribank.qldv_api.gateway.StaffClient;
 import com.agribank.qldv_api.gateway.UserClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.RegisterRequest;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.user.ADResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
-import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
-import com.agribank.qldvutils.dto.EmployeeInfoDto;
+import com.agribank.qldvutils.entity.Staff;
 import com.agribank.qldvutils.entity.User;
+import com.agribank.qldvutils.enums.EAccountStatus;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -37,116 +38,100 @@ public class AuthenticationService {
     @Value("${qldv.app.id}")
     private Integer QLDV_APP_ID;
 
-    @Value("${app.service.publicKeyPath}")
-    private String publicKeyPath;
 
     private final IAMClient iamClient;
     private final UserClient userClient;
+    private final StaffClient staffClient;
     private final ModelMapper modelMapper;
-    private final UserLogService userLogService;
     private final AuthenticationLogService authenticationLogService;
-    private final EmployeeInfoService employeeInfoService;
 
     public UserResponse register(RegisterRequest request) {
         IAMRegisterRequest registerRequest = IAMRegisterRequest.builder()
-                .username(CommonUtils.splitUsername(request.getEmail()))
+                .username(request.getUsername())
                 .brcd(request.getBrcd())
-                .email(request.getEmail())
-                .phone(request.getPhone())
+                .email(request.getUsername() + Constants.EMAIL_DOMAIN)
                 .fullName(request.getFullName())
                 .applicationIds(List.of(QLDV_APP_ID))
-                .vneid(request.getVneid())
-                .address(request.getAddress())
-                .staffCode(request.getStaffCode())
                 .depId(request.getDepId())
-                .userKind(request.getUserKind())
+                .staffCode(request.getStaffCode())
                 .build();
 
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String authorHeader = "Bearer " + CommonUtils.getAccessToken(servletRequest);
 
+        if (!EAuthType.SSO_EMAIL.name().equals(request.getAuthType())) {
+            validateInternal(request, registerRequest, authorHeader);
+        }
         UserIamResponse userIamResponse = null;
         try {
-            DefaultResponse<ADResponse> adResponse = iamClient.checkAd(authorHeader, registerRequest.getUsername(), 0);
+            User user = new User();
+            user.setUsername(request.getUsername());
+            user.setUsername(registerRequest.getUsername());
 
-            if (Objects.isNull(adResponse) || Objects.isNull(adResponse.getData())) {
-                throw new CommonException("Email không đúng định dạng Agribank vui lòng kiểm tra lại");
-            }
+            UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-            EmployeeInfoDto employeeInfoDto = employeeInfoService.findByEmpno(request.getStaffCode()+"");
-            if (Objects.isNull(employeeInfoDto)) {
-                throw new CommonException("Mã nhân viên không chính xác vui lòng kiểm tra lại!");
-            }
+            user.setFullName(request.getFullName());
+            user.setBrcd(request.getBrcd());
+            user.setDepId(request.getDepId());
+            user.setDeleted(0);
+            user.setAccountStatus(EAccountStatus.ACTIVE.name());
+            user.setAuthType(request.getAuthType());
+            user.setCreatedBy(userRequested.getId());
+            user.setStaffCode(Objects.nonNull(request.getStaffCode())
+            ? request.getStaffCode() + ""
+                    : null
+                    );
+            user.setAccountStatus(EUserStatus.ACTIVE.name());
 
-            User userNew = userClient.getUserByEmail(request.getEmail()).getData();
-            User userOld = new User();
-            String action = EApiLogType.UPDATE.getValue();
 
-            if (Objects.isNull(userNew)) {
-                userNew = new User();
-                action = EApiLogType.INSERT.getValue();
-                userNew.setEmail(request.getEmail());
-                userNew.setUsername(registerRequest.getUsername());
-            }else {
-                userOld.setId(userNew.getId());
-                userOld.setIdIam(userNew.getIdIam());
-                userOld.setEmail(userNew.getEmail());
-                userOld.setUsername(userNew.getUsername());
-                userOld.setPhone(userNew.getPhone());
-                userOld.setFullName(userNew.getFullName());
-                userOld.setVneid(userNew.getVneid());
-                userOld.setBrcd(userNew.getBrcd());
-                userOld.setDepId(userNew.getDepId());
-                userOld.setActive(userNew.getActive());
-                userOld.setStaffCode(userNew.getStaffCode());
-                userNew.setDeleted(userNew.getDeleted());
-            }
+            user = userClient.save(user).getData();
+            createPMStaff(user);
 
-            userNew.setFullName(request.getFullName());
-            userNew.setActive(0);
-            userNew.setDeleted(1);
-            userNew.setBrcd(request.getBrcd());
-            userNew.setDepId(request.getDepId());
-
-            userNew.setStaffCode(String.valueOf(request.getStaffCode()));
-
-            BaseResponse<User> savedUserResponse = userClient.save(userNew);
-            if (!savedUserResponse.getSuccess() || Objects.isNull(savedUserResponse.getData())) {
-                throw new CommonException(savedUserResponse.getMessage());
-            }
-
-            assignRole(savedUserResponse.getData().getId(), request.getRoleIds());
+            assignRole(user.getId(), request.getRoleIds(), user);
             //ghi log
             DefaultResponse<UserIamResponse> response = iamClient.register(authorHeader, registerRequest);
 
             userIamResponse = response.getData();
 
-            userNew = userClient.getUserByEmail(request.getEmail()).getData();
-            userNew.setPhone(userIamResponse.getPhone());
-            userNew.setVneid(userIamResponse.getVneid());
-            userNew.setIdIam(userIamResponse.getId());
-            userNew.setDeleted(0);
-            savedUserResponse = userClient.save(userNew);
+            user.setIdIam(userIamResponse.getId());
+            user = userClient.save(user).getData();
 
-            writeLog(action, userNew, userOld, registerRequest);
-            return modelMapper.map(savedUserResponse.getData(), UserResponse.class);
+            writeLog(registerRequest);
+            return modelMapper.map(user, UserResponse.class);
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }
     }
 
-    private void writeLog(String action, User userNew, User userOld, IAMRegisterRequest registerRequest) {
-        if (EApiLogType.UPDATE.getValue().equals(action)) {
-            userLogService.handlerWriteLogUpdate(userOld, userNew);
-        }else {
+    private void createPMStaff(User user){
+        if (Objects.isNull(user.getStaffCode()) || user.getStaffCode().isBlank()) {
+            return;
+        }
+
+        Staff existedStaff = staffClient.findByStaffCode(user.getStaffCode()).getData();
+        if (Objects.nonNull(existedStaff)) {
+            return;
+        }
+
+        Staff staff = Staff.builder()
+                .staffCode(user.getStaffCode())
+                .fullName(user.getFullName())
+                .build();
+        staffClient.save(staff);
+    }
+
+    private void writeLog(IAMRegisterRequest registerRequest) {
+        try {
             List<IAMRegisterRequest> iamRegisterRequests = new ArrayList<>();
             iamRegisterRequests.add(registerRequest);
             authenticationLogService.writeLogRegister(iamRegisterRequests);
+        }catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 
 
-    private void assignRole(String id, List<String> roles) {
+    private void assignRole(String id, List<String> roles, User user) {
         UserRoleRequest request = UserRoleRequest.builder()
                 .userId(id)
                 .roleIds(roles)
@@ -154,7 +139,24 @@ public class AuthenticationService {
         try {
             userRoleService.assignUserRole(request);
         }catch (Exception e) {
-            System.out.println(e.getMessage());
+            userClient.delete(user);
+            throw new CommonException(e.getMessage());
+        }
+    }
+
+    private void validateInternal(RegisterRequest request, IAMRegisterRequest registerRequest, String authorHeader){
+        if (Objects.isNull(request.getBrcd())) {
+            throw new CommonException("Bạn chưa chọn chi nhánh");
+        }
+
+        if (Objects.isNull(request.getDepId())) {
+            throw new CommonException("Bạn chưa chọn phòng ban");
+        }
+
+        try {
+            iamClient.registerValidate(authorHeader, registerRequest);
+        }catch (Exception e) {
+            throw new CommonException(e.getMessage());
         }
     }
 }

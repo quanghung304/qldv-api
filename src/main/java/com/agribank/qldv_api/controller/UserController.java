@@ -2,12 +2,12 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.PageItemsResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
+import com.agribank.qldv_api.response.user.UserListResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.request.SearchUserRequest;
-import com.agribank.qldvutils.response.PageResponse;
-import com.agribank.qldvutils.response.user.UserSearchResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,10 +25,26 @@ public class UserController {
         return DefaultResponse.success(userService.searchUserIam(request));
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<UserSearchResponse>>> search(@RequestBody SearchUserRequest request) {
+    @PreAuthorize("hasAuthority('R-ADM') || hasAuthority('R-QTVCS')")
+    @GetMapping("/search")
+    public ResponseEntity<DefaultResponse<PageItemsResponse<UserListResponse>>> search(
+            @RequestParam(name = "brcd", required = false) Integer brcd,
+            @RequestParam(name = "role_id", required = false) String roleId,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "page", defaultValue = "0") Integer page,
+            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize
+    ) {
+        SearchUserRequest request = new SearchUserRequest();
+        request.setBrcd(brcd);
+        request.setRoleId(roleId);
+        request.setStatus(status);
+        request.setKeyword(keyword);
+        request.setPage(page);
+        request.setPageSize(pageSize);
         request.validate();
-        return DefaultResponse.success(userService.searchQLDV(request));
+
+        return DefaultResponse.success(userService.searchUsers(request));
     }
 
     @PutMapping("/change-password")
@@ -37,24 +53,23 @@ public class UserController {
         return DefaultResponse.success(userService.changePassword(request), null);
     }
 
-    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
+    @PreAuthorize("hasAuthority('R-ADM') || hasAnyAuthority('R-QTVCS')")
     @PostMapping("/reset-password")
     public ResponseEntity<DefaultResponse<String>> resetPassword(@RequestBody ResetPasswordRequest request) {
         request.validate();
         return DefaultResponse.success(userService.resetPassword(request), null);
     }
 
-    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('R-ADM') || hasAnyAuthority('R-QTVCS')")
     @PutMapping("/update")
     public ResponseEntity<DefaultResponse<String>> update(@RequestBody UserUpdateRequest request) {
         request.validate();
         return DefaultResponse.success(userService.update(request), null);
     }
 
-    @PutMapping("/active")
-    public ResponseEntity<DefaultResponse<String>> active(@RequestBody ActiveUserRequest request) {
-        request.validate();
-        return DefaultResponse.success(userService.active(request), null);
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<DefaultResponse<String>> active(@PathVariable("id") String id) {
+        return DefaultResponse.success(userService.active(id), null);
     }
 
     @DeleteMapping("/delete/{id}")

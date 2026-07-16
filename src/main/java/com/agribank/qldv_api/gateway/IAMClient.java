@@ -30,6 +30,12 @@ public interface IAMClient {
             @RequestParam(name = "ldapType") Integer ldapType
     );
 
+    @PostMapping("api/v1/user/register-validate")
+    DefaultResponse<Boolean> registerValidate(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody IAMRegisterRequest request
+    );
+
     @GetMapping("api/v1/check/token")
     DefaultResponse<UserIamResponse> verifyToken(
             @RequestHeader("Authorization") String authorizationHeader

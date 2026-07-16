@@ -1,14 +1,19 @@
 package com.agribank.qldv_api.service;
 
+
+import com.agribank.qldv_api.enums.Constants;
+import com.agribank.qldv_api.enums.EAuthType;
 import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.PageItemsResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
+import com.agribank.qldv_api.response.user.UserListResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
@@ -88,7 +93,7 @@ public class UserService {
         //Kiểm tra quyền search user cho Chi nhánh
         checkPermissionSearchUser(request);
         if (Objects.isNull(request.getOrderBy())){
-            request.setOrderBy("organizationCodeB");
+            request.setOrderBy("createdAt");
         }
 
         PageResponse<UserSearchResponse> response = userClient.search(request).getData();
@@ -101,7 +106,9 @@ public class UserService {
         List<Integer> brcds = new ArrayList<>();
         List<String> userIds = new ArrayList<>();
         userResponses.forEach(u -> {
-            brcds.add(u.getBrcd());
+            if (Objects.nonNull(u.getBrcd())) {
+                brcds.add(u.getBrcd());
+            }
             userIds.add(u.getId());
         });
 
@@ -109,24 +116,81 @@ public class UserService {
         Map<Integer, BranchResponse> branchResponseMap = getBranchInfo(brcds);
 
         //Lấy role
-        Map<String, List<String>> roleMap = getUserRole(userIds);
+        Map<String, List<RoleDtoResponse>> roleMap = getUserRoleDetails(userIds);
 
         for (UserSearchResponse userResponse : userResponses) {
             BranchResponse branchResponse = branchResponseMap.getOrDefault(userResponse.getBrcd(), null);
             if (Objects.nonNull(branchResponse)) {
                 userResponse.setBranchName(branchResponse.getLclbrnm());
+                userResponse.setUnitName(branchResponse.getLclbrnm());
             }
 
-            List<String> roleName = roleMap.getOrDefault(userResponse.getId(), new ArrayList<>());
-            userResponse.setRoles(roleName);
+            List<RoleDtoResponse> roles = roleMap.getOrDefault(userResponse.getId(), new ArrayList<>());
+            userResponse.setRoles(roles.stream().map(RoleDtoResponse::getRoleName).toList());
+            RoleDtoResponse displayRole = getDisplayRole(roles, request.getRoleId());
+            if (Objects.nonNull(displayRole)) {
+                userResponse.setRoleId(getRoleIdentifier(displayRole));
+                userResponse.setRoleName(displayRole.getRoleName());
+            }
+            userResponse.setAccountStatus(toContractStatus(userResponse.getAccountStatus()));
         }
 
         response.setData(userResponses);
         return response;
     }
 
+    public PageItemsResponse<UserListResponse> searchUsers(SearchUserRequest request) {
+        PageResponse<UserSearchResponse> response = searchQLDV(request);
+        List<UserListResponse> items = Objects.isNull(response.getData())
+                ? new ArrayList<>()
+                : response.getData().stream().map(this::toUserListResponse).toList();
+
+        return PageItemsResponse.<UserListResponse>builder()
+                .items(items)
+                .currentPage(response.getCurrentPage())
+                .totalItems(response.getTotalItems())
+                .totalPages(response.getTotalPages())
+                .build();
+    }
+
+    private UserListResponse toUserListResponse(UserSearchResponse user) {
+        return UserListResponse.builder()
+                .userId(Objects.nonNull(user.getUserId()) ? user.getUserId() : user.getId())
+                .fullName(user.getFullName())
+                .username(user.getUsername())
+                .unitId(Objects.nonNull(user.getUnitId()) ? user.getUnitId() : user.getBrcd())
+                .unitName(Objects.nonNull(user.getUnitName()) ? user.getUnitName() : user.getBranchName())
+                .roleId(user.getRoleId())
+                .roleName(user.getRoleName())
+                .accountStatus(toContractStatus(user.getAccountStatus()))
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+
     private void checkPermissionSearchUser(SearchUserRequest request){
         UserDetailsImpl userRequested = getUserRequested();
+        if (Objects.isNull(userRequested)) {
+            return;
+        }
+
+        if (hasAuthority(userRequested, "R-ADM")) {
+            return;
+        }
+
+        if (hasAuthority(userRequested, "R-QTVCS")) {
+            Integer brcd = userRequested.getBrcd();
+            if (Objects.isNull(brcd)) {
+                throw new CommonException("Khong xac dinh duoc don vi cua nguoi dung");
+            }
+
+            if (Objects.nonNull(request.getBrcd()) && !Objects.equals(request.getBrcd(), brcd)) {
+                throw new CommonException("Ban khong co quyen tim kiem User don vi khac");
+            }
+
+            request.setBrcd(brcd);
+            return;
+        }
+
         String userOrganizationCode = userRequested.getOrganizationCode();
 
         if (!BTCDU_CODE.equals(userOrganizationCode)
@@ -140,11 +204,16 @@ public class UserService {
         }
     }
 
+    private boolean hasAuthority(UserDetailsImpl user, String authority) {
+        return Objects.nonNull(user.getAuthorities())
+                && user.getAuthorities().stream().anyMatch(a -> authority.equals(a.getAuthority()));
+    }
+
 
 
     private Map<Integer, BranchResponse> getBranchInfo(List<Integer> brcds){
         if (brcds.isEmpty()){
-            return null;
+            return new HashMap<>();
         }
         brcds = brcds.stream().distinct().toList();
 
@@ -163,6 +232,54 @@ public class UserService {
         }
 
         return branchResponseMap;
+    }
+
+    private Map<String, List<RoleDtoResponse>> getUserRoleDetails(List<String> userIds){
+        List<RoleDtoResponse> roleDtoResponses = new ArrayList<>();
+        try {
+            roleDtoResponses = roleClient.findByUserIds(userIds).getData();
+        }catch (Exception e){
+            System.out.println("getUserRole: " + e.getMessage());
+        }
+
+        Map<String, List<RoleDtoResponse>> roleMap = new HashMap<>();
+        if (!roleDtoResponses.isEmpty()){
+            for (RoleDtoResponse roleDtoResponse : roleDtoResponses) {
+                List<RoleDtoResponse> roles = roleMap.getOrDefault(roleDtoResponse.getUserId(), new ArrayList<>());
+                roles.add(roleDtoResponse);
+                roleMap.put(roleDtoResponse.getUserId(), roles);
+            }
+        }
+        return roleMap;
+    }
+
+    private RoleDtoResponse getDisplayRole(List<RoleDtoResponse> roles, String roleId) {
+        if (roles.isEmpty()) {
+            return null;
+        }
+
+        if (Objects.nonNull(roleId) && !roleId.isBlank()) {
+            return roles.stream()
+                    .filter(r -> roleId.equals(r.getRoleId()) || roleId.equals(r.getRoleCode()))
+                    .findFirst()
+                    .orElse(roles.get(0));
+        }
+
+        return roles.get(0);
+    }
+
+    private String getRoleIdentifier(RoleDtoResponse role) {
+        if (Objects.nonNull(role.getRoleCode()) && !role.getRoleCode().isBlank()) {
+            return role.getRoleCode();
+        }
+        return role.getRoleId();
+    }
+
+    private String toContractStatus(String status) {
+        if (EUserStatus.INACTIVE.name().equals(status)) {
+            return "LOCKED";
+        }
+        return status;
     }
 
     private Map<String, List<String>> getUserRole(List<String> userIds){
@@ -217,12 +334,14 @@ public class UserService {
                 .fullName(userUpdateRequest.getFullName())
                 .build();
 
-        user.setBrcd(userIAMUpdate.getBrcd());
-        user.setDepId(userIAMUpdate.getDepId());
-        user.setFullName(userIAMUpdate.getFullName());
+        user.setBrcd(userUpdateRequest.getBrcd());
+        user.setDepId(userUpdateRequest.getDepId());
+        user.setFullName(userUpdateRequest.getFullName());
 
         try {
-            DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
+            if (EAuthType.SSO_EMAIL.name().equals(user.getAuthType())){
+                DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
+            }
 
             userClient.save(user);
 
@@ -235,30 +354,33 @@ public class UserService {
             }
 
             userLogService.handlerWriteLogUpdate(userOld, user);
-            return response.getMessage();
+            return "Thành công";
         }catch (Exception e){
             throw new CommonException(e.getMessage());
         }
     }
 
-    public String active(ActiveUserRequest request){
-        User userNew = findById(request.getId());
+    public String active(String id){
+        User userNew = findById(id);
 
         if(Objects.isNull(userNew)){
             throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
+        String accountStatus = EUserStatus.ACTIVE.name().equals(userNew.getAccountStatus())
+                ? EUserStatus.INACTIVE.name()
+                : EUserStatus.ACTIVE.name();
         ActiveUserIAMRequest activeUserIAMRequest = ActiveUserIAMRequest.builder()
                 .appId(QLDV_APP_ID)
                 .userId(userNew.getIdIam())
-                .type(request.getType())
+                .type(accountStatus)
                 .build();
 
         try {
             DefaultResponse<String> response = iamClient.active(getAuthorHeader(), activeUserIAMRequest);
             User userOld = (User) CommonUtils.handleCloneObject(userNew);
 
-            userNew.setActive(EUserStatus.getValue(request.getType()));
+            userNew.setAccountStatus(accountStatus);
             userClient.save(userNew);
 
             userLogService.handlerWriteLogUpdate(userOld, userNew);
@@ -275,7 +397,8 @@ public class UserService {
         }
 
         try {
-            DefaultResponse<String> response = iamClient.delete(getAuthorHeader(), user.getEmail(), QLDV_APP_ID);
+            DefaultResponse<String> response = iamClient.delete(getAuthorHeader(),
+                    user.getUsername() + Constants.EMAIL_DOMAIN, QLDV_APP_ID);
 
             user.setDeleted(1);
             userClient.save(user);
@@ -342,9 +465,7 @@ public class UserService {
             throw new CommonException("Hệ thống đang không tìm thấy User của bạn. Vui lòng thử lại sau");
         }
 
-        user.setVneid(request.getVneid());
         user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
 
         iamClient.userUpdate(getAuthorHeader(), request);
         userClient.save(user);

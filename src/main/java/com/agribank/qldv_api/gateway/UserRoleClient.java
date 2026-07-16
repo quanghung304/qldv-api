@@ -11,15 +11,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "user-role", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
+@FeignClient(name = "user-role", url = "${qldv.database.url}" + "/api/v1/user-role", configuration = DatabaseFeignConfiguration.class)
 public interface UserRoleClient extends BaseClient<UserRole, String> {
 
-    @PostMapping("api/v1/user-role/find-by-id")
+    @PostMapping("/find-by-id")
     DefaultResponse<List<UserRole>> getById(
             @RequestBody String userId
     );
 
-    @DeleteMapping("api/v1/user-role/delete-by-id")
+    @DeleteMapping("/delete-by-id")
     DefaultResponse<String> deleteById(
             @RequestBody UserRoleRequest request
     );

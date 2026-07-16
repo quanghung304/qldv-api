@@ -60,27 +60,24 @@ public class JwtTokenFilter extends OncePerRequestFilter{
                 return;
             }
 
-            UserDto user = userClient.getUserInfo(userIamResponse.getEmail()).getData();
+            User user = userClient.findByUsername(userIamResponse.getUsername()).getData();
 
-            if (Objects.isNull(user) && userIamResponse.getUsername().equals("admin")) {
-                User admin = generateAdminAccount(userIamResponse);
-                user = modelMapper.map(admin, UserDto.class);
-            }
+//            if (Objects.isNull(user) && userIamResponse.getUsername().equals("admin")) {
+//                User admin = generateAdminAccount(userIamResponse);
+//                user = modelMapper.map(admin, UserDto.class);
+//            }
 
             List<Role> roles = roleService.getRoleByUserId(user.getId());
             List<GrantedAuthority> roleNames = new ArrayList<>();
             if (!roles.isEmpty()) {
-                roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleName())).collect(Collectors.toList());
+                roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleCode())).collect(Collectors.toList());
             }
 
             UserDetailsImpl userDetails = new UserDetailsImpl();
             userDetails.setId(user.getId());
-            userDetails.setStaffCode(user.getStaffCode());
             userDetails.setUsername(userIamResponse.getUsername());
             userDetails.setEmail(userIamResponse.getEmail());
             userDetails.setBrcd(user.getBrcd());
-            userDetails.setOrganizationCode(user.getOrganizationCode());
-            userDetails.setFormOrganization(user.getFormOrganization());
             userDetails.setIdIam(userIamResponse.getId());
             userDetails.setDepId(user.getDepId());
             userDetails.setFullName(user.getFullName());
@@ -113,11 +110,9 @@ public class JwtTokenFilter extends OncePerRequestFilter{
         User admin = User.builder()
                 .idIam(userIamResponse.getId())
                 .username(userIamResponse.getUsername())
-                .email(userIamResponse.getEmail())
                 .fullName(userIamResponse.getFullName())
                 .brcd(userIamResponse.getBrcd())
                 .depId(userIamResponse.getDepartment().getId())
-                .vneid(userIamResponse.getVneid())
                 .build();
 
         BaseResponse<User> response = userClient.save(admin);
