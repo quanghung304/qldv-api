@@ -5,6 +5,6 @@ import com.agribank.qldvutils.entity.CaseOrganization;
 import com.agribank.qldvutils.entity.CaseOrganizationId;
 import org.springframework.cloud.openfeign.FeignClient;
 
-@FeignClient(name = "caseOrganizationClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
+@FeignClient(name = "caseOrganizationClient", url = "${qldv.database.url}" + "/api/v1/case-organization", configuration = DatabaseFeignConfiguration.class)
 public interface CaseOrganizationClient extends BaseClient<CaseOrganization, CaseOrganizationId> {
 }
