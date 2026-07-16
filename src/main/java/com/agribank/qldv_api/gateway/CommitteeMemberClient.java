@@ -5,6 +5,6 @@ import com.agribank.qldvutils.entity.CommitteeMember;
 import com.agribank.qldvutils.entity.CommitteeMemberId;
 import org.springframework.cloud.openfeign.FeignClient;
 
-@FeignClient(name = "committeeMemberClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
+@FeignClient(name = "committeeMemberClient", url = "${qldv.database.url}" + "/api/v1/committee-member", configuration = DatabaseFeignConfiguration.class)
 public interface CommitteeMemberClient extends BaseClient<CommitteeMember, CommitteeMemberId> {
 }

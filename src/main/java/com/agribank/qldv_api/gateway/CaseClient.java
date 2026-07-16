@@ -4,6 +4,6 @@ import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.Case;
 import org.springframework.cloud.openfeign.FeignClient;
 
-@FeignClient(name = "caseClient", url = "${qldv.database.url}", configuration = DatabaseFeignConfiguration.class)
+@FeignClient(name = "caseClient", url = "${qldv.database.url}" + "/api/v1/case", configuration = DatabaseFeignConfiguration.class)
 public interface CaseClient extends BaseClient<Case, String> {
 }
