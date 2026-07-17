@@ -27,6 +27,16 @@ public class ExceptionHandle {
         return BaseResponse.error(exception.getMessage());
     }
 
+    @ExceptionHandler(value = ForbiddenException.class)
+    public ResponseEntity<BaseResponse<Object>> exception(ForbiddenException exception) {
+        return BaseResponse.error(exception.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(value = NotFoundException.class)
+    public ResponseEntity<BaseResponse<Object>> exception(NotFoundException exception) {
+        return BaseResponse.error(exception.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(value = MissingServletRequestParameterException.class)
     public ResponseEntity<BaseResponse<Object>> exception(MissingServletRequestParameterException exception) {
         return BaseResponse.error("Không được để trống param " + exception.getParameterName());

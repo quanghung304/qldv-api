@@ -18,13 +18,10 @@ import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.response.BaseResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +59,9 @@ public class AuthenticationService {
                 .userKind(request.getUserKind())
                 .build();
 
-        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        String authorHeader = "Bearer " + CommonUtils.getAccessToken(servletRequest);
-
         UserIamResponse userIamResponse = null;
         try {
-            DefaultResponse<ADResponse> adResponse = iamClient.checkAd(authorHeader, registerRequest.getUsername(), 0);
+            DefaultResponse<ADResponse> adResponse = iamClient.checkAd(registerRequest.getUsername(), 0);
 
             if (Objects.isNull(adResponse) || Objects.isNull(adResponse.getData())) {
                 throw new CommonException("Email không đúng định dạng Agribank vui lòng kiểm tra lại");
@@ -117,7 +111,7 @@ public class AuthenticationService {
 
             assignRole(savedUserResponse.getData().getId(), request.getRoleIds());
             //ghi log
-            DefaultResponse<UserIamResponse> response = iamClient.register(authorHeader, registerRequest);
+            DefaultResponse<UserIamResponse> response = iamClient.register(registerRequest);
 
             userIamResponse = response.getData();
 
