@@ -2,7 +2,6 @@ package com.agribank.qldv_api.jwt;
 
 import com.agribank.qldv_api.gateway.IAMClient;
 import com.agribank.qldv_api.gateway.UserClient;
-import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.service.role.RoleService;
 import com.agribank.qldvutils.dto.UserDto;
@@ -47,13 +46,11 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         try {
-            final String token;
             if (!hasAuthorizationBearer(request)) {
                 filterChain.doFilter(request, response);
                 return;
             }
-            token = getAccessToken(request);
-            UserIamResponse userIamResponse = iamClient.verifyToken("Bearer " + token).getData();
+            UserIamResponse userIamResponse = iamClient.verifyToken().getData();
 
             if (Objects.isNull(userIamResponse)) {
                 filterChain.doFilter(request, response);
@@ -72,6 +69,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             if (!roles.isEmpty()) {
                 roleNames = roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleName())).collect(Collectors.toList());
             }
+            List<String> roleCodes = roles.stream().map(Role::getRoleCode).filter(Objects::nonNull).collect(Collectors.toList());
 
             UserDetailsImpl userDetails = new UserDetailsImpl();
             userDetails.setId(user.getId());
@@ -79,11 +77,11 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             userDetails.setUsername(userIamResponse.getUsername());
             userDetails.setEmail(userIamResponse.getEmail());
             userDetails.setBrcd(user.getBrcd());
-            userDetails.setOrganizationCode(user.getOrganizationCode());
-            userDetails.setFormOrganization(user.getFormOrganization());
             userDetails.setIdIam(userIamResponse.getId());
             userDetails.setDepId(user.getDepId());
             userDetails.setFullName(user.getFullName());
+            userDetails.setRoleCodes(roleCodes);
+            userDetails.setPartyOrganizationId(user.getPartyOrganizationId());
             userDetails.setAuthorities(roleNames);
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
@@ -101,12 +99,6 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             return false;
         }
         return true;
-    }
-
-    private String getAccessToken(HttpServletRequest request){
-        String header = request.getHeader("Authorization");
-        String token = header.split(" ")[1];
-        return token;
     }
 
     private User generateAdminAccount(UserIamResponse userIamResponse) {

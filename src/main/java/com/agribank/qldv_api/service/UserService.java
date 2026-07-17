@@ -20,15 +20,12 @@ import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchUserRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.user.UserSearchResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
 
@@ -62,26 +59,19 @@ public class UserService {
     }
 
     public UserSearchIamResponse searchUserIam(SearchUserIAMRequest request){
-        String authorHeader = getAuthorHeader();
-
         request.validate();
         if(!request.getPrntbrcd().isBlank() && BRANCH_CODE_HEAD_QUARTER >= Integer.parseInt(request.getPrntbrcd())){
             request.setBrcd("");
             request.setPrntbrcd("");
         }
 
-        return iamClient.search(authorHeader, QLDV_APP_ID,
+        return iamClient.search(QLDV_APP_ID,
                 request.getBrcd(),
                 request.getName(),
                 request.getPrntbrcd(),
                 request.getPage(),
                 request.getPageSize()
                 ).getData();
-    }
-
-    private String getAuthorHeader(){
-        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        return  "Bearer " + CommonUtils.getAccessToken(servletRequest);
     }
 
     public PageResponse<UserSearchResponse> searchQLDV(SearchUserRequest request){
@@ -127,7 +117,7 @@ public class UserService {
 
     private void checkPermissionSearchUser(SearchUserRequest request){
         UserDetailsImpl userRequested = getUserRequested();
-        String userOrganizationCode = userRequested.getOrganizationCode();
+        String userOrganizationCode = userRequested.getPartyOrganizationId();
 
         if (!BTCDU_CODE.equals(userOrganizationCode)
                 && Objects.nonNull(request.getOrganizationCode()) && !request.getOrganizationCode().contains(userOrganizationCode)
@@ -150,7 +140,7 @@ public class UserService {
 
         List<BranchResponse> branchResponses = new ArrayList<>();
         try {
-            branchResponses = iamClient.getBranchInfo(getAuthorHeader(), brcds).getData();
+            branchResponses = iamClient.getBranchInfo(brcds).getData();
         }catch (Exception e){
             System.out.println("getBranchInfo: " + e.getMessage());
         }
@@ -187,7 +177,7 @@ public class UserService {
     public String changePassword(PasswordRequest request){
         request.setOldPassword(CommonUtils.handleEncryptPassword(request.getOldPassword(), publicKeyPath));
         request.setNewPassword(CommonUtils.handleEncryptPassword(request.getNewPassword(), publicKeyPath));
-        return iamClient.changePassword(getAuthorHeader(), request).getData();
+        return iamClient.changePassword(request).getData();
     }
 
     public String resetPassword(ResetPasswordRequest request){
@@ -197,7 +187,7 @@ public class UserService {
         }
 
         request.setPassword(CommonUtils.handleEncryptPassword(request.getPassword(), publicKeyPath));
-        return iamClient.resetPassword(getAuthorHeader(), request).getMessage();
+        return iamClient.resetPassword(request).getMessage();
     }
 
 
@@ -222,7 +212,7 @@ public class UserService {
         user.setFullName(userIAMUpdate.getFullName());
 
         try {
-            DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
+            DefaultResponse<String> response = iamClient.updateUserIAM(userIAMUpdate);
 
             userClient.save(user);
 
@@ -255,7 +245,7 @@ public class UserService {
                 .build();
 
         try {
-            DefaultResponse<String> response = iamClient.active(getAuthorHeader(), activeUserIAMRequest);
+            DefaultResponse<String> response = iamClient.active(activeUserIAMRequest);
             User userOld = (User) CommonUtils.handleCloneObject(userNew);
 
             userNew.setActive(EUserStatus.getValue(request.getType()));
@@ -275,7 +265,7 @@ public class UserService {
         }
 
         try {
-            DefaultResponse<String> response = iamClient.delete(getAuthorHeader(), user.getEmail(), QLDV_APP_ID);
+            DefaultResponse<String> response = iamClient.delete(user.getEmail(), QLDV_APP_ID);
 
             user.setDeleted(1);
             userClient.save(user);
@@ -346,7 +336,7 @@ public class UserService {
         user.setFullName(request.getFullName());
         user.setPhone(request.getPhone());
 
-        iamClient.userUpdate(getAuthorHeader(), request);
+        iamClient.userUpdate(request);
         userClient.save(user);
 
         return "Cập nhật thông tin thành công";

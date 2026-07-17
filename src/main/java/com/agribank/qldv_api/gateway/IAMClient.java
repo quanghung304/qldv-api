@@ -19,25 +19,20 @@ import java.util.List;
 public interface IAMClient {
     @PostMapping("api/v1/auth/signup")
     DefaultResponse<UserIamResponse> register(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody IAMRegisterRequest request
     );
 
     @GetMapping("api/v1/auth/ad/check-user")
     DefaultResponse<ADResponse> checkAd(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(name = "username") String username,
             @RequestParam(name = "ldapType") Integer ldapType
     );
 
     @GetMapping("api/v1/check/token")
-    DefaultResponse<UserIamResponse> verifyToken(
-            @RequestHeader("Authorization") String authorizationHeader
-    );
+    DefaultResponse<UserIamResponse> verifyToken();
 
     @GetMapping("api/v1/user/get-user-page")
     DefaultResponse<UserSearchIamResponse> search(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(name = "appId") Integer appId,
             @RequestParam(name = "brcd") String brcd,
             @RequestParam(name = "name") String name,
@@ -48,61 +43,50 @@ public interface IAMClient {
 
     @DeleteMapping("api/v1/user/remove-user-app")
     DefaultResponse<String> delete(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(name = "email") String email,
             @RequestParam(name = "app_id") Integer appId
     );
 
     @PutMapping("api/v1/user/change-password")
     DefaultResponse<String> changePassword(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody PasswordRequest request
             );
 
     @PutMapping("api/v1/user/update-user")
     DefaultResponse<String> updateUserIAM(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody UserIAMUpdate request
     );
 
     @PostMapping("api/v1/user/reset-password")
     DefaultResponse<String> resetPassword(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody ResetPasswordRequest request
     );
 
     @PostMapping("api/v1/user/active")
     DefaultResponse<String> active(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody ActiveUserIAMRequest request
-    );
-
-    @PostMapping("api/v1/branch/filter-brcds")
-    DefaultResponse<List<BranchResponse>> getBranchInfo(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody List<Integer> brcds
     );
 
     @PutMapping("api/v1/user/update")
     DefaultResponse<String> userUpdate(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody UserRequestedUpdate request
+    );
+
+    @PostMapping("api/v1/branch/filter-brcds")
+    DefaultResponse<List<BranchResponse>> getBranchInfo(
+            @RequestBody List<Integer> brcds
     );
 
     @PostMapping("api/v1/branch/get-brcd-child")
     DefaultResponse<List<BranchChildResponse>> getBranchChildInfo(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody List<Integer> brcds
     );
 
     @GetMapping("api/v1/branch")
-    DefaultResponse<List<BranchResponse>> getAllBranch(
-            @RequestHeader("Authorization") String authorizationHeader
-    );
+    DefaultResponse<List<BranchResponse>> getAllBranch();
 
     @GetMapping("api/v1/departments")
     DefaultResponse<List<DepartmentResponse>> getDepartment(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(name = "brcd") Integer brcd
     );
 }
