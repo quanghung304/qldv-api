@@ -3,6 +3,7 @@ package com.agribank.qldv_api.controller;
 import com.agribank.qldv_api.request.organization.OrganizationSearchRequest;
 import com.agribank.qldv_api.response.organization.OrganizationDetailResponse;
 import com.agribank.qldv_api.response.organization.OrganizationListItemResponse;
+import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.OrganizationService;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
@@ -24,17 +25,20 @@ import java.util.List;
 public class OrganizationController {
     private final OrganizationService organizationService;
 
+    @RequirePermission(function = "FN7", action = "VIEW")
     @PostMapping
     public ResponseEntity<BaseResponse<PageResponse<OrganizationListItemResponse>>> search(
             @RequestBody OrganizationSearchRequest request) {
         return BaseResponse.success(organizationService.search(request));
     }
 
+    @RequirePermission(function = "FN7", action = "VIEW")
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<OrganizationDetailResponse>> getById(@PathVariable String id) {
         return BaseResponse.success(organizationService.getById(id));
     }
 
+    @RequirePermission(function = "FN7", action = "VIEW")
     @GetMapping("/{id}/committee-members")
     public ResponseEntity<BaseResponse<List<CommitteeMemberResponse>>> getCommitteeMembers(@PathVariable String id) {
         return BaseResponse.success(organizationService.getCommitteeMembers(id));

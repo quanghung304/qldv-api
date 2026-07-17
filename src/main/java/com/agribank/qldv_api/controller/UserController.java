@@ -4,6 +4,7 @@ import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
+import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.request.SearchUserRequest;
 import com.agribank.qldvutils.response.PageResponse;
@@ -25,6 +26,7 @@ public class UserController {
         return DefaultResponse.success(userService.searchUserIam(request));
     }
 
+    @RequirePermission(function = "FN9", action = "VIEW")
     @PostMapping("/search")
     public ResponseEntity<DefaultResponse<PageResponse<UserSearchResponse>>> search(@RequestBody SearchUserRequest request) {
         request.validate();
@@ -44,13 +46,14 @@ public class UserController {
         return DefaultResponse.success(userService.resetPassword(request), null);
     }
 
-    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN')")
+    @RequirePermission(function = "FN9", action = "EDIT")
     @PutMapping("/update")
     public ResponseEntity<DefaultResponse<String>> update(@RequestBody UserUpdateRequest request) {
         request.validate();
         return DefaultResponse.success(userService.update(request), null);
     }
 
+    @RequirePermission(function = "FN9", action = "DELETE")
     @PutMapping("/active")
     public ResponseEntity<DefaultResponse<String>> active(@RequestBody ActiveUserRequest request) {
         request.validate();
@@ -62,7 +65,7 @@ public class UserController {
         return DefaultResponse.success(userService.delete(id), null);
     }
 
-//    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
+    @RequirePermission(function = "FN9", action = "VIEW")
     @GetMapping("/{id}")
     public ResponseEntity<DefaultResponse<UserResponse>> getUserById(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.getUserInfo(id));
