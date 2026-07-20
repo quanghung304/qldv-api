@@ -9,6 +9,7 @@ import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.request.SearchUserRequest;
+import com.agribank.qldvutils.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,23 +29,10 @@ public class UserController {
 
     @RequirePermission(function = "FN9", action = "VIEW")
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageItemsResponse<UserListResponse>>> search(
-            @RequestParam(name = "brcd", required = false) Integer brcd,
-            @RequestParam(name = "role_id", required = false) String roleId,
-            @RequestParam(name = "status", required = false) String status,
-            @RequestParam(name = "keyword", required = false) String keyword,
-            @RequestParam(name = "page", defaultValue = "0") Integer page,
-            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize
+    public ResponseEntity<DefaultResponse<PageResponse<UserListResponse>>> search(
+            @RequestBody SearchUserRequest request
     ) {
-        SearchUserRequest request = new SearchUserRequest();
-        request.setBrcd(brcd);
-        request.setRoleId(roleId);
-        request.setStatus(status);
-        request.setKeyword(keyword);
-        request.setPage(page);
-        request.setPageSize(pageSize);
         request.validate();
-
         return DefaultResponse.success(userService.searchUsers(request));
     }
 

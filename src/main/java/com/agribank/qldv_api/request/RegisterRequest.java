@@ -22,6 +22,7 @@ public class RegisterRequest {
     Integer staffCode;
     List<String> roleIds;
     String authType;
+    String organizationId;
 
     public void validate() {
         if(Objects.isNull(username)) {
@@ -44,6 +45,10 @@ public class RegisterRequest {
 
         if (!EAuthType.SSO_EMAIL.name().equals(authType) && !EAuthType.LOCAL_PASSWORD.name().equals(authType)) {
             throw new CommonException("Sai loại tài khoản");
+        }
+
+        if (Objects.isNull(organizationId)) {
+            throw new CommonException("Chưa chọn Tổ chức Đảng");
         }
     }
 }

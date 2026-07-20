@@ -81,6 +81,7 @@ public class AuthenticationService {
             user.setDeleted(0);
             user.setAccountStatus(EAccountStatus.ACTIVE.getId());
             user.setCreatedBy(userRequested.getId());
+            user.setEmail(request.getUsername());
             user.setStaffCode(Objects.nonNull(request.getStaffCode())
             ? request.getStaffCode() + ""
                     : null
@@ -88,7 +89,7 @@ public class AuthenticationService {
 
 
             user = userClient.save(user).getData();
-            createPMStaff(user);
+            createPMStaff(user, request);
 
             assignRole(user.getId(), request.getRoleIds(), user);
             //ghi log
@@ -106,7 +107,7 @@ public class AuthenticationService {
         }
     }
 
-    private void createPMStaff(User user){
+    private void createPMStaff(User user, RegisterRequest request){
         if (Objects.isNull(user.getStaffCode()) || user.getStaffCode().isBlank()) {
             return;
         }
@@ -119,6 +120,8 @@ public class AuthenticationService {
         Staff staff = Staff.builder()
                 .staffCode(user.getStaffCode())
                 .fullName(user.getFullName())
+                .organizationId(request.getOrganizationId())
+                .brcd(request.getBrcd())
                 .build();
         staffClient.save(staff);
     }

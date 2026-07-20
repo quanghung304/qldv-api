@@ -3,6 +3,7 @@ package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EAuthType;
+import com.agribank.qldv_api.enums.ERole;
 import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -131,18 +132,19 @@ public class UserService {
         return response;
     }
 
-    public PageItemsResponse<UserListResponse> searchUsers(SearchUserRequest request) {
+    public PageResponse<UserListResponse> searchUsers(SearchUserRequest request) {
         PageResponse<UserSearchResponse> response = searchQLDV(request);
         List<UserListResponse> items = Objects.isNull(response.getData())
                 ? new ArrayList<>()
                 : response.getData().stream().map(this::toUserListResponse).toList();
 
-        return PageItemsResponse.<UserListResponse>builder()
-                .items(items)
-                .currentPage(response.getCurrentPage())
-                .totalItems(response.getTotalItems())
-                .totalPages(response.getTotalPages())
-                .build();
+        PageResponse<UserListResponse> responsePageResponse = new PageResponse<>();
+        responsePageResponse.setData(items);
+        responsePageResponse.setCurrentPage(response.getCurrentPage());
+        responsePageResponse.setTotalPages(response.getTotalPages());
+        responsePageResponse.setTotalItems(response.getTotalItems());
+
+        return responsePageResponse;
     }
 
     private UserListResponse toUserListResponse(UserSearchResponse user) {
@@ -165,11 +167,11 @@ public class UserService {
             return;
         }
 
-        if (hasAuthority(userRequested, "R-ADM")) {
+        if (hasAuthority(userRequested, ERole.R_ADM.getRoleName())) {
             return;
         }
 
-        if (hasAuthority(userRequested, "R-QTVCS")) {
+        if (hasAuthority(userRequested, ERole.R_QTVCS.getRoleName())) {
             Integer brcd = userRequested.getBrcd();
             if (Objects.isNull(brcd)) {
                 throw new CommonException("Khong xac dinh duoc don vi cua nguoi dung");
@@ -181,7 +183,6 @@ public class UserService {
 
             request.setBrcd(brcd);
         }
-
     }
 
     private boolean hasAuthority(UserDetailsImpl user, String authority) {
@@ -343,7 +344,7 @@ public class UserService {
             throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
-        boolean isActive = Objects.equals(EAccountStatus.ACTIVE.getId(), userNew.getAccountStatus());
+        boolean isActive = Objects.equals(EUserStatus.ACTIVE.getId(), userNew.getAccountStatus());
         String iamStatusType = isActive ? EUserStatus.INACTIVE.name() : EUserStatus.ACTIVE.name();
         Integer newAccountStatus = isActive ? EUserStatus.INACTIVE.getId() : EUserStatus.ACTIVE.getId();
         ActiveUserIAMRequest activeUserIAMRequest = ActiveUserIAMRequest.builder()
