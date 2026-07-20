@@ -21,16 +21,20 @@ import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
+import com.agribank.qldvutils.enums.EAccountStatus;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchUserRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.user.UserSearchResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
 
@@ -112,7 +116,6 @@ public class UserService {
             BranchResponse branchResponse = branchResponseMap.getOrDefault(userResponse.getBrcd(), null);
             if (Objects.nonNull(branchResponse)) {
                 userResponse.setBranchName(branchResponse.getLclbrnm());
-                userResponse.setUnitName(branchResponse.getLclbrnm());
             }
 
             List<RoleDtoResponse> roles = roleMap.getOrDefault(userResponse.getId(), new ArrayList<>());
@@ -122,7 +125,6 @@ public class UserService {
                 userResponse.setRoleId(getRoleIdentifier(displayRole));
                 userResponse.setRoleName(displayRole.getRoleName());
             }
-            userResponse.setAccountStatus(toContractStatus(userResponse.getAccountStatus()));
         }
 
         response.setData(userResponses);
@@ -145,14 +147,14 @@ public class UserService {
 
     private UserListResponse toUserListResponse(UserSearchResponse user) {
         return UserListResponse.builder()
-                .userId(Objects.nonNull(user.getUserId()) ? user.getUserId() : user.getId())
+                .userId(user.getId())
                 .fullName(user.getFullName())
                 .username(user.getUsername())
-                .unitId(Objects.nonNull(user.getUnitId()) ? user.getUnitId() : user.getBrcd())
-                .unitName(Objects.nonNull(user.getUnitName()) ? user.getUnitName() : user.getBranchName())
+                .brcd(user.getBrcd())
+                .branchName(user.getBranchName())
                 .roleId(user.getRoleId())
                 .roleName(user.getRoleName())
-                .accountStatus(toContractStatus(user.getAccountStatus()))
+                .accountStatus(user.getAccountStatus())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
@@ -178,26 +180,18 @@ public class UserService {
             }
 
             request.setBrcd(brcd);
-            return;
         }
 
-        String userOrganizationCode = userRequested.getOrganizationCode();
-        String userOrganizationCode = userRequested.getPartyOrganizationId();
-
-        if (!BTCDU_CODE.equals(userOrganizationCode)
-                && Objects.nonNull(request.getOrganizationCode()) && !request.getOrganizationCode().contains(userOrganizationCode)
-        ){
-            throw new CommonException("Bạn không có quyền tìm kiếm User chi, đảng bộ khác");
-        }
-
-        if (!BTCDU_CODE.equals(userOrganizationCode) && Objects.isNull(request.getOrganizationCode())){
-            request.setOrganizationCode(userOrganizationCode);
-        }
     }
 
     private boolean hasAuthority(UserDetailsImpl user, String authority) {
         return Objects.nonNull(user.getAuthorities())
                 && user.getAuthorities().stream().anyMatch(a -> authority.equals(a.getAuthority()));
+    }
+
+    private String getAuthorHeader() {
+        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        return "Bearer " + CommonUtils.getAccessToken(servletRequest);
     }
 
 
@@ -266,13 +260,6 @@ public class UserService {
         return role.getRoleId();
     }
 
-    private String toContractStatus(String status) {
-        if (EUserStatus.INACTIVE.name().equals(status)) {
-            return "LOCKED";
-        }
-        return status;
-    }
-
     private Map<String, List<String>> getUserRole(List<String> userIds){
         List<RoleDtoResponse> roleDtoResponses = new ArrayList<>();
         try {
@@ -330,9 +317,7 @@ public class UserService {
         user.setFullName(userUpdateRequest.getFullName());
 
         try {
-            if (EAuthType.SSO_EMAIL.name().equals(user.getAuthType())){
-                DefaultResponse<String> response = iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
-            }
+            iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
 
             userClient.save(user);
 
@@ -358,20 +343,20 @@ public class UserService {
             throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
-        String accountStatus = EUserStatus.ACTIVE.name().equals(userNew.getAccountStatus())
-                ? EUserStatus.INACTIVE.name()
-                : EUserStatus.ACTIVE.name();
+        boolean isActive = Objects.equals(EAccountStatus.ACTIVE.getId(), userNew.getAccountStatus());
+        String iamStatusType = isActive ? EUserStatus.INACTIVE.name() : EUserStatus.ACTIVE.name();
+        Integer newAccountStatus = isActive ? EUserStatus.INACTIVE.getId() : EUserStatus.ACTIVE.getId();
         ActiveUserIAMRequest activeUserIAMRequest = ActiveUserIAMRequest.builder()
                 .appId(QLDV_APP_ID)
                 .userId(userNew.getIdIam())
-                .type(accountStatus)
+                .type(iamStatusType)
                 .build();
 
         try {
             DefaultResponse<String> response = iamClient.active(activeUserIAMRequest);
             User userOld = (User) CommonUtils.handleCloneObject(userNew);
 
-            userNew.setAccountStatus(accountStatus);
+            userNew.setAccountStatus(newAccountStatus);
             userClient.save(userNew);
 
             userLogService.handlerWriteLogUpdate(userOld, userNew);

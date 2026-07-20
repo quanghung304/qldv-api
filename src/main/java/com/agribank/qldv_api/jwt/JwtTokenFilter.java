@@ -15,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -37,7 +36,6 @@ public class JwtTokenFilter extends OncePerRequestFilter{
     final IAMClient iamClient;
     final UserClient userClient;
     final RoleService roleService;
-    final ModelMapper modelMapper;
     
     @Override
     protected void doFilterInternal(
@@ -57,12 +55,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
                 return;
             }
 
-            User user = userClient.findByUsername(userIamResponse.getUsername()).getData();
-
-//            if (Objects.isNull(user) && userIamResponse.getUsername().equals("admin")) {
-//                User admin = generateAdminAccount(userIamResponse);
-//                user = modelMapper.map(admin, UserDto.class);
-//            }
+            UserDto user = userClient.getUserInfo(userIamResponse.getEmail()).getData();
 
             List<Role> roles = roleService.getRoleByUserId(user.getId());
             List<GrantedAuthority> roleNames = new ArrayList<>();
@@ -80,7 +73,6 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             userDetails.setDepId(user.getDepId());
             userDetails.setFullName(user.getFullName());
             userDetails.setRoleCodes(roleCodes);
-            userDetails.setPartyOrganizationId(user.getPartyOrganizationId());
             userDetails.setAuthorities(roleNames);
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());

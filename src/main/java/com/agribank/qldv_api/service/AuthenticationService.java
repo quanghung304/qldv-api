@@ -9,6 +9,7 @@ import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.RegisterRequest;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
+import com.agribank.qldv_api.response.user.ADResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
@@ -18,13 +19,14 @@ import com.agribank.qldvutils.entity.Staff;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.enums.EAccountStatus;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +71,6 @@ public class AuthenticationService {
                 throw new CommonException("Email không đúng định dạng Agribank vui lòng kiểm tra lại");
             }
             User user = new User();
-            user.setUsername(request.getUsername());
             user.setUsername(registerRequest.getUsername());
 
             UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -78,14 +79,12 @@ public class AuthenticationService {
             user.setBrcd(request.getBrcd());
             user.setDepId(request.getDepId());
             user.setDeleted(0);
-            user.setAccountStatus(EAccountStatus.ACTIVE.name());
-            user.setAuthType(request.getAuthType());
+            user.setAccountStatus(EAccountStatus.ACTIVE.getId());
             user.setCreatedBy(userRequested.getId());
             user.setStaffCode(Objects.nonNull(request.getStaffCode())
             ? request.getStaffCode() + ""
                     : null
                     );
-            user.setAccountStatus(EUserStatus.ACTIVE.name());
 
 
             user = userClient.save(user).getData();
@@ -134,7 +133,6 @@ public class AuthenticationService {
         }
     }
 
-
     private void assignRole(String id, List<String> roles, User user) {
         UserRoleRequest request = UserRoleRequest.builder()
                 .userId(id)
@@ -143,7 +141,6 @@ public class AuthenticationService {
         try {
             userRoleService.assignUserRole(request);
         }catch (Exception e) {
-            userClient.delete(user);
             throw new CommonException(e.getMessage());
         }
     }

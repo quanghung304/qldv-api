@@ -26,8 +26,8 @@ public class UserController {
         return DefaultResponse.success(userService.searchUserIam(request));
     }
 
-    @PreAuthorize("hasAuthority('R-ADM') || hasAuthority('R-QTVCS')")
-    @GetMapping("/search")
+    @RequirePermission(function = "FN9", action = "VIEW")
+    @PostMapping("/search")
     public ResponseEntity<DefaultResponse<PageItemsResponse<UserListResponse>>> search(
             @RequestParam(name = "brcd", required = false) Integer brcd,
             @RequestParam(name = "role_id", required = false) String roleId,
@@ -43,9 +43,6 @@ public class UserController {
         request.setKeyword(keyword);
         request.setPage(page);
         request.setPageSize(pageSize);
-    @RequirePermission(function = "FN9", action = "VIEW")
-    @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<UserSearchResponse>>> search(@RequestBody SearchUserRequest request) {
         request.validate();
 
         return DefaultResponse.success(userService.searchUsers(request));
@@ -57,7 +54,7 @@ public class UserController {
         return DefaultResponse.success(userService.changePassword(request), null);
     }
 
-    @PreAuthorize("hasAuthority('R-ADM') || hasAnyAuthority('R-QTVCS')")
+    @RequirePermission(function = "FN9", action = "EDIT")
     @PostMapping("/reset-password")
     public ResponseEntity<DefaultResponse<String>> resetPassword(@RequestBody ResetPasswordRequest request) {
         request.validate();
@@ -73,10 +70,11 @@ public class UserController {
 
     @RequirePermission(function = "FN9", action = "DELETE")
     @PatchMapping("/{id}/status")
-        public ResponseEntity<DefaultResponse<String>> active(@PathVariable("id") String id) {
-            return DefaultResponse.success(userService.active(id), null);
-        }
+    public ResponseEntity<DefaultResponse<String>> active(@PathVariable("id") String id) {
+        return DefaultResponse.success(userService.active(id), null);
+    }
 
+    @RequirePermission(function = "FN9", action = "DELETE")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<DefaultResponse<String>> delete(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.delete(id), null);
