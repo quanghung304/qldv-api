@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 @Data
@@ -21,8 +22,12 @@ public class UserDetailsImpl implements UserDetails{
 	private String email;
 	private Integer brcd;
 	private Integer depId;
-	private String organizationCode;
-	private String formOrganization;
+	/** Danh sách role_code (PMDV_ROLE.role_code) của user — resolve 1 lần lúc xác thực (JwtTokenFilter),
+	 * không query lại PMDV_USER_ROLE mỗi request. */
+	private List<String> roleCodes;
+	/** PMDV_STAFF.organization_id của user (qua staff_code) — resolve 1 lần lúc xác thực, dùng cho
+	 * logic phạm vi dữ liệu tổ chức đảng (module Tổ chức Đảng), khác với organizationCode (IAM). */
+	private String partyOrganizationId;
     private Collection<? extends GrantedAuthority> authorities;
 
 //    public static UserDetailsImpl fromModel(User user){

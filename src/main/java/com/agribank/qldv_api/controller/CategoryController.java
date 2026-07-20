@@ -4,6 +4,7 @@ import com.agribank.qldv_api.response.category.CaseTypeResponse;
 import com.agribank.qldv_api.response.category.DocumentTypeResponse;
 import com.agribank.qldv_api.response.category.OrganizationTypeResponse;
 import com.agribank.qldv_api.response.category.StatusResponse;
+import com.agribank.qldv_api.security.NoPermissionCheck;
 import com.agribank.qldv_api.service.CategoryService;
 import com.agribank.qldvutils.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Toàn bộ /api/v1/categories/* chỉ cần token hợp lệ, KHÔNG cần kiểm tra RBAC
+ * (đã chốt trong task RBAC middleware) — đánh dấu tường minh bằng @NoPermissionCheck ở
+ * class-level thay vì để PermissionInterceptor tự suy ra do không có @RequirePermission.
+ */
+@NoPermissionCheck
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/categories")

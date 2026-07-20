@@ -253,15 +253,6 @@ public class CommonUtils {
 
         return calendar.getTime();
     }
-    public static String getOrganizationByRequestedUser() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (Objects.equals(userDetails.getOrganizationCode(), Constants.BTCDU_CODE)) {
-            return null;
-        }
-
-        return userDetails.getOrganizationCode().substring(0, Constants.FORM_B_NAME_LENGTH);
-    }
 
     public static String createJsonData(Object object, List<?> organizationMergeDetails, Map<String, String> detailFieldMap, Map<String, String> getCombinedFieldMap) {
         try {

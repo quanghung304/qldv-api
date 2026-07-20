@@ -6,6 +6,7 @@ import com.agribank.qldv_api.response.PageItemsResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
 import com.agribank.qldv_api.response.user.UserListResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
+import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldvutils.request.SearchUserRequest;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,9 @@ public class UserController {
         request.setKeyword(keyword);
         request.setPage(page);
         request.setPageSize(pageSize);
+    @RequirePermission(function = "FN9", action = "VIEW")
+    @PostMapping("/search")
+    public ResponseEntity<DefaultResponse<PageResponse<UserSearchResponse>>> search(@RequestBody SearchUserRequest request) {
         request.validate();
 
         return DefaultResponse.success(userService.searchUsers(request));
@@ -60,24 +64,25 @@ public class UserController {
         return DefaultResponse.success(userService.resetPassword(request), null);
     }
 
-    @PreAuthorize("hasAuthority('R-ADM') || hasAnyAuthority('R-QTVCS')")
+    @RequirePermission(function = "FN9", action = "EDIT")
     @PutMapping("/update")
     public ResponseEntity<DefaultResponse<String>> update(@RequestBody UserUpdateRequest request) {
         request.validate();
         return DefaultResponse.success(userService.update(request), null);
     }
 
+    @RequirePermission(function = "FN9", action = "DELETE")
     @PatchMapping("/{id}/status")
-    public ResponseEntity<DefaultResponse<String>> active(@PathVariable("id") String id) {
-        return DefaultResponse.success(userService.active(id), null);
-    }
+        public ResponseEntity<DefaultResponse<String>> active(@PathVariable("id") String id) {
+            return DefaultResponse.success(userService.active(id), null);
+        }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<DefaultResponse<String>> delete(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.delete(id), null);
     }
 
-//    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
+    @RequirePermission(function = "FN9", action = "VIEW")
     @GetMapping("/{id}")
     public ResponseEntity<DefaultResponse<UserResponse>> getUserById(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.getUserInfo(id));
