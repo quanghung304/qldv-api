@@ -131,8 +131,12 @@ public class OrganizationService {
      * Phạm vi dữ liệu: role_code + partyOrganizationId đọc THẲNG từ UserDetailsImpl (đã resolve
      * 1 lần lúc xác thực trong JwtTokenFilter) — không query lại PMDV_USER_ROLE / PMDV_STAFF ở
      * đây. Chỉ gọi DB đúng 1 lần để lấy tổ chức trực thuộc (findDescendantIds), khi cần org-scope.
+     *
+     * Package-private (không phải private): CaseService tái sử dụng nguyên vẹn hàm này để tính
+     * phạm vi tổ chức đảng cho API tra cứu hồ sơ nghiệp vụ — cùng logic phân giải role_code,
+     * không viết lại.
      */
-    private OrganizationScope resolveScope() {
+    OrganizationScope resolveScope() {
         UserDetailsImpl userRequested = userService.getUserRequested();
         if (userRequested == null) {
             throw new ForbiddenException("ERR-GL-02: Không xác thực được người dùng");
