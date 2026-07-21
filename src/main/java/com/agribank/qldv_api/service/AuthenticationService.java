@@ -82,7 +82,10 @@ public class AuthenticationService {
             UserEntityRequest userEntityRequest = new UserEntityRequest();
             userEntityRequest.setUser(user);
             userEntityRequest.setStaff(createPMStaff(user, request));
-            userEntityRequest.setUserRoles(getUserRole(request.getRoleIds()));
+            userEntityRequest.setUserRoles(request.getRoleIds().stream()
+                    .map(ur -> UserRole.builder()
+                            .roleId(ur).build())
+                    .toList());
 
             userClient.saveEntity(userEntityRequest);
 
@@ -124,12 +127,6 @@ public class AuthenticationService {
         }
     }
 
-    private List<UserRole> getUserRole(List<String> roles) {
-        return roles.stream()
-                .map(ur -> UserRole.builder()
-                        .roleId(ur).build())
-                .toList();
-    }
 
     private void validateInternal(RegisterRequest request, IAMRegisterRequest registerRequest){
         if (Objects.isNull(request.getBrcd())) {
