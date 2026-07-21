@@ -1,5 +1,7 @@
 package com.agribank.qldv_api.service;
 
+
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -7,8 +9,11 @@ import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
+import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
+import com.agribank.qldv_api.response.role.RoleResponse;
+import com.agribank.qldv_api.response.user.UserListResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
@@ -20,17 +25,19 @@ import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchUserRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.user.UserSearchResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
 
 import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
-import static com.agribank.qldv_api.enums.Constants.BTCDU_CODE;
 
 
 @Service
@@ -76,9 +83,8 @@ public class UserService {
 
     public PageResponse<UserSearchResponse> searchQLDV(SearchUserRequest request){
         //Kiểm tra quyền search user cho Chi nhánh
-        checkPermissionSearchUser(request);
         if (Objects.isNull(request.getOrderBy())){
-            request.setOrderBy("organizationCodeB");
+            request.setOrderBy("createdAt");
         }
 
         PageResponse<UserSearchResponse> response = userClient.search(request).getData();
@@ -89,52 +95,154 @@ public class UserService {
         List<UserSearchResponse> userResponses = response.getData();
 
         List<Integer> brcds = new ArrayList<>();
-        List<String> userIds = new ArrayList<>();
         userResponses.forEach(u -> {
-            brcds.add(u.getBrcd());
-            userIds.add(u.getId());
+            if (Objects.nonNull(u.getBrcd())) {
+                brcds.add(u.getBrcd());
+            }
         });
 
         //lấy tên chi nhánh
         Map<Integer, BranchResponse> branchResponseMap = getBranchInfo(brcds);
-
-        //Lấy role
-        Map<String, List<String>> roleMap = getUserRole(userIds);
 
         for (UserSearchResponse userResponse : userResponses) {
             BranchResponse branchResponse = branchResponseMap.getOrDefault(userResponse.getBrcd(), null);
             if (Objects.nonNull(branchResponse)) {
                 userResponse.setBranchName(branchResponse.getLclbrnm());
             }
-
-            List<String> roleName = roleMap.getOrDefault(userResponse.getId(), new ArrayList<>());
-            userResponse.setRoles(roleName);
         }
 
         response.setData(userResponses);
         return response;
     }
 
-    private void checkPermissionSearchUser(SearchUserRequest request){
-        UserDetailsImpl userRequested = getUserRequested();
-        String userOrganizationCode = userRequested.getPartyOrganizationId();
+    public PageResponse<UserListResponse> searchUsers(UserSearchRequest request) {
+        SearchUserRequest searchUserRequest = new SearchUserRequest();
+        searchUserRequest.setName(request.getName());
+        searchUserRequest.setOrganizationId(request.getOrganizationId());
+        searchUserRequest.setDelete(request.getDelete());
+        searchUserRequest.setRoleId(request.getRoleId());
+        searchUserRequest.setStatus(request.getStatus());
+        searchUserRequest.setKeyword(request.getKeyword());
+        searchUserRequest.setBrcds(checkValidateAndGetBrcds(request.getBrcd()));
+        PageResponse<UserSearchResponse> response = searchQLDV(searchUserRequest);
+        List<UserSearchResponse> userResponses = response.getData();
 
-        if (!BTCDU_CODE.equals(userOrganizationCode)
-                && Objects.nonNull(request.getOrganizationCode()) && !request.getOrganizationCode().contains(userOrganizationCode)
-        ){
-            throw new CommonException("Bạn không có quyền tìm kiếm User chi, đảng bộ khác");
+        List<UserListResponse> items;
+        if (Objects.isNull(userResponses) || userResponses.isEmpty()) {
+            items = new ArrayList<>();
+        } else {
+            List<String> userIds = userResponses.stream().map(UserSearchResponse::getId).toList();
+            //Lấy toàn bộ role của từng user (1 user có thể có nhiều role)
+            Map<String, List<RoleDtoResponse>> roleMap = getUserRoleDetails(userIds);
+            items = userResponses.stream()
+                    .map(user -> toUserListResponse(user, roleMap.getOrDefault(user.getId(), new ArrayList<>())))
+                    .toList();
         }
 
-        if (!BTCDU_CODE.equals(userOrganizationCode) && Objects.isNull(request.getOrganizationCode())){
-            request.setOrganizationCode(userOrganizationCode);
+        PageResponse<UserListResponse> responsePageResponse = new PageResponse<>();
+        responsePageResponse.setData(items);
+        responsePageResponse.setCurrentPage(response.getCurrentPage());
+        responsePageResponse.setTotalPages(response.getTotalPages());
+        responsePageResponse.setTotalItems(response.getTotalItems());
+
+        return responsePageResponse;
+    }
+
+    public List<Integer> checkValidateAndGetBrcds(Integer brcd) {
+        UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (Objects.isNull(brcd) && userRequested.getBrcd() > Constants.FIRST_LV1_BRCD) {
+            brcd = userRequested.getBrcd();
         }
+
+        if (Objects.isNull(brcd)) {
+            return null;
+        }
+
+        List<BranchResponse> branchUserRequested = getBranchResponse(userRequested.getBrcd());
+        List<BranchResponse> branchIAMResponses = getBranchResponse(brcd);
+
+        if (branchIAMResponses.isEmpty() && userRequested.getBrcd().equals(brcd)) {
+            return List.of(brcd);
+        }
+
+        List<Integer> brcdOfUserRequested = new ArrayList<>();
+        if(!branchUserRequested.isEmpty()){
+            brcdOfUserRequested = branchUserRequested.stream().map(BranchResponse::getBrcd).toList();
+        }else {
+            brcdOfUserRequested = List.of(userRequested.getBrcd());
+        }
+
+        if (!brcdOfUserRequested.contains(brcd) && !isHeadOffice(userRequested.getBrcd())) {
+            throw new CommonException("Bạn không có quyền truy cập chi nhánh " + brcd);
+        }
+
+        if (branchIAMResponses.isEmpty()){
+            return List.of(brcd);
+        }
+
+        return  branchIAMResponses.stream().map(BranchResponse::getBrcd).toList();
+    }
+
+    public boolean isHeadOffice(Integer brcd) {
+        return Constants.HEAD_OFFICE_BRCD <= brcd && brcd < Constants.FIRST_LV1_BRCD;
+    }
+
+    public List<BranchResponse> getBranchResponse(Integer brcd){
+        List<BranchChildResponse> branchIAMResponse = iamClient.getBranchChildInfo(List.of(brcd)).getData();
+
+        List<BranchResponse> response = new ArrayList<>();
+
+        if (Objects.nonNull(branchIAMResponse) && !branchIAMResponse.isEmpty()) {
+            BranchResponse parentBranch = new BranchResponse();
+            parentBranch.setBrcd(branchIAMResponse.get(0).getBrcd());
+            parentBranch.setEngbrnm(branchIAMResponse.get(0).getEngbrnm());
+            parentBranch.setEngbrshrtnm(branchIAMResponse.get(0).getEngbrshrtnm());
+            parentBranch.setLclbrnm(branchIAMResponse.get(0).getLclbrnm());
+            parentBranch.setLclbrshrtnm(branchIAMResponse.get(0).getLclbrshrtnm());
+
+
+            response.add(parentBranch);
+            response.addAll(branchIAMResponse.get(0).getBranchChild());
+        }
+
+        return response;
+    }
+
+    private UserListResponse toUserListResponse(UserSearchResponse user, List<RoleDtoResponse> roles) {
+        return UserListResponse.builder()
+                .userId(user.getId())
+                .fullName(user.getFullName())
+                .username(user.getUsername())
+                .brcd(user.getBrcd())
+                .branchName(user.getBranchName())
+                .roles(roles.stream().map(this::toRoleResponse).toList())
+                .accountStatus(user.getAccountStatus())
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+    private RoleResponse toRoleResponse(RoleDtoResponse role) {
+        RoleResponse roleResponse = new RoleResponse();
+        roleResponse.setId(getRoleIdentifier(role));
+        roleResponse.setName(role.getRoleName());
+        return roleResponse;
+    }
+
+    private boolean hasAuthority(UserDetailsImpl user, String authority) {
+        return Objects.nonNull(user.getAuthorities())
+                && user.getAuthorities().stream().anyMatch(a -> authority.equals(a.getAuthority()));
+    }
+
+    private String getAuthorHeader() {
+        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        return "Bearer " + CommonUtils.getAccessToken(servletRequest);
     }
 
 
 
     private Map<Integer, BranchResponse> getBranchInfo(List<Integer> brcds){
         if (brcds.isEmpty()){
-            return null;
+            return new HashMap<>();
         }
         brcds = brcds.stream().distinct().toList();
 
@@ -153,6 +261,32 @@ public class UserService {
         }
 
         return branchResponseMap;
+    }
+
+    private Map<String, List<RoleDtoResponse>> getUserRoleDetails(List<String> userIds){
+        List<RoleDtoResponse> roleDtoResponses = new ArrayList<>();
+        try {
+            roleDtoResponses = roleClient.findByUserIds(userIds).getData();
+        }catch (Exception e){
+            System.out.println("getUserRole: " + e.getMessage());
+        }
+
+        Map<String, List<RoleDtoResponse>> roleMap = new HashMap<>();
+        if (!roleDtoResponses.isEmpty()){
+            for (RoleDtoResponse roleDtoResponse : roleDtoResponses) {
+                List<RoleDtoResponse> roles = roleMap.getOrDefault(roleDtoResponse.getUserId(), new ArrayList<>());
+                roles.add(roleDtoResponse);
+                roleMap.put(roleDtoResponse.getUserId(), roles);
+            }
+        }
+        return roleMap;
+    }
+
+    private String getRoleIdentifier(RoleDtoResponse role) {
+        if (Objects.nonNull(role.getRoleCode()) && !role.getRoleCode().isBlank()) {
+            return role.getRoleCode();
+        }
+        return role.getRoleId();
     }
 
     private Map<String, List<String>> getUserRole(List<String> userIds){
@@ -207,12 +341,12 @@ public class UserService {
                 .fullName(userUpdateRequest.getFullName())
                 .build();
 
-        user.setBrcd(userIAMUpdate.getBrcd());
-        user.setDepId(userIAMUpdate.getDepId());
-        user.setFullName(userIAMUpdate.getFullName());
+        user.setBrcd(userUpdateRequest.getBrcd());
+        user.setDepId(userUpdateRequest.getDepId());
+        user.setFullName(userUpdateRequest.getFullName());
 
         try {
-            DefaultResponse<String> response = iamClient.updateUserIAM(userIAMUpdate);
+            iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
 
             userClient.save(user);
 
@@ -225,30 +359,33 @@ public class UserService {
             }
 
             userLogService.handlerWriteLogUpdate(userOld, user);
-            return response.getMessage();
+            return "Thành công";
         }catch (Exception e){
             throw new CommonException(e.getMessage());
         }
     }
 
-    public String active(ActiveUserRequest request){
-        User userNew = findById(request.getId());
+    public String active(String id){
+        User userNew = findById(id);
 
         if(Objects.isNull(userNew)){
             throw new CommonException("Không tồn tại user vui lòng kiểm tra lại");
         }
 
+        boolean isActive = Objects.equals(EUserStatus.ACTIVE.getId(), userNew.getAccountStatus());
+        String iamStatusType = isActive ? EUserStatus.INACTIVE.name() : EUserStatus.ACTIVE.name();
+        Integer newAccountStatus = isActive ? EUserStatus.INACTIVE.getId() : EUserStatus.ACTIVE.getId();
         ActiveUserIAMRequest activeUserIAMRequest = ActiveUserIAMRequest.builder()
                 .appId(QLDV_APP_ID)
                 .userId(userNew.getIdIam())
-                .type(request.getType())
+                .type(iamStatusType)
                 .build();
 
         try {
             DefaultResponse<String> response = iamClient.active(activeUserIAMRequest);
             User userOld = (User) CommonUtils.handleCloneObject(userNew);
 
-            userNew.setActive(EUserStatus.getValue(request.getType()));
+            userNew.setAccountStatus(newAccountStatus);
             userClient.save(userNew);
 
             userLogService.handlerWriteLogUpdate(userOld, userNew);
@@ -265,7 +402,8 @@ public class UserService {
         }
 
         try {
-            DefaultResponse<String> response = iamClient.delete(user.getEmail(), QLDV_APP_ID);
+            DefaultResponse<String> response = iamClient.delete(getAuthorHeader(),
+                    user.getUsername() + Constants.EMAIL_DOMAIN, QLDV_APP_ID);
 
             user.setDeleted(1);
             userClient.save(user);
@@ -332,9 +470,7 @@ public class UserService {
             throw new CommonException("Hệ thống đang không tìm thấy User của bạn. Vui lòng thử lại sau");
         }
 
-        user.setVneid(request.getVneid());
         user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
 
         iamClient.userUpdate(request);
         userClient.save(user);

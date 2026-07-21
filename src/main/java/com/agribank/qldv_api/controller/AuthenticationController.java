@@ -7,6 +7,7 @@ import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

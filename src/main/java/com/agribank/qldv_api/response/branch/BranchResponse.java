@@ -1,6 +1,8 @@
 package com.agribank.qldv_api.response.branch;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 

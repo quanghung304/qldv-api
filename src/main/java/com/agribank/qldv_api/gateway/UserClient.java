@@ -5,9 +5,12 @@ import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.request.SearchUserRequest;
+import com.agribank.qldvutils.request.user.UserEntityRequest;
+import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.user.UserSearchResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "userClient", url = "${qldv.database.url}" + "/api/v1/user", configuration = DatabaseFeignConfiguration.class)
@@ -41,4 +44,7 @@ public interface UserClient extends BaseClient<User, String> {
             @RequestParam(name = "staffCode") String staffCode,
             @RequestParam(name = "organizationCode") String organizationCode
     );
+
+    @PostMapping("/save-entity")
+    DefaultResponse<String> saveEntity(@RequestBody UserEntityRequest request);
 }

@@ -3,12 +3,11 @@ package com.agribank.qldv_api.controller;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
+import com.agribank.qldv_api.response.user.UserListResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.UserService;
-import com.agribank.qldvutils.request.SearchUserRequest;
 import com.agribank.qldvutils.response.PageResponse;
-import com.agribank.qldvutils.response.user.UserSearchResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,9 +27,11 @@ public class UserController {
 
     @RequirePermission(function = "FN9", action = "VIEW")
     @PostMapping("/search")
-    public ResponseEntity<DefaultResponse<PageResponse<UserSearchResponse>>> search(@RequestBody SearchUserRequest request) {
+    public ResponseEntity<DefaultResponse<PageResponse<UserListResponse>>> search(
+            @RequestBody UserSearchRequest request
+    ) {
         request.validate();
-        return DefaultResponse.success(userService.searchQLDV(request));
+        return DefaultResponse.success(userService.searchUsers(request));
     }
 
     @PutMapping("/change-password")
@@ -39,7 +40,7 @@ public class UserController {
         return DefaultResponse.success(userService.changePassword(request), null);
     }
 
-    @PreAuthorize("hasAuthority('QLDV_SYSTEM_ADMIN') || hasAnyAuthority('QLDV_APPROVER')")
+    @RequirePermission(function = "FN9", action = "EDIT")
     @PostMapping("/reset-password")
     public ResponseEntity<DefaultResponse<String>> resetPassword(@RequestBody ResetPasswordRequest request) {
         request.validate();
@@ -54,12 +55,12 @@ public class UserController {
     }
 
     @RequirePermission(function = "FN9", action = "DELETE")
-    @PutMapping("/active")
-    public ResponseEntity<DefaultResponse<String>> active(@RequestBody ActiveUserRequest request) {
-        request.validate();
-        return DefaultResponse.success(userService.active(request), null);
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<DefaultResponse<String>> active(@PathVariable("id") String id) {
+        return DefaultResponse.success(userService.active(id), null);
     }
 
+    @RequirePermission(function = "FN9", action = "DELETE")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<DefaultResponse<String>> delete(@PathVariable("id") String id) {
         return DefaultResponse.success(userService.delete(id), null);

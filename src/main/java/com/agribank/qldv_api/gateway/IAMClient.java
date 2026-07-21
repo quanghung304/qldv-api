@@ -28,6 +28,11 @@ public interface IAMClient {
             @RequestParam(name = "ldapType") Integer ldapType
     );
 
+    @PostMapping("api/v1/user/register-validate")
+    DefaultResponse<Boolean> registerValidate(
+            @RequestBody IAMRegisterRequest request
+    );
+
     @GetMapping("api/v1/check/token")
     DefaultResponse<UserIamResponse> verifyToken();
 
@@ -43,6 +48,7 @@ public interface IAMClient {
 
     @DeleteMapping("api/v1/user/remove-user-app")
     DefaultResponse<String> delete(
+            @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(name = "email") String email,
             @RequestParam(name = "app_id") Integer appId
     );
@@ -54,6 +60,7 @@ public interface IAMClient {
 
     @PutMapping("api/v1/user/update-user")
     DefaultResponse<String> updateUserIAM(
+            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody UserIAMUpdate request
     );
 

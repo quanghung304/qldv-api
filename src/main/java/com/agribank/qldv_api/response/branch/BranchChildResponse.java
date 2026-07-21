@@ -7,8 +7,8 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
+@EqualsAndHashCode(callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BranchChildResponse extends BranchResponse {
     List<BranchResponse> branchChild;

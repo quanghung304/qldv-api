@@ -1,7 +1,5 @@
 package com.agribank.qldv_api.utils;
 
-import com.agribank.qldv_api.enums.Constants;
-import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldvutils.exception.CommonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -14,7 +12,6 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.*;
 import java.text.Normalizer;
