@@ -75,6 +75,7 @@ public class JwtTokenFilter extends OncePerRequestFilter{
             userDetails.setRoleCodes(roleCodes);
             userDetails.setAuthorities(roleNames);
             userDetails.setStaffCode(user.getStaffCode());
+            userDetails.setPartyOrganizationId(user.getPartyOrganizationId());
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);

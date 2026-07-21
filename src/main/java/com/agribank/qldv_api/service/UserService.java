@@ -2,7 +2,6 @@ package com.agribank.qldv_api.service;
 
 
 import com.agribank.qldv_api.enums.Constants;
-import com.agribank.qldv_api.enums.ERole;
 import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.gateway.*;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -10,8 +9,10 @@ import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
+import com.agribank.qldv_api.response.branch.BranchChildResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
+import com.agribank.qldv_api.response.role.RoleResponse;
 import com.agribank.qldv_api.response.user.UserListResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.UserLogService;
@@ -37,7 +38,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.*;
 
 import static com.agribank.qldv_api.enums.Constants.BRANCH_CODE_HEAD_QUARTER;
-import static com.agribank.qldv_api.enums.Constants.BTCDU_CODE;
 
 
 @Service
@@ -83,7 +83,6 @@ public class UserService {
 
     public PageResponse<UserSearchResponse> searchQLDV(SearchUserRequest request){
         //Kiểm tra quyền search user cho Chi nhánh
-        checkPermissionSearchUser(request);
         if (Objects.isNull(request.getOrderBy())){
             request.setOrderBy("createdAt");
         }
@@ -96,32 +95,19 @@ public class UserService {
         List<UserSearchResponse> userResponses = response.getData();
 
         List<Integer> brcds = new ArrayList<>();
-        List<String> userIds = new ArrayList<>();
         userResponses.forEach(u -> {
             if (Objects.nonNull(u.getBrcd())) {
                 brcds.add(u.getBrcd());
             }
-            userIds.add(u.getId());
         });
 
         //lấy tên chi nhánh
         Map<Integer, BranchResponse> branchResponseMap = getBranchInfo(brcds);
 
-        //Lấy role
-        Map<String, List<RoleDtoResponse>> roleMap = getUserRoleDetails(userIds);
-
         for (UserSearchResponse userResponse : userResponses) {
             BranchResponse branchResponse = branchResponseMap.getOrDefault(userResponse.getBrcd(), null);
             if (Objects.nonNull(branchResponse)) {
                 userResponse.setBranchName(branchResponse.getLclbrnm());
-            }
-
-            List<RoleDtoResponse> roles = roleMap.getOrDefault(userResponse.getId(), new ArrayList<>());
-            userResponse.setRoles(roles.stream().map(RoleDtoResponse::getRoleName).toList());
-            RoleDtoResponse displayRole = getDisplayRole(roles, request.getRoleId());
-            if (Objects.nonNull(displayRole)) {
-                userResponse.setRoleId(getRoleIdentifier(displayRole));
-                userResponse.setRoleName(displayRole.getRoleName());
             }
         }
 
@@ -129,11 +115,29 @@ public class UserService {
         return response;
     }
 
-    public PageResponse<UserListResponse> searchUsers(SearchUserRequest request) {
-        PageResponse<UserSearchResponse> response = searchQLDV(request);
-        List<UserListResponse> items = Objects.isNull(response.getData())
-                ? new ArrayList<>()
-                : response.getData().stream().map(this::toUserListResponse).toList();
+    public PageResponse<UserListResponse> searchUsers(UserSearchRequest request) {
+        SearchUserRequest searchUserRequest = new SearchUserRequest();
+        searchUserRequest.setName(request.getName());
+        searchUserRequest.setOrganizationId(request.getOrganizationId());
+        searchUserRequest.setDelete(request.getDelete());
+        searchUserRequest.setRoleId(request.getRoleId());
+        searchUserRequest.setStatus(request.getStatus());
+        searchUserRequest.setKeyword(request.getKeyword());
+        searchUserRequest.setBrcds(checkValidateAndGetBrcds(request.getBrcd()));
+        PageResponse<UserSearchResponse> response = searchQLDV(searchUserRequest);
+        List<UserSearchResponse> userResponses = response.getData();
+
+        List<UserListResponse> items;
+        if (Objects.isNull(userResponses) || userResponses.isEmpty()) {
+            items = new ArrayList<>();
+        } else {
+            List<String> userIds = userResponses.stream().map(UserSearchResponse::getId).toList();
+            //Lấy toàn bộ role của từng user (1 user có thể có nhiều role)
+            Map<String, List<RoleDtoResponse>> roleMap = getUserRoleDetails(userIds);
+            items = userResponses.stream()
+                    .map(user -> toUserListResponse(user, roleMap.getOrDefault(user.getId(), new ArrayList<>())))
+                    .toList();
+        }
 
         PageResponse<UserListResponse> responsePageResponse = new PageResponse<>();
         responsePageResponse.setData(items);
@@ -144,42 +148,84 @@ public class UserService {
         return responsePageResponse;
     }
 
-    private UserListResponse toUserListResponse(UserSearchResponse user) {
+    public List<Integer> checkValidateAndGetBrcds(Integer brcd) {
+        UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (Objects.isNull(brcd) && userRequested.getBrcd() > Constants.FIRST_LV1_BRCD) {
+            brcd = userRequested.getBrcd();
+        }
+
+        if (Objects.isNull(brcd)) {
+            return null;
+        }
+
+        List<BranchResponse> branchUserRequested = getBranchResponse(userRequested.getBrcd());
+        List<BranchResponse> branchIAMResponses = getBranchResponse(brcd);
+
+        if (branchIAMResponses.isEmpty() && userRequested.getBrcd().equals(brcd)) {
+            return List.of(brcd);
+        }
+
+        List<Integer> brcdOfUserRequested = new ArrayList<>();
+        if(!branchUserRequested.isEmpty()){
+            brcdOfUserRequested = branchUserRequested.stream().map(BranchResponse::getBrcd).toList();
+        }else {
+            brcdOfUserRequested = List.of(userRequested.getBrcd());
+        }
+
+        if (!brcdOfUserRequested.contains(brcd) && !isHeadOffice(userRequested.getBrcd())) {
+            throw new CommonException("Bạn không có quyền truy cập chi nhánh " + brcd);
+        }
+
+        if (branchIAMResponses.isEmpty()){
+            return List.of(brcd);
+        }
+
+        return  branchIAMResponses.stream().map(BranchResponse::getBrcd).toList();
+    }
+
+    public boolean isHeadOffice(Integer brcd) {
+        return Constants.HEAD_OFFICE_BRCD <= brcd && brcd < Constants.FIRST_LV1_BRCD;
+    }
+
+    public List<BranchResponse> getBranchResponse(Integer brcd){
+        List<BranchChildResponse> branchIAMResponse = iamClient.getBranchChildInfo(List.of(brcd)).getData();
+
+        List<BranchResponse> response = new ArrayList<>();
+
+        if (Objects.nonNull(branchIAMResponse) && !branchIAMResponse.isEmpty()) {
+            BranchResponse parentBranch = new BranchResponse();
+            parentBranch.setBrcd(branchIAMResponse.get(0).getBrcd());
+            parentBranch.setEngbrnm(branchIAMResponse.get(0).getEngbrnm());
+            parentBranch.setEngbrshrtnm(branchIAMResponse.get(0).getEngbrshrtnm());
+            parentBranch.setLclbrnm(branchIAMResponse.get(0).getLclbrnm());
+            parentBranch.setLclbrshrtnm(branchIAMResponse.get(0).getLclbrshrtnm());
+
+
+            response.add(parentBranch);
+            response.addAll(branchIAMResponse.get(0).getBranchChild());
+        }
+
+        return response;
+    }
+
+    private UserListResponse toUserListResponse(UserSearchResponse user, List<RoleDtoResponse> roles) {
         return UserListResponse.builder()
                 .userId(user.getId())
                 .fullName(user.getFullName())
                 .username(user.getUsername())
                 .brcd(user.getBrcd())
                 .branchName(user.getBranchName())
-                .roleId(user.getRoleId())
-                .roleName(user.getRoleName())
+                .roles(roles.stream().map(this::toRoleResponse).toList())
                 .accountStatus(user.getAccountStatus())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
 
-    private void checkPermissionSearchUser(SearchUserRequest request){
-        UserDetailsImpl userRequested = getUserRequested();
-        if (Objects.isNull(userRequested)) {
-            return;
-        }
-
-        if (hasAuthority(userRequested, ERole.R_ADM.getRoleName())) {
-            return;
-        }
-
-        if (hasAuthority(userRequested, ERole.R_QTVCS.getRoleName())) {
-            Integer brcd = userRequested.getBrcd();
-            if (Objects.isNull(brcd)) {
-                throw new CommonException("Khong xac dinh duoc don vi cua nguoi dung");
-            }
-
-            if (Objects.nonNull(request.getBrcd()) && !Objects.equals(request.getBrcd(), brcd)) {
-                throw new CommonException("Ban khong co quyen tim kiem User don vi khac");
-            }
-
-            request.setBrcd(brcd);
-        }
+    private RoleResponse toRoleResponse(RoleDtoResponse role) {
+        RoleResponse roleResponse = new RoleResponse();
+        roleResponse.setId(getRoleIdentifier(role));
+        roleResponse.setName(role.getRoleName());
+        return roleResponse;
     }
 
     private boolean hasAuthority(UserDetailsImpl user, String authority) {
@@ -234,21 +280,6 @@ public class UserService {
             }
         }
         return roleMap;
-    }
-
-    private RoleDtoResponse getDisplayRole(List<RoleDtoResponse> roles, String roleId) {
-        if (roles.isEmpty()) {
-            return null;
-        }
-
-        if (Objects.nonNull(roleId) && !roleId.isBlank()) {
-            return roles.stream()
-                    .filter(r -> roleId.equals(r.getRoleId()) || roleId.equals(r.getRoleCode()))
-                    .findFirst()
-                    .orElse(roles.get(0));
-        }
-
-        return roles.get(0);
     }
 
     private String getRoleIdentifier(RoleDtoResponse role) {

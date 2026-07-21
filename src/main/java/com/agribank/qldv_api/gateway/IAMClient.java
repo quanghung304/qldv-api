@@ -30,7 +30,6 @@ public interface IAMClient {
 
     @PostMapping("api/v1/user/register-validate")
     DefaultResponse<Boolean> registerValidate(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody IAMRegisterRequest request
     );
 

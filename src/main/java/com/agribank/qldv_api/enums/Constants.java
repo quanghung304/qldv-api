@@ -14,4 +14,6 @@ public class Constants {
     public static final String EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     public static final long MAX_FILE_SIZE = 4 * 1024 * 1024; //4MB
     public static final String EMAIL_DOMAIN = "@agribank.com.vn";
+    public static final Integer FIRST_LV1_BRCD = 1080;
+    public static final Integer HEAD_OFFICE_BRCD = 1000;
 }

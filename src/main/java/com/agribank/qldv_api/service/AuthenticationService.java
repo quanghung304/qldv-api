@@ -7,26 +7,23 @@ import com.agribank.qldv_api.gateway.UserClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.IAMRegisterRequest;
 import com.agribank.qldv_api.request.RegisterRequest;
-import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.response.DefaultResponse;
 import com.agribank.qldv_api.response.user.ADResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
 import com.agribank.qldv_api.service.role.UserRoleService;
-import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.entity.Staff;
 import com.agribank.qldvutils.entity.User;
+import com.agribank.qldvutils.entity.UserRole;
 import com.agribank.qldvutils.enums.EAccountStatus;
 import com.agribank.qldvutils.exception.CommonException;
-import jakarta.servlet.http.HttpServletRequest;
+import com.agribank.qldvutils.request.user.UserEntityRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,10 +54,8 @@ public class AuthenticationService {
                 .staffCode(request.getStaffCode())
                 .build();
 
-        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        String authorHeader = "Bearer " + CommonUtils.getAccessToken(servletRequest);
-        validateInternal(request, registerRequest, authorHeader);
-        UserIamResponse userIamResponse = null;
+        validateInternal(request, registerRequest);
+
         try {
             DefaultResponse<ADResponse> adResponse = iamClient.checkAd(registerRequest.getUsername(), 0);
 
@@ -83,18 +78,15 @@ public class AuthenticationService {
             ? request.getStaffCode() + ""
                     : null
                     );
-
-            user = userClient.save(user).getData();
-            createPMStaff(user, request);
-
-            assignRole(user.getId(), request.getRoleIds(), user);
-            //ghi log
-            DefaultResponse<UserIamResponse> response = iamClient.register(registerRequest);
-
-            userIamResponse = response.getData();
+            UserIamResponse userIamResponse = iamClient.register(registerRequest).getData();
 
             user.setIdIam(userIamResponse.getId());
-            user = userClient.save(user).getData();
+            UserEntityRequest userEntityRequest = new UserEntityRequest();
+            userEntityRequest.setUser(user);
+            userEntityRequest.setStaff(createPMStaff(user, request));
+            userEntityRequest.setUserRoles(getUserRole(request.getRoleIds()));
+
+            userClient.saveEntity(userEntityRequest);
 
             writeLog(registerRequest);
             return modelMapper.map(user, UserResponse.class);
@@ -103,23 +95,24 @@ public class AuthenticationService {
         }
     }
 
-    private void createPMStaff(User user, RegisterRequest request){
-        if (Objects.isNull(user.getStaffCode()) || user.getStaffCode().isBlank()) {
-            return;
+    private Staff createPMStaff(User user, RegisterRequest request){
+        if (Objects.isNull(request.getStaffCode())) {
+            return null;
         }
 
         Staff existedStaff = staffClient.findByStaffCode(user.getStaffCode()).getData();
         if (Objects.nonNull(existedStaff)) {
-            return;
+            existedStaff.setBrcd(request.getBrcd());
+            existedStaff.setOrganizationId(request.getOrganizationId());
+            return existedStaff;
         }
 
-        Staff staff = Staff.builder()
+        return Staff.builder()
                 .staffCode(user.getStaffCode())
                 .fullName(user.getFullName())
                 .organizationId(request.getOrganizationId())
                 .brcd(request.getBrcd())
                 .build();
-        staffClient.save(staff);
     }
 
     private void writeLog(IAMRegisterRequest registerRequest) {
@@ -132,19 +125,14 @@ public class AuthenticationService {
         }
     }
 
-    private void assignRole(String id, List<String> roles, User user) {
-        UserRoleRequest request = UserRoleRequest.builder()
-                .userId(id)
-                .roleIds(roles)
-                .build();
-        try {
-            userRoleService.assignUserRole(request);
-        }catch (Exception e) {
-            throw new CommonException(e.getMessage());
-        }
+    private List<UserRole> getUserRole(List<String> roles) {
+        return roles.stream()
+                .map(ur -> UserRole.builder()
+                        .roleId(ur).build())
+                .toList();
     }
 
-    private void validateInternal(RegisterRequest request, IAMRegisterRequest registerRequest, String authorHeader){
+    private void validateInternal(RegisterRequest request, IAMRegisterRequest registerRequest){
         if (Objects.isNull(request.getBrcd())) {
             throw new CommonException("Bạn chưa chọn chi nhánh");
         }
@@ -154,7 +142,7 @@ public class AuthenticationService {
         }
 
         try {
-            iamClient.registerValidate(authorHeader, registerRequest);
+            iamClient.registerValidate(registerRequest);
         }catch (Exception e) {
             throw new CommonException(e.getMessage());
         }

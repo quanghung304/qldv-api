@@ -1,11 +1,13 @@
 package com.agribank.qldv_api.response.user;
 
+import com.agribank.qldv_api.response.role.RoleResponse;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 @Builder
@@ -16,8 +18,7 @@ public class UserListResponse {
     String username;
     Integer brcd;
     String branchName;
-    String roleId;
-    String roleName;
+    List<RoleResponse> roles;
     Integer accountStatus;
     Timestamp createdAt;
 }
