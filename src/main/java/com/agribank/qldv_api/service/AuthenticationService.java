@@ -12,7 +12,6 @@ import com.agribank.qldv_api.response.user.ADResponse;
 import com.agribank.qldv_api.response.user.UserIamResponse;
 import com.agribank.qldv_api.response.user.UserResponse;
 import com.agribank.qldv_api.service.log.AuthenticationLogService;
-import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldvutils.entity.Staff;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.entity.UserRole;
@@ -32,7 +31,6 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final UserRoleService userRoleService;
     @Value("${qldv.app.id}")
     private Integer QLDV_APP_ID;
 
@@ -104,6 +102,7 @@ public class AuthenticationService {
         if (Objects.nonNull(existedStaff)) {
             existedStaff.setBrcd(request.getBrcd());
             existedStaff.setOrganizationId(request.getOrganizationId());
+            existedStaff.setFullName(request.getFullName());
             return existedStaff;
         }
 
