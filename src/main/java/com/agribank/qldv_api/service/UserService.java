@@ -2,7 +2,6 @@ package com.agribank.qldv_api.service;
 
 
 import com.agribank.qldv_api.enums.Constants;
-import com.agribank.qldv_api.enums.EAuthType;
 import com.agribank.qldv_api.enums.ERole;
 import com.agribank.qldv_api.enums.EUserStatus;
 import com.agribank.qldv_api.gateway.*;
@@ -10,7 +9,6 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.role.UserRoleRequest;
 import com.agribank.qldv_api.request.user.*;
 import com.agribank.qldv_api.response.DefaultResponse;
-import com.agribank.qldv_api.response.PageItemsResponse;
 import com.agribank.qldv_api.response.apiLog.UserSearchIamResponse;
 import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.role.RoleDtoResponse;
@@ -22,7 +20,6 @@ import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.Role;
 import com.agribank.qldvutils.entity.User;
-import com.agribank.qldvutils.enums.EAccountStatus;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchUserRequest;
 import com.agribank.qldvutils.response.PageResponse;
