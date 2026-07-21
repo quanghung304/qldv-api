@@ -16,6 +16,7 @@ import com.agribank.qldv_api.response.organization.ParentOrganizationResponse;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.OrganizationType;
 import com.agribank.qldvutils.enums.EOperationStatus;
+import com.agribank.qldvutils.enums.ERoleCode;
 import com.agribank.qldvutils.request.organization.OrganizationSearchQuery;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.organization.CommitteeMemberResponse;
@@ -34,9 +35,10 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class OrganizationService {
-    private static final Set<String> FULL_SCOPE_ROLES = Set.of("R-ADM", "R-CV", "R-KS", "R-LD");
-    private static final Set<String> ORG_SCOPE_ROLES = Set.of("R-QTVCS", "R-BPTM", "R-PDCS", "R-KSCS");
-    private static final String ROLE_DVTT = "R-DVTT";
+    private static final Set<String> FULL_SCOPE_ROLES = Set.of(
+            ERoleCode.R_ADM.getCode(), ERoleCode.R_CV.getCode(), ERoleCode.R_KS.getCode(), ERoleCode.R_LD.getCode());
+    private static final Set<String> ORG_SCOPE_ROLES = Set.of(
+            ERoleCode.R_QTVCS.getCode(), ERoleCode.R_BPTM.getCode(), ERoleCode.R_PDCS.getCode(), ERoleCode.R_KSCS.getCode());
     private static final int STATUS_OFFICIAL = 2;
 
     private final OrganizationClient organizationClient;
@@ -144,7 +146,6 @@ public class OrganizationService {
 
         List<String> roleCodes = userRequested.getRoleCodes();
         Set<String> effective = new HashSet<>(roleCodes == null ? List.of() : roleCodes);
-        effective.remove(ROLE_DVTT);
 
         if (effective.isEmpty()) {
             throw new ForbiddenException("ERR-GL-02: Vai trò của bạn chưa được cấp phạm vi truy cập tổ chức đảng");
