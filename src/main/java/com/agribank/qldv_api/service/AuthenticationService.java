@@ -59,10 +59,7 @@ public class AuthenticationService {
 
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String authorHeader = "Bearer " + CommonUtils.getAccessToken(servletRequest);
-
-        if (!EAuthType.SSO_EMAIL.name().equals(request.getAuthType())) {
-            validateInternal(request, registerRequest, authorHeader);
-        }
+        validateInternal(request, registerRequest, authorHeader);
         UserIamResponse userIamResponse = null;
         try {
             DefaultResponse<ADResponse> adResponse = iamClient.checkAd(registerRequest.getUsername(), 0);
@@ -86,7 +83,6 @@ public class AuthenticationService {
             ? request.getStaffCode() + ""
                     : null
                     );
-
 
             user = userClient.save(user).getData();
             createPMStaff(user, request);
