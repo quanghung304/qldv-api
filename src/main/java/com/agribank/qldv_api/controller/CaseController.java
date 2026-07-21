@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
+import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.CaseService;
@@ -43,5 +44,14 @@ public class CaseController {
     @GetMapping("/{id}/history")
     public ResponseEntity<BaseResponse<List<CaseHistoryItemResponse>>> getHistory(@PathVariable String id) {
         return BaseResponse.success(caseService.getHistory(id));
+    }
+
+    @RequirePermission(function = "FN2", action = "APPROVE")
+    @PostMapping("/{id}/workflow-action")
+    public ResponseEntity<BaseResponse<String>> workflowAction(@PathVariable String id,
+                                                                 @RequestBody WorkflowActionRequest request) {
+        request.validate();
+        caseService.performWorkflowAction(id, request);
+        return BaseResponse.success("Success");
     }
 }

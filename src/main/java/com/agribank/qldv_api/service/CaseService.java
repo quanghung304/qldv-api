@@ -5,8 +5,11 @@ import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseHistoryClient;
 import com.agribank.qldv_api.gateway.CaseOrganizationClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
+import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
+import com.agribank.qldv_api.workflow.WorkflowEngine;
 import com.agribank.qldvutils.request.casemgmt.CaseSearchQuery;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseHistoryItemResponse;
@@ -27,6 +30,8 @@ public class CaseService {
     private final CaseOrganizationClient caseOrganizationClient;
     private final CaseHistoryClient caseHistoryClient;
     private final OrganizationService organizationService;
+    private final UserService userService;
+    private final WorkflowEngine workflowEngine;
     private final ModelMapper modelMapper;
 
     /**
@@ -86,6 +91,21 @@ public class CaseService {
         }
 
         return safeList(caseHistoryClient.findByCaseId(id).getData());
+    }
+
+    /**
+     * Endpoint dùng chung cho 4 action (SUBMIT_CONTROL/RETURN/APPROVE_FORWARD/APPROVE) —
+     * WorkflowActionRequest.validate() đã chặn action khác trước khi tới đây. Không kiểm tra
+     * phạm vi tổ chức đảng ở đây — guard hợp lệ của bước này chỉ gồm rule khớp (flow/status/
+     * action) + role khớp (WorkflowEngine PHẦN 2), đúng như spec, không tự thêm kiểm tra khác.
+     */
+    public void performWorkflowAction(String caseId, WorkflowActionRequest request) {
+        UserDetailsImpl userRequested = userService.getUserRequested();
+        if (userRequested == null) {
+            throw new ForbiddenException("ERR-GL-02: Không xác thực được người dùng");
+        }
+        workflowEngine.transition(caseId, request.getAction(), userRequested.getRoleCodes(),
+                userRequested.getId(), request.getComment());
     }
 
     /**
