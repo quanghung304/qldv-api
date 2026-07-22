@@ -24,4 +24,7 @@ public interface CaseClient extends BaseClient<Case, String> {
 
     @GetMapping("/exists-by-case-code")
     BaseResponse<Boolean> existsByCaseCode(@RequestParam String caseCode);
+
+    @GetMapping("/find-latest-by-prefix")
+    BaseResponse<Optional<Case>> findLatestByPrefix(@RequestParam String prefix);
 }

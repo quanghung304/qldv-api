@@ -37,6 +37,7 @@ public class EstablishmentCaseRequest {
     private static final int MAX_ORGANIZATION_NAME_LENGTH = 250;
     private static final int MAX_COMMITTEE_STRUCTURE_LENGTH = 500;
     private static final int MAX_CONCLUSION_NO_LENGTH = 50;
+    private static final long POLITICAL_STANDARD_VALIDITY_MONTHS = 6;
     private static final Set<String> VALID_POSITIONS = Set.of("SECRETARY", "DEPUTY_SECRETARY", "MEMBER");
 
     Integer brcd;
@@ -53,7 +54,6 @@ public class EstablishmentCaseRequest {
     List<ProposedCommitteeMemberRequest> proposedCommitteeMembers;
     String politicalStandardConclusionNo;
     LocalDate politicalStandardConclusionDate;
-    List<String> attachmentIds;
 
     /** API-SC02-01 (tạo mới) — toàn bộ field B phải có giá trị hợp lệ. */
     public void validate() {
@@ -79,9 +79,7 @@ public class EstablishmentCaseRequest {
                 "ERR-SC02-01: political_standard_conclusion_no không được để trống, không vượt quá " + MAX_CONCLUSION_NO_LENGTH + " ký tự");
         requirePastOrPresentDate(errors, "politicalStandardConclusionDate", politicalStandardConclusionDate,
                 "ERR-SC02-04: political_standard_conclusion_date không được để trống và không được sau ngày hiện tại");
-        if (attachmentIds == null || attachmentIds.isEmpty()) {
-            errors.put("attachmentIds", "ERR-SC02-12: Hồ sơ phải có tối thiểu 1 tệp đính kèm (đề án nhân sự)");
-        }
+        validatePoliticalStandardValidity(errors, politicalStandardConclusionDate);
         throwIfInvalid(errors);
     }
 
@@ -139,9 +137,6 @@ public class EstablishmentCaseRequest {
         if (politicalStandardConclusionDate != null) {
             requirePastOrPresentDate(errors, "politicalStandardConclusionDate", politicalStandardConclusionDate,
                     "ERR-SC02-04: political_standard_conclusion_date không được sau ngày hiện tại");
-        }
-        if (attachmentIds != null && attachmentIds.isEmpty()) {
-            errors.put("attachmentIds", "ERR-SC02-12: Nếu cập nhật danh sách tệp đính kèm, phải có tối thiểu 1 tệp");
         }
         throwIfInvalid(errors);
     }
@@ -204,6 +199,14 @@ public class EstablishmentCaseRequest {
     private void requirePastOrPresentDate(Map<String, String> errors, String field, LocalDate value, String message) {
         if (value == null || value.isAfter(LocalDate.now())) {
             errors.put(field, message);
+        }
+    }
+
+    /** BR-SC02-02 — cảnh báo (không chặn lưu), quá 6 tháng kể từ ngày ban hành kết luận TCCT. */
+    private void validatePoliticalStandardValidity(Map<String, String> errors, LocalDate conclusionDate) {
+        if (conclusionDate != null && conclusionDate.plusMonths(POLITICAL_STANDARD_VALIDITY_MONTHS).isBefore(LocalDate.now())) {
+            errors.put("ERR-SC02-13", "Kết luận tiêu chuẩn chính trị đã quá 6 tháng kể từ ngày ban hành (BR-SC02-02) — "
+                    + "cần cập nhật kết luận mới hoặc xác nhận ngoại lệ trước khi Trình kiểm soát");
         }
     }
 

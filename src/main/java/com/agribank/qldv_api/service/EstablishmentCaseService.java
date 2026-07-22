@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
@@ -76,8 +75,6 @@ import java.util.stream.Collectors;
 public class EstablishmentCaseService {
     private static final String ESTABLISH_CASE_TYPE_CODE = "ESTABLISH";
     private static final String INITIAL_STATUS_CODE = ECaseStatusCode.A_01.getCode();
-    private static final long POLITICAL_STANDARD_VALIDITY_MONTHS = 6;
-    private static final Set<String> PERSONNEL_ATTACHMENT_TYPES = Set.of("PERSONNEL_PLAN", "MEMBER_LIST");
 
     private final CaseClient caseClient;
     private final CaseEstablishmentClient caseEstablishmentClient;
@@ -110,8 +107,6 @@ public class EstablishmentCaseService {
         validateMemberCountThreshold(errors, request.getMemberCount(), organizationType);
         validateLeadershipInfoExists(errors, request.getLeadershipInfo());
         Set<String> foundStaffCodes = validateProposedCommitteeMembersExist(errors, request.getProposedCommitteeMembers());
-        validatePoliticalStandardValidity(warnings, request.getPoliticalStandardConclusionDate());
-        validateAttachments(errors, warnings, request.getAttachmentIds());
 
         if (!errors.isEmpty()) {
             throw new FieldValidationException(errors);
@@ -136,13 +131,8 @@ public class EstablishmentCaseService {
         persistRequest.setCaseEntity(newCase);
         persistRequest.setEstablishment(establishment);
         persistRequest.setCommitteeMembers(buildCommitteeRows(request.getProposedCommitteeMembers(), foundStaffCodes));
-        persistRequest.setAttachmentIdsToLink(request.getAttachmentIds());
 
         Case savedCase = caseEstablishmentClient.persist(persistRequest).getData();
-
-        // TODO(S2-03/BR-SC02-06): khi có đủ field bắt buộc, tự động gọi API-DOC-01 nội bộ để
-        // kết xuất Tờ trình BTV + Phiếu xin ý kiến BTV. Chưa nối vì cơ chế Data Mapping (S2-03)
-        // chưa triển khai trong repo — xem javadoc lớp này.
 
         return new EstablishmentCaseResponse(savedCase.getId(), savedCase.getCaseCode(), savedCase.getStatusId(),
                 savedCase.getCreatedAt(), savedCase.getUpdatedAt(), warnings);
@@ -197,18 +187,6 @@ public class EstablishmentCaseService {
             foundStaffCodes = validateProposedCommitteeMembersExist(errors, request.getProposedCommitteeMembers());
         }
 
-        LocalDate effectiveConclusionDate = request.getPoliticalStandardConclusionDate() != null
-                ? request.getPoliticalStandardConclusionDate() : existing.getPoliticalStandardConclusionDate();
-        validatePoliticalStandardValidity(warnings, effectiveConclusionDate);
-
-        if (request.getAttachmentIds() != null) {
-            validateAttachments(errors, warnings, request.getAttachmentIds());
-        }
-        // Nếu request không gửi attachmentIds: không đụng tới tệp đính kèm hiện có — chưa có
-        // API tra cứu tệp theo case_id (thuộc phạm vi S2-05, chưa triển khai) nên không thể kiểm
-        // tra lại BR-SC02-03 cho tệp CŨ ở lần cập nhật này; chỉ cảnh báo khi client gửi kèm
-        // attachmentIds mới.
-
         if (!errors.isEmpty()) {
             throw new FieldValidationException(errors);
         }
@@ -225,11 +203,8 @@ public class EstablishmentCaseService {
         persistRequest.setEstablishment(existing);
         persistRequest.setCommitteeMembers(replaceCommitteeMembers
                 ? buildCommitteeRows(request.getProposedCommitteeMembers(), foundStaffCodes) : null);
-        persistRequest.setAttachmentIdsToLink(request.getAttachmentIds());
 
         Case savedCase = caseEstablishmentClient.persist(persistRequest).getData();
-
-        // TODO(S2-03/BR-SC02-06): tương tự createEstablishmentCase — gọi API-DOC-01 khi đủ field.
 
         return new EstablishmentCaseResponse(savedCase.getId(), savedCase.getCaseCode(), savedCase.getStatusId(),
                 savedCase.getCreatedAt(), savedCase.getUpdatedAt(), warnings);
@@ -321,49 +296,16 @@ public class EstablishmentCaseService {
         return foundCodes;
     }
 
-    /** BR-SC02-02 — cảnh báo (không chặn lưu), quá 6 tháng kể từ ngày ban hành kết luận TCCT. */
-    private void validatePoliticalStandardValidity(Map<String, String> warnings, LocalDate conclusionDate) {
-        if (conclusionDate == null) {
-            return;
-        }
-        if (conclusionDate.plusMonths(POLITICAL_STANDARD_VALIDITY_MONTHS).isBefore(LocalDate.now())) {
-            warnings.put("ERR-SC02-13", "Kết luận tiêu chuẩn chính trị đã quá 6 tháng kể từ ngày ban hành (BR-SC02-02) — "
-                    + "cần cập nhật kết luận mới hoặc xác nhận ngoại lệ trước khi Trình kiểm soát");
-        }
-    }
-
-    private void validateAttachments(Map<String, String> errors, Map<String, String> warnings, List<String> attachmentIds) {
-        if (attachmentIds == null || attachmentIds.isEmpty()) {
-            errors.put("attachmentIds", "ERR-SC02-12: Hồ sơ phải có tối thiểu 1 tệp đính kèm (đề án nhân sự)");
-            return;
-        }
-        List<Attachment> attachments = safeList(attachmentClient.findAllById(attachmentIds).getData());
-        if (attachments.size() != attachmentIds.size()) {
-            errors.put("attachmentIds", "ERR-SC02-12: Có attachment_id không tồn tại trong hệ thống");
-        }
-        warnMissingPersonnelAttachment(warnings, attachments);
-    }
-
-    /** BR-SC02-03 — cảnh báo, không chặn lưu (chỉ chặn Trình kiểm soát, ngoài phạm vi task này). */
-    private void warnMissingPersonnelAttachment(Map<String, String> warnings, List<Attachment> attachments) {
-        boolean hasPersonnelDoc = attachments.stream()
-                .anyMatch(a -> a.getAttachmentType() != null && PERSONNEL_ATTACHMENT_TYPES.contains(a.getAttachmentType()));
-        if (!hasPersonnelDoc) {
-            warnings.put("ERR-SC02-14", "Hồ sơ chưa có tài liệu 'Đề án nhân sự' hoặc 'Danh sách đảng viên' (BR-SC02-03) — "
-                    + "cần xác nhận trước khi Trình kiểm soát");
-        }
-    }
-
     private String generateCaseCode(String caseTypeCode) {
         DateTimeFormatter formatter = DateTimeFormatter.BASIC_ISO_DATE;
-        for (int attempt = 0; attempt < 5; attempt++) {
-            String candidate = caseTypeCode + "-" + LocalDate.now().format(formatter) + "-"
-                    + String.format("%04d", ThreadLocalRandom.current().nextInt(0, 10000));
-            if (Boolean.FALSE.equals(caseClient.existsByCaseCode(candidate).getData())) {
-                return candidate;
-            }
+        String prefix = caseTypeCode + "-" + LocalDate.now().format(formatter);
+        Optional<Case> latest = caseClient.findLatestByPrefix(prefix + "-").getData();
+        int nextSeq = 1;
+        if (latest.isPresent()) {
+            String latestCode = latest.get().getCaseCode();
+            nextSeq = Integer.parseInt(latestCode.substring(latestCode.lastIndexOf('-') + 1)) + 1;
         }
-        throw new CommonException("Không sinh được case_code duy nhất, vui lòng thử lại");
+        return prefix + "-" + String.format("%04d", nextSeq);
     }
 
     private void applyUpdates(CaseEstablishment establishment, EstablishmentCaseRequest request, String organizationTypeId) {
