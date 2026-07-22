@@ -51,6 +51,11 @@ public class ExceptionHandle {
         return DefaultResponse.error("Validation failed", errors);
     }
 
+    @ExceptionHandler(FieldValidationException.class)
+    public ResponseEntity<DefaultResponse<Map<String, String>>> exception(FieldValidationException exception) {
+        return DefaultResponse.error("Validation failed", exception.getFieldErrors());
+    }
+
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<BaseResponse<Object>> exception(Exception exception) {
         if (exception instanceof ClientAbortException) {

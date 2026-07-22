@@ -42,7 +42,7 @@ public class WorkflowEngine {
 
         WorkflowTransitionRule rule = CaseWorkflowConfig.RULES.stream()
                 .filter(r -> r.flowCode().equals(flowCode)
-                        && r.fromStatusCode().equals(currentStatus)
+                        && r.fromStatusCode().getCode().equals(currentStatus)
                         && r.actionCode().equals(actionCode))
                 .findFirst()
                 .orElse(null);
@@ -69,7 +69,7 @@ public class WorkflowEngine {
         request.setEntityId(caseId);
         request.setFromStatusId(currentStatus);
         request.setAction(actionCode);
-        request.setToStatusId(rule.toStatusCode());
+        request.setToStatusId(rule.toStatusCode().getCode());
         request.setPerformedBy(performedBy);
         request.setPerformedRoleId(matchedRole);
         request.setNote(note);

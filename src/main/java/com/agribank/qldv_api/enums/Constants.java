@@ -16,4 +16,11 @@ public class Constants {
     public static final String EMAIL_DOMAIN = "@agribank.com.vn";
     public static final Integer FIRST_LV1_BRCD = 1080;
     public static final Integer HEAD_OFFICE_BRCD = 1000;
+    /**
+     * PMDV_CASE.origin_flow — Luồng A: BTCĐU tự khởi tạo và phê duyệt (17 trạng thái A-01…A-17,
+     * xem workflow-states.md / CaseWorkflowConfig). Dùng khi tạo hồ sơ Thành lập TCĐ cấp Agribank
+     * (API-SC02-01, luôn khởi phát Luồng A) — KHÔNG suy ra từ authority_level trong service dùng
+     * chung, vì cấp cơ sở (GRASSROOTS_LEVEL) có thể là Luồng B HOẶC C tuỳ kịch bản (SC-07, Sprint 5).
+     */
+    public static final String CASE_FLOW_BTCDU = "A";
 }
