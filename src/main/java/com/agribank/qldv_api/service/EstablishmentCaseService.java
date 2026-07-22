@@ -182,7 +182,7 @@ public class EstablishmentCaseService {
             throw new ForbiddenException("BR-SC02-05: Hồ sơ không còn ở trạng thái Đang thực hiện (A-01), không thể chỉnh sửa");
         }
 
-        CaseEstablishment existing = caseEstablishmentClient.findById(caseId).getData().orElse(
+        CaseEstablishment existing = caseEstablishmentClient.findByCaseId(caseId).getData().orElse(
                 CaseEstablishment.builder().caseId(caseId).build());
 
         Map<String, String> errors = new LinkedHashMap<>();
