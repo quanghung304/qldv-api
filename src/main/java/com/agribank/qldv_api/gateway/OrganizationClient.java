@@ -25,4 +25,7 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
 
     @GetMapping("/count-children-by-parent-ids")
     DefaultListResponse<OrganizationChildCountResponse> countChildrenByParentIds(@RequestParam List<String> parentIds);
+
+    @GetMapping("/exists-active-by-name")
+    BaseResponse<Boolean> existsActiveByName(@RequestParam String organizationName, @RequestParam Integer operationStatus);
 }
