@@ -71,6 +71,7 @@ public class CaseController {
     @RequirePermission(function = "FN1", action = "CREATE")
     @PostMapping("/establishments")
     public ResponseEntity<BaseResponse<EstablishmentCaseResponse>> createEstablishment(@RequestBody EstablishmentCaseRequest request) {
+        request.validate();
         return BaseResponse.success(establishmentCaseService.createEstablishmentCase(
                 request, EAuthorityLevel.BANK_LEVEL.getId(), Constants.CASE_FLOW_BTCDU, null));
     }
@@ -78,6 +79,7 @@ public class CaseController {
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment")
     public ResponseEntity<BaseResponse<EstablishmentCaseResponse>> updateEstablishment(@PathVariable String id, @RequestBody EstablishmentCaseRequest request) {
+        request.validateForUpdate();
         return BaseResponse.success(establishmentCaseService.updateEstablishmentCase(id, request, null));
     }
 }
