@@ -7,8 +7,10 @@ import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.DefaultListResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.organization.OrganizationChildCountResponse;
+import com.agribank.qldvutils.response.organization.OrganizationSubordinateRawResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,4 +30,7 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
 
     @GetMapping("/exists-active-by-name")
     BaseResponse<Boolean> existsActiveByName(@RequestParam String organizationName, @RequestParam Integer operationStatus);
+
+    @GetMapping("/{organizationId}/subordinates")
+    DefaultListResponse<OrganizationSubordinateRawResponse> findSubordinates(@PathVariable String organizationId);
 }

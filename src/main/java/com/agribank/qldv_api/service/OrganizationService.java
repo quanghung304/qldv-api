@@ -12,6 +12,7 @@ import com.agribank.qldv_api.response.branch.BranchResponse;
 import com.agribank.qldv_api.response.category.OrganizationTypeResponse;
 import com.agribank.qldv_api.response.organization.OrganizationDetailResponse;
 import com.agribank.qldv_api.response.organization.OrganizationListItemResponse;
+import com.agribank.qldv_api.response.organization.OrganizationSubordinateResponse;
 import com.agribank.qldv_api.response.organization.ParentOrganizationResponse;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.OrganizationType;
@@ -21,6 +22,7 @@ import com.agribank.qldvutils.request.organization.OrganizationSearchQuery;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.organization.CommitteeMemberResponse;
 import com.agribank.qldvutils.response.organization.OrganizationChildCountResponse;
+import com.agribank.qldvutils.response.organization.OrganizationSubordinateRawResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -130,6 +132,28 @@ public class OrganizationService {
     }
 
     /**
+     * Toàn bộ tổ chức trực thuộc (con cháu, mọi cấp) của organizationId, qua Oracle CONNECT BY ở
+     * qldv-db (OrganizationRepository.findSubordinates). Phạm vi dữ liệu + thứ tự kiểm tra (scope
+     * TRƯỚC, 404 SAU) tái sử dụng đúng cơ chế đã dùng cho getById/getCommitteeMembers ở trên.
+     */
+    public List<OrganizationSubordinateResponse> getSubordinates(String organizationId) {
+        OrganizationScope scope = resolveScope();
+        if (!scope.isFull() && !scope.isAllowed(organizationId)) {
+            throw new ForbiddenException("ERR-GL-02: Bạn không có quyền truy cập tổ chức đảng này");
+        }
+
+        Organization org = organizationClient.findById(organizationId).getData().orElse(null);
+        if (org == null) {
+            throw new NotFoundException("Không tìm thấy tổ chức đảng với ID đã cung cấp");
+        }
+
+        List<OrganizationSubordinateRawResponse> rawList = safeList(organizationClient.findSubordinates(organizationId).getData());
+        Map<String, OrganizationType> typeMap = fetchTypeMap();
+
+        return rawList.stream().map(raw -> toSubordinateResponse(raw, typeMap)).toList();
+    }
+
+    /**
      * Phạm vi dữ liệu: role_code + partyOrganizationId đọc THẲNG từ UserDetailsImpl (đã resolve
      * 1 lần lúc xác thực trong JwtTokenFilter) — không query lại PMDV_USER_ROLE / PMDV_STAFF ở
      * đây. Chỉ gọi DB đúng 1 lần để lấy tổ chức trực thuộc (findDescendantIds), khi cần org-scope.
@@ -196,6 +220,46 @@ public class OrganizationService {
         response.setCommitteeMemberCount(o.getCommitteeMemberCount());
         response.setAffiliatedCellCount(childCountByParent.getOrDefault(o.getId(), 0L).intValue());
         return response;
+    }
+
+    private OrganizationSubordinateResponse toSubordinateResponse(OrganizationSubordinateRawResponse raw,
+                                                                    Map<String, OrganizationType> typeMap) {
+        OrganizationSubordinateResponse response = new OrganizationSubordinateResponse();
+        response.setId(raw.getId());
+        response.setOrganizationCode(raw.getOrganizationCode());
+        response.setOrganizationName(raw.getOrganizationName());
+        response.setOrganizationTypeId(raw.getOrganizationTypeId());
+
+        OrganizationType type = typeMap.get(raw.getOrganizationTypeId());
+        if (type != null) {
+            response.setOrganizationTypeCode(type.getCode());
+            response.setOrganizationTypeName(type.getName());
+        }
+
+        response.setBrcd(raw.getBrcd());
+        response.setParentOrganizationId(raw.getParentOrganizationId());
+        response.setOperationStatus(raw.getOperationStatus());
+        response.setOperationStatusName(mapOperationStatusName(raw.getOperationStatus()));
+        response.setMemberCount(raw.getMemberCount());
+        response.setCommitteeMemberCount(raw.getCommitteeMemberCount());
+        response.setLevel(raw.getDepthLevel());
+        return response;
+    }
+
+    private static String mapOperationStatusName(Integer operationStatus) {
+        if (operationStatus == null) {
+            return null;
+        }
+        if (operationStatus.equals(EOperationStatus.ACTIVE.getId())) {
+            return "Đang hoạt động";
+        }
+        if (operationStatus.equals(EOperationStatus.DISSOLVED.getId())) {
+            return "Đã giải thể";
+        }
+        if (operationStatus.equals(EOperationStatus.DISBANDED.getId())) {
+            return "Đã giải tán";
+        }
+        return null;
     }
 
     private Map<String, OrganizationType> fetchTypeMap() {
