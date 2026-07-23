@@ -2,18 +2,19 @@ package com.agribank.qldv_api.workflow;
 
 
 import com.agribank.qldv_api.enums.ECaseStatusCode;
+import com.agribank.qldvutils.enums.ECaseWorkflowAction;
+import com.agribank.qldvutils.enums.ERoleCode;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_01;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_02;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_03;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_04;
-import static com.agribank.qldv_api.enums.ECaseStatusCode.A_05;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_06;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_07;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_08;
-import static com.agribank.qldv_api.enums.ECaseStatusCode.A_09;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_10;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_11;
 import static com.agribank.qldv_api.enums.ECaseStatusCode.A_12;
@@ -55,51 +56,51 @@ public final class CaseWorkflowConfig {
 
     public static final List<WorkflowTransitionRule> RULES = List.of(
             // Luồng A — 24 transition
-            rule("A", A_01, "SUBMIT_CONTROL", A_02, "R-CV"),
-            rule("A", A_02, "RETURN", A_01, "R-KS"),
-            rule("A", A_02, "APPROVE_FORWARD", A_03, "R-KS"),
-            rule("A", A_03, "RETURN", A_01, "R-LD"),
-            rule("A", A_03, "APPROVE", A_04, "R-LD"),
-            rule("A", A_04, "UPLOAD_BTV_RESULT", A_05, "R-CV"),
-            rule("A", A_05, "SUBMIT_CONTROL", A_06, "R-CV"),
-            rule("A", A_06, "RETURN", A_05, "R-KS"),
-            rule("A", A_06, "APPROVE_FORWARD", A_07, "R-KS"),
-            rule("A", A_07, "RETURN", A_05, "R-LD"),
-            rule("A", A_07, "APPROVE", A_08, "R-LD"),
-            rule("A", A_08, "UPDATE_BCH_MINUTES", A_09, "R-CV"),
-            rule("A", A_09, "SUBMIT_CONTROL", A_10, "R-CV"),
-            rule("A", A_10, "RETURN", A_09, "R-KS"),
-            rule("A", A_10, "APPROVE_FORWARD", A_11, "R-KS"),
-            rule("A", A_11, "RETURN", A_09, "R-LD"),
-            rule("A", A_11, "APPROVE", A_12, "R-LD"),
-            rule("A", A_12, "SUBMIT_CONTROL", A_13, "R-CV"),
-            rule("A", A_13, "RETURN", A_12, "R-KS"),
-            rule("A", A_13, "APPROVE_FORWARD", A_14, "R-KS"),
-            rule("A", A_14, "RETURN", A_12, "R-LD"),
-            rule("A", A_14, "APPROVE", A_15, "R-LD"),
-            rule("A", A_15, "REGISTER_SIGNED_DOC", A_16, "R-CV"),
-            rule("A", A_16, "APPROVE_COMPLETE", A_17, "R-LD"),
+            rule("A", A_01, ECaseWorkflowAction.SUBMIT_CONTROL, A_02, ERoleCode.R_CV),
+            rule("A", A_02, ECaseWorkflowAction.RETURN, A_01, ERoleCode.R_KS),
+            rule("A", A_02, ECaseWorkflowAction.APPROVE_FORWARD, A_03, ERoleCode.R_KS),
+            rule("A", A_03, ECaseWorkflowAction.RETURN, A_01, ERoleCode.R_LD),
+            rule("A", A_03, ECaseWorkflowAction.APPROVE, A_04, ERoleCode.R_LD),
+            rule("A", A_04, ECaseWorkflowAction.SUBMIT_CONTROL, A_06, ERoleCode.R_CV),
+            rule("A", A_06, ECaseWorkflowAction.RETURN, A_04, ERoleCode.R_KS),
+            rule("A", A_06, ECaseWorkflowAction.APPROVE_FORWARD, A_07, ERoleCode.R_KS),
+            rule("A", A_07, ECaseWorkflowAction.RETURN, A_04, ERoleCode.R_LD),
+            rule("A", A_07, ECaseWorkflowAction.APPROVE, A_08, ERoleCode.R_LD),
+            rule("A", A_08, ECaseWorkflowAction.SUBMIT_CONTROL, A_10, ERoleCode.R_CV),
+            rule("A", A_10, ECaseWorkflowAction.RETURN, A_08, ERoleCode.R_KS),
+            rule("A", A_10, ECaseWorkflowAction.APPROVE_FORWARD, A_11, ERoleCode.R_KS),
+            rule("A", A_11, ECaseWorkflowAction.RETURN, A_08, ERoleCode.R_LD),
+            rule("A", A_11, ECaseWorkflowAction.APPROVE, A_12, ERoleCode.R_LD),
+            rule("A", A_12, ECaseWorkflowAction.SUBMIT_CONTROL, A_13, ERoleCode.R_CV),
+            rule("A", A_13, ECaseWorkflowAction.RETURN, A_12, ERoleCode.R_KS),
+            rule("A", A_13, ECaseWorkflowAction.APPROVE_FORWARD, A_14, ERoleCode.R_KS),
+            rule("A", A_14, ECaseWorkflowAction.RETURN, A_12, ERoleCode.R_LD),
+            rule("A", A_14, ECaseWorkflowAction.APPROVE, A_15, ERoleCode.R_LD),
+            rule("A", A_15, ECaseWorkflowAction.REGISTER_SIGNED_DOC, A_16, ERoleCode.R_CV),
+            rule("A", A_16, ECaseWorkflowAction.APPROVE_COMPLETE, A_17, ERoleCode.R_LD),
 
             // Luồng B — 5 transition
-            rule("B", B_01, "SUBMIT_CONTROL", B_02, "R-BPTM"),
-            rule("B", B_02, "RETURN", B_01, "R-KSCS"),
-            rule("B", B_02, "APPROVE_FORWARD", B_03, "R-KSCS"),
-            rule("B", B_03, "APPROVE_ISSUE", B_04, "R-BPTM", "R-PDCS"),
-            rule("B", B_04, "APPROVE_COMPLETE", B_05, "R-PDCS"),
+            rule("B", B_01, ECaseWorkflowAction.SUBMIT_CONTROL, B_02, ERoleCode.R_BPTM),
+            rule("B", B_02, ECaseWorkflowAction.RETURN, B_01, ERoleCode.R_KSCS),
+            rule("B", B_02, ECaseWorkflowAction.APPROVE_FORWARD, B_03, ERoleCode.R_KSCS),
+            rule("B", B_03, ECaseWorkflowAction.APPROVE_ISSUE, B_04, ERoleCode.R_BPTM, ERoleCode.R_PDCS),
+            rule("B", B_04, ECaseWorkflowAction.APPROVE_COMPLETE, B_05, ERoleCode.R_PDCS),
 
             // Luồng C — 5 transition
-            rule("C", C_01, "SUBMIT_CONTROL", C_02, "R-BPTM"),
-            rule("C", C_02, "RETURN", C_01, "R-KSCS"),
-            rule("C", C_02, "APPROVE_FORWARD", C_03, "R-KSCS"),
-            rule("C", C_03, "SUBMIT_TO_PARENT", C_04, "R-PDCS"),
-            rule("C", C_04, "RECEIVE_ROUTE", A_01, "R-CV")
+            rule("C", C_01, ECaseWorkflowAction.SUBMIT_CONTROL, C_02, ERoleCode.R_BPTM),
+            rule("C", C_02, ECaseWorkflowAction.RETURN, C_01, ERoleCode.R_KSCS),
+            rule("C", C_02, ECaseWorkflowAction.APPROVE_FORWARD, C_03, ERoleCode.R_KSCS),
+            rule("C", C_03, ECaseWorkflowAction.SUBMIT_TO_PARENT, C_04, ERoleCode.R_PDCS),
+            rule("C", C_04, ECaseWorkflowAction.RECEIVE_ROUTE, A_01, ERoleCode.R_CV)
     );
 
     private CaseWorkflowConfig() {
     }
 
-    private static WorkflowTransitionRule rule(String flowCode, ECaseStatusCode fromStatusCode, String actionCode,
-                                                ECaseStatusCode toStatusCode, String... roleCodes) {
-        return new WorkflowTransitionRule(flowCode, fromStatusCode, actionCode, toStatusCode, List.of(roleCodes));
+    private static WorkflowTransitionRule rule(String flowCode, ECaseStatusCode fromStatusCode,
+                                                ECaseWorkflowAction action,
+                                                ECaseStatusCode toStatusCode, ERoleCode... roles) {
+        List<String> roleCodes = Stream.of(roles).map(ERoleCode::getCode).toList();
+        return new WorkflowTransitionRule(flowCode, fromStatusCode, action.name(), toStatusCode, roleCodes);
     }
 }
