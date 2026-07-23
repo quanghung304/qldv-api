@@ -2,12 +2,15 @@ package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
+import com.agribank.qldv_api.request.casemgmt.BoardReviewRequest;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
+import com.agribank.qldv_api.response.casemgmt.BoardReviewResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.CaseService;
+import com.agribank.qldv_api.service.BoardReviewService;
 import com.agribank.qldv_api.service.EstablishmentCaseService;
 import com.agribank.qldvutils.enums.EAuthorityLevel;
 import com.agribank.qldvutils.response.BaseResponse;
@@ -32,6 +35,7 @@ import java.util.List;
 public class CaseController {
     private final CaseService caseService;
     private final EstablishmentCaseService establishmentCaseService;
+    private final BoardReviewService boardReviewService;
 
     @RequirePermission(function = "FN4", action = "VIEW")
     @PostMapping
@@ -81,5 +85,19 @@ public class CaseController {
     public ResponseEntity<BaseResponse<EstablishmentCaseResponse>> updateEstablishment(@PathVariable String id, @RequestBody EstablishmentCaseRequest request) {
         request.validateForUpdate();
         return BaseResponse.success(establishmentCaseService.updateEstablishmentCase(id, request, null));
+    }
+
+    @RequirePermission(function = "FN1", action = "EDIT")
+    @PutMapping("/{id}/establishment/board-review")
+    public ResponseEntity<BaseResponse<BoardReviewResponse>> updateBoardReview(
+            @PathVariable String id, @RequestBody BoardReviewRequest request) {
+        request.validate();
+        return BaseResponse.success(boardReviewService.upsert(id, request));
+    }
+
+    @RequirePermission(function = "FN1", action = "VIEW")
+    @GetMapping("/{id}/establishment/board-review")
+    public ResponseEntity<BaseResponse<BoardReviewResponse>> getBoardReview(@PathVariable String id) {
+        return BaseResponse.success(boardReviewService.get(id));
     }
 }
