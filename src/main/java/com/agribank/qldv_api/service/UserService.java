@@ -116,13 +116,7 @@ public class UserService {
     }
 
     public PageResponse<UserListResponse> searchUsers(UserSearchRequest request) {
-        SearchUserRequest searchUserRequest = new SearchUserRequest();
-        searchUserRequest.setName(request.getName());
-        searchUserRequest.setOrganizationId(request.getOrganizationId());
-        searchUserRequest.setDelete(request.getDelete());
-        searchUserRequest.setRoleId(request.getRoleId());
-        searchUserRequest.setStatus(request.getStatus());
-        searchUserRequest.setKeyword(request.getKeyword());
+        SearchUserRequest searchUserRequest = modelMapper.map(request, SearchUserRequest.class);
         searchUserRequest.setBrcds(checkValidateAndGetBrcds(request.getBrcd()));
         PageResponse<UserSearchResponse> response = searchQLDV(searchUserRequest);
         List<UserSearchResponse> userResponses = response.getData();
