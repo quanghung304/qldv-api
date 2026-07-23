@@ -5,6 +5,7 @@ import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
+import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.CaseService;
@@ -60,6 +61,13 @@ public class CaseController {
         request.validate();
         caseService.performWorkflowAction(id, request);
         return BaseResponse.success("Success");
+    }
+
+    /** Xem chi tiết đầy đủ 15 field Bước 1 SC-02 — dùng chung cho cả cấp Agribank lẫn SC-07 sau này. */
+    @RequirePermission(function = "FN1", action = "VIEW")
+    @GetMapping("/{id}/establishment")
+    public ResponseEntity<BaseResponse<EstablishmentCaseDetailResponse>> getEstablishmentDetail(@PathVariable String id) {
+        return BaseResponse.success(establishmentCaseService.getEstablishmentCaseDetail(id));
     }
 
     /**
