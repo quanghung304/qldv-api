@@ -7,6 +7,7 @@ import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.AttachmentClient;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseEstablishmentClient;
+import com.agribank.qldv_api.gateway.CaseEstablishmentCommitteeClient;
 import com.agribank.qldv_api.gateway.CaseTypeClient;
 import com.agribank.qldv_api.gateway.EmployeeInfoClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
@@ -15,7 +16,9 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.LeadershipInfoRequest;
 import com.agribank.qldv_api.request.casemgmt.ProposedCommitteeMemberRequest;
+import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
+import com.agribank.qldv_api.response.casemgmt.ProposedCommitteeMemberDetailResponse;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.Attachment;
 import com.agribank.qldvutils.entity.Case;
@@ -27,6 +30,7 @@ import com.agribank.qldvutils.enums.ECommitteePosition;
 import com.agribank.qldvutils.enums.EOperationStatus;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.casemgmt.EstablishmentCasePersistRequest;
+import com.agribank.qldvutils.response.casemgmt.CaseListItemResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -78,6 +82,7 @@ public class EstablishmentCaseService {
 
     private final CaseClient caseClient;
     private final CaseEstablishmentClient caseEstablishmentClient;
+    private final CaseEstablishmentCommitteeClient caseEstablishmentCommitteeClient;
     private final CaseTypeClient caseTypeClient;
     private final OrganizationTypeClient organizationTypeClient;
     private final OrganizationClient organizationClient;
@@ -208,6 +213,91 @@ public class EstablishmentCaseService {
 
         return new EstablishmentCaseResponse(savedCase.getId(), savedCase.getCaseCode(), savedCase.getStatusId(),
                 savedCase.getCreatedAt(), savedCase.getUpdatedAt(), warnings);
+    }
+
+    /**
+     * GET /cases/{id}/establishment — chi tiết đầy đủ 15 field Bước 1 SC-02. Hồ sơ tồn tại nhưng
+     * chưa từng lưu CaseEstablishment (trường hợp hiếm) thì các field 15-field trả về null thay
+     * vì lỗi 404 — 404 chỉ áp dụng khi chính PMDV_CASE không tồn tại.
+     */
+    public EstablishmentCaseDetailResponse getEstablishmentCaseDetail(String caseId) {
+        CaseListItemResponse caseInfo = caseClient.findDetailById(caseId).getData()
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ"));
+
+        CaseEstablishment establishment = caseEstablishmentClient.findByCaseId(caseId).getData().orElse(null);
+
+        OrganizationType organizationType = establishment != null && establishment.getOrganizationTypeId() != null
+                ? organizationTypeClient.findById(establishment.getOrganizationTypeId()).getData().orElse(null)
+                : null;
+
+        String leadershipStaffName = null;
+        if (establishment != null && establishment.getLeadershipStaffId() != null) {
+            EmployeeInfoDto employee = employeeInfoClient.findByEmpno(establishment.getLeadershipStaffId()).getData();
+            leadershipStaffName = employee != null ? employee.getFullName() : null;
+        }
+
+        List<CaseEstablishmentCommittee> committeeRows = safeList(caseEstablishmentCommitteeClient.findByCaseId(caseId).getData());
+
+        return EstablishmentCaseDetailResponse.builder()
+                .caseId(caseInfo.getCaseId())
+                .caseCode(caseInfo.getCaseCode())
+                .caseTypeId(caseInfo.getCaseTypeId())
+                .caseTypeName(caseInfo.getCaseTypeName())
+                .statusId(caseInfo.getStatusId())
+                .statusName(caseInfo.getStatusName())
+                .authorityLevel(caseInfo.getAuthorityLevel())
+                .originFlow(caseInfo.getOriginFlow())
+                .createdBy(caseInfo.getCreatedBy())
+                .createdByName(caseInfo.getCreatedByName())
+                .createdAt(caseInfo.getCreatedAt())
+                .updatedAt(caseInfo.getUpdatedAt())
+                .completedAt(caseInfo.getCompletedAt())
+                .proposedOrganizationName(caseInfo.getProposedOrganizationName())
+                .brcd(establishment != null ? establishment.getBrcd() : null)
+                .staffCount(establishment != null ? establishment.getStaffCount() : null)
+                .leadershipStaffId(establishment != null ? establishment.getLeadershipStaffId() : null)
+                .leadershipStaffName(leadershipStaffName)
+                .leadershipInfoText(establishment != null ? establishment.getLeadershipInfoText() : null)
+                .boardDecisionNo(establishment != null ? establishment.getBoardDecisionNo() : null)
+                .boardDecisionDate(establishment != null ? establishment.getBoardDecisionDate() : null)
+                .boardDecisionSummary(establishment != null ? establishment.getBoardDecisionSummary() : null)
+                .organizationTypeId(establishment != null ? establishment.getOrganizationTypeId() : null)
+                .organizationTypeName(organizationType != null ? organizationType.getName() : null)
+                .memberCount(establishment != null ? establishment.getMemberCount() : null)
+                .committeeMemberCount(establishment != null ? establishment.getCommitteeMemberCount() : null)
+                .committeeStructure(establishment != null ? establishment.getCommitteeStructure() : null)
+                .proposedCommitteeMembers(resolveCommitteeMembers(committeeRows))
+                .politicalStandardConclusionNo(establishment != null ? establishment.getPoliticalStandardConclusionNo() : null)
+                .politicalStandardConclusionDate(establishment != null ? establishment.getPoliticalStandardConclusionDate() : null)
+                .build();
+    }
+
+    /** Tra hàng loạt (IN) qua EmployeeInfoClient để lấy tên hiển thị — tránh N+1. */
+    private List<ProposedCommitteeMemberDetailResponse> resolveCommitteeMembers(List<CaseEstablishmentCommittee> rows) {
+        if (rows.isEmpty()) {
+            return List.of();
+        }
+        List<String> staffIds = rows.stream().map(CaseEstablishmentCommittee::getStaffCode).distinct().toList();
+        Map<String, String> nameByStaffId = safeList(employeeInfoClient.findByEmpnos(staffIds).getData()).stream()
+                .collect(Collectors.toMap(EmployeeInfoDto::getStaffCode, EmployeeInfoDto::getFullName, (a, b) -> a));
+        return rows.stream()
+                .map(row -> new ProposedCommitteeMemberDetailResponse(
+                        row.getStaffCode(),
+                        nameByStaffId.get(row.getStaffCode()),
+                        resolvePositionName(row.getProposedPosition())))
+                .toList();
+    }
+
+    private String resolvePositionName(Integer positionId) {
+        if (positionId == null) {
+            return null;
+        }
+        for (ECommitteePosition position : ECommitteePosition.values()) {
+            if (position.getId() == positionId) {
+                return position.name();
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------- helpers (đều cần DB)
