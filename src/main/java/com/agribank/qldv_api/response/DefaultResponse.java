@@ -37,7 +37,7 @@ public class DefaultResponse<T> {
         return new ResponseEntity<>(DefaultResponse.<T>builder()
                 .success(false)
                 .message(message)
-                .build(), HttpStatus.OK);
+                .build(), HttpStatus.BAD_REQUEST);
     }
 
     public static <T> ResponseEntity<DefaultResponse<T>> error(String message, T data) {
@@ -45,7 +45,7 @@ public class DefaultResponse<T> {
                 .success(false)
                 .data(data)
                 .message(message)
-                .build(), HttpStatus.OK);
+                .build(), HttpStatus.BAD_REQUEST);
     }
 
     public static <T> ResponseEntity<DefaultResponse<T>> errorAccessDeny(String message) {
