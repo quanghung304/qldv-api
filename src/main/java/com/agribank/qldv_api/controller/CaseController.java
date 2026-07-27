@@ -3,15 +3,21 @@ package com.agribank.qldv_api.controller;
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
 import com.agribank.qldv_api.request.casemgmt.BoardReviewRequest;
+import com.agribank.qldv_api.request.casemgmt.CommitteeReviewRequest;
+import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.BoardReviewResponse;
+import com.agribank.qldv_api.response.casemgmt.CommitteeReviewResponse;
+import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.CaseService;
 import com.agribank.qldv_api.service.BoardReviewService;
+import com.agribank.qldv_api.service.CommitteeReviewService;
+import com.agribank.qldv_api.service.DecisionDocumentsService;
 import com.agribank.qldv_api.service.EstablishmentCaseService;
 import com.agribank.qldvutils.enums.EAuthorityLevel;
 import com.agribank.qldvutils.response.BaseResponse;
@@ -37,6 +43,8 @@ public class CaseController {
     private final CaseService caseService;
     private final EstablishmentCaseService establishmentCaseService;
     private final BoardReviewService boardReviewService;
+    private final CommitteeReviewService committeeReviewService;
+    private final DecisionDocumentsService decisionDocumentsService;
 
     @RequirePermission(function = "FN4", action = "VIEW")
     @PostMapping
@@ -107,5 +115,29 @@ public class CaseController {
     @GetMapping("/{id}/establishment/board-review")
     public ResponseEntity<BaseResponse<BoardReviewResponse>> getBoardReview(@PathVariable String id) {
         return BaseResponse.success(boardReviewService.get(id));
+    }
+
+    /** API-SC05-01 — Bước 3 giai đoạn 1 (trước ban hành), guard status A-08 + role R-CV (ở service). */
+    @RequirePermission(function = "FN1", action = "EDIT")
+    @PutMapping("/{id}/establishment/committee-review")
+    public ResponseEntity<BaseResponse<CommitteeReviewResponse>> updateCommitteeReview(
+            @PathVariable String id, @RequestBody CommitteeReviewRequest request) {
+        request.validate();
+        return BaseResponse.success(committeeReviewService.upsert(id, request));
+    }
+
+    @RequirePermission(function = "FN1", action = "VIEW")
+    @GetMapping("/{id}/establishment/committee-review")
+    public ResponseEntity<BaseResponse<CommitteeReviewResponse>> getCommitteeReview(@PathVariable String id) {
+        return BaseResponse.success(committeeReviewService.get(id));
+    }
+
+    /** API-SC05-02 — Bước 3 giai đoạn 2 (sau ban hành), guard status A-15 + role R-CV (ở service). */
+    @RequirePermission(function = "FN1", action = "EDIT")
+    @PutMapping("/{id}/establishment/decision-documents")
+    public ResponseEntity<BaseResponse<DecisionDocumentsResponse>> updateDecisionDocuments(
+            @PathVariable String id, @RequestBody DecisionDocumentsRequest request) {
+        request.validate();
+        return BaseResponse.success(decisionDocumentsService.upsert(id, request));
     }
 }
