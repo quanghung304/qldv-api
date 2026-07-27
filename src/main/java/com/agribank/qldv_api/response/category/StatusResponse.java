@@ -14,4 +14,7 @@ public class StatusResponse {
     Integer statusType;
     String statusTypeLabel;
     Boolean isLocked;
+    Integer stepNo;
+    String stepCode;
+    String stepName;
 }
