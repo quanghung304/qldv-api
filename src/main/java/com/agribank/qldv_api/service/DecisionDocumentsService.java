@@ -8,7 +8,6 @@ import com.agribank.qldv_api.gateway.AttachmentClient;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseEstablishmentClient;
 import com.agribank.qldv_api.gateway.DocumentClient;
-import com.agribank.qldv_api.gateway.DocumentTypeClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
@@ -17,10 +16,8 @@ import com.agribank.qldvutils.entity.Attachment;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseEstablishment;
 import com.agribank.qldvutils.entity.Document;
-import com.agribank.qldvutils.entity.DocumentType;
 import com.agribank.qldvutils.enums.ECaseWorkflowAction;
 import com.agribank.qldvutils.enums.EDocumentOrigin;
-import com.agribank.qldvutils.exception.CommonException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,13 +31,17 @@ import java.util.stream.Stream;
 
 /**
  * API-SC05-02 — Bước 3 giai đoạn 2 (sau ban hành). 3 cặp field của request map vào 3 bản ghi
- * PMDV_DOCUMENT riêng biệt (ESTABLISH_DECISION, COMMITTEE_APPOINTMENT_DECISION,
- * POLITICAL_STANDARD_CONCLUSION) — KHÔNG có bảng phẳng riêng (xem prompt_S3-02 mục 4).
+ * PMDV_DOCUMENT riêng biệt (establish decision, committee appointment decision, political
+ * standard conclusion) — KHÔNG có bảng phẳng riêng (xem prompt_S3-02 mục 4).
+ *
+ * PMDV_DOCUMENT_TYPE đã bị loại bỏ khỏi dự án (task tái cấu trúc PMDV_DOCUMENT_TEMPLATE) — 3
+ * document ở đây là REFERENCE/GENERATED nhập tay, KHÔNG qua template, nên dùng {@code documentName}
+ * (chuỗi cố định, không phụ thuộc danh mục nào) làm khóa phân biệt thay vì document_type_id cũ.
  *
  * GC-S3-02-06: political_standard_conclusion đáng lẽ đã có sẵn record (origin=REFERENCE) từ lúc
  * tạo hồ sơ ở SC-02 — nhưng cơ chế Data Mapping/tự tạo record căn cứ đó (S2-03) chưa nối vào
  * EstablishmentCaseService (xem TODO ở đó). Ở đây dùng chiến lược upsert (tìm theo case_id +
- * document_type_id, có thì update, không có thì tạo mới) để endpoint chạy được ngay cả khi
+ * document_name, có thì update, không có thì tạo mới) để endpoint chạy được ngay cả khi
  * record căn cứ đó chưa tồn tại, đồng thời vẫn đúng hành vi "update" khi record đã có sẵn.
  *
  * GC-S3-02-04 (dung hòa): luôn cho lưu dữ liệu hợp lệ của bất kỳ bộ nào được gửi (kể cả chưa đủ
@@ -52,16 +53,15 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class DecisionDocumentsService {
-    private static final String ESTABLISH_DECISION_CODE = "ESTABLISH_DECISION";
-    private static final String COMMITTEE_APPOINTMENT_DECISION_CODE = "COMMITTEE_APPOINTMENT_DECISION";
-    private static final String POLITICAL_STANDARD_CONCLUSION_CODE = "POLITICAL_STANDARD_CONCLUSION";
+    private static final String ESTABLISH_DECISION_NAME = "Quyết định thành lập tổ chức đảng";
+    private static final String COMMITTEE_APPOINTMENT_DECISION_NAME = "Quyết định chuẩn y cấp ủy";
+    private static final String POLITICAL_STANDARD_CONCLUSION_NAME = "Kết luận tiêu chuẩn chính trị";
     private static final long POLITICAL_STANDARD_VALIDITY_MONTHS = 6;
 
     private final CaseService caseService;
     private final CaseClient caseClient;
     private final CaseEstablishmentClient caseEstablishmentClient;
     private final DocumentClient documentClient;
-    private final DocumentTypeClient documentTypeClient;
     private final AttachmentClient attachmentClient;
     private final WorkflowEngine workflowEngine;
     private final UserService userService;
@@ -73,13 +73,9 @@ public class DecisionDocumentsService {
         }
         UserDetailsImpl user = requireUser();
 
-        DocumentType establishType = requireDocumentType(ESTABLISH_DECISION_CODE);
-        DocumentType committeeType = requireDocumentType(COMMITTEE_APPOINTMENT_DECISION_CODE);
-        DocumentType politicalType = requireDocumentType(POLITICAL_STANDARD_CONCLUSION_CODE);
-
-        Document existingEstablishDoc = findDocument(caseId, establishType.getId());
-        Document existingCommitteeDoc = findDocument(caseId, committeeType.getId());
-        Document existingPoliticalDoc = findDocument(caseId, politicalType.getId());
+        Document existingEstablishDoc = findDocument(caseId, ESTABLISH_DECISION_NAME);
+        Document existingCommitteeDoc = findDocument(caseId, COMMITTEE_APPOINTMENT_DECISION_NAME);
+        Document existingPoliticalDoc = findDocument(caseId, POLITICAL_STANDARD_CONCLUSION_NAME);
 
         Map<String, String> errors = new LinkedHashMap<>();
         Map<String, String> warnings = new LinkedHashMap<>();
@@ -96,13 +92,13 @@ public class DecisionDocumentsService {
             throw new FieldValidationException(errors);
         }
 
-        Document establishDoc = upsertDocument(existingEstablishDoc, caseId, establishType.getId(),
+        Document establishDoc = upsertDocument(existingEstablishDoc, caseId, ESTABLISH_DECISION_NAME,
                 request.getEstablishDecisionNo(), request.getEstablishDecisionIssueDate(),
                 request.getEstablishDecisionEffectiveDate(), user.getId(), EDocumentOrigin.GENERATED.getId());
-        Document committeeDoc = upsertDocument(existingCommitteeDoc, caseId, committeeType.getId(),
+        Document committeeDoc = upsertDocument(existingCommitteeDoc, caseId, COMMITTEE_APPOINTMENT_DECISION_NAME,
                 request.getCommitteeAppointmentDecisionNo(), request.getCommitteeAppointmentIssueDate(),
                 request.getCommitteeAppointmentEffectiveDate(), user.getId(), EDocumentOrigin.GENERATED.getId());
-        Document politicalDoc = upsertDocument(existingPoliticalDoc, caseId, politicalType.getId(),
+        Document politicalDoc = upsertDocument(existingPoliticalDoc, caseId, POLITICAL_STANDARD_CONCLUSION_NAME,
                 request.getPoliticalStandardConclusionNoFinal(), request.getPoliticalStandardConclusionIssueDate(),
                 request.getPoliticalStandardConclusionEffectiveDate(), user.getId(), EDocumentOrigin.REFERENCE.getId());
 
@@ -136,14 +132,8 @@ public class DecisionDocumentsService {
         return user;
     }
 
-    private DocumentType requireDocumentType(String code) {
-        return documentTypeClient.findByCode(code).getData()
-                .orElseThrow(() -> new CommonException(
-                        "Danh mục loại văn bản '" + code + "' chưa được seed trong PMDV_DOCUMENT_TYPE"));
-    }
-
-    private Document findDocument(String caseId, String documentTypeId) {
-        return documentClient.findByCaseIdAndDocumentTypeId(caseId, documentTypeId).getData().orElse(null);
+    private Document findDocument(String caseId, String documentName) {
+        return documentClient.findByCaseIdAndDocumentName(caseId, documentName).getData().orElse(null);
     }
 
     private void validateUniqueDocumentNo(Map<String, String> errors, String field, String no, Document existing) {
@@ -169,14 +159,14 @@ public class DecisionDocumentsService {
         }
     }
 
-    private Document upsertDocument(Document existing, String caseId, String documentTypeId, String no,
+    private Document upsertDocument(Document existing, String caseId, String documentName, String no,
                                      LocalDate issueDate, LocalDate effectiveDate, String createdBy, Integer origin) {
         if (no == null && issueDate == null && effectiveDate == null) {
             return existing;
         }
         Document target = existing != null ? existing : Document.builder()
                 .caseId(caseId)
-                .documentTypeId(documentTypeId)
+                .documentName(documentName)
                 .origin(origin)
                 .createdBy(createdBy)
                 .build();

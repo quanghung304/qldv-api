@@ -29,7 +29,7 @@ public class ExceptionHandle {
 
     @ExceptionHandler(value = ForbiddenException.class)
     public ResponseEntity<BaseResponse<Object>> exception(ForbiddenException exception) {
-        return BaseResponse.error(exception.getMessage(), HttpStatus.FORBIDDEN);
+        return BaseResponse.error(exception.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(value = NotFoundException.class)

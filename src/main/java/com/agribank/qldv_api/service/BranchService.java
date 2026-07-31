@@ -33,4 +33,13 @@ public class BranchService {
             return null;
         }
     }
+
+    /** Tên chi nhánh (tiếng Việt, lclbrnm) theo brcd — dùng cho BranchNameByBrcdResolver (S2-03, placeholder EXTERNAL_LOOKUP). */
+    public String getBranchName(Integer brcd) {
+        List<BranchResponse> branchResponses = client.getBranchInfo(List.of(brcd)).getData();
+        if (branchResponses == null || branchResponses.isEmpty()) {
+            return null;
+        }
+        return branchResponses.get(0).getLclbrnm();
+    }
 }
