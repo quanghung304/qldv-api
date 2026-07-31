@@ -11,8 +11,11 @@ import java.util.Optional;
 
 @FeignClient(name = "documentClient", url = "${qldv.database.url}" + "/api/v1/document", configuration = DatabaseFeignConfiguration.class)
 public interface DocumentClient extends BaseClient<Document, String> {
-    @GetMapping("/find-by-case-id-and-document-type-id")
-    BaseResponse<Optional<Document>> findByCaseIdAndDocumentTypeId(@RequestParam String caseId, @RequestParam String documentTypeId);
+    @GetMapping("/find-by-case-id-and-template-code")
+    BaseResponse<Optional<Document>> findByCaseIdAndTemplateCode(@RequestParam String caseId, @RequestParam String templateCode);
+
+    @GetMapping("/find-by-case-id-and-document-name")
+    BaseResponse<Optional<Document>> findByCaseIdAndDocumentName(@RequestParam String caseId, @RequestParam String documentName);
 
     @GetMapping("/exists-by-document-no")
     BaseResponse<Boolean> existsByDocumentNo(@RequestParam String documentNo, @RequestParam(required = false) String excludeId);

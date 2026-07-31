@@ -127,6 +127,9 @@ public class EstablishmentCaseService {
                 .statusId(INITIAL_STATUS_CODE)
                 .createdBy(user.getId())
                 .proposedOrganizationName(request.getProposedOrganizationName())
+                // NULLABLE, không validate bắt buộc ở đây — chỉ kiểm tra ở API sinh văn bản
+                // theo bước (DocumentGenerationService), theo đúng phạm vi đã chốt.
+                .btvMethod(request.getBtvMethod())
                 .build();
 
         CaseEstablishment establishment = CaseEstablishment.builder().build();
