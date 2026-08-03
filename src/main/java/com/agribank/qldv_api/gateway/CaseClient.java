@@ -2,6 +2,7 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.Case;
+import com.agribank.qldvutils.request.casemgmt.CaseDeletePersistRequest;
 import com.agribank.qldvutils.request.casemgmt.CaseSearchQuery;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
@@ -27,4 +28,8 @@ public interface CaseClient extends BaseClient<Case, String> {
 
     @GetMapping("/find-latest-by-prefix")
     BaseResponse<Optional<Case>> findLatestByPrefix(@RequestParam String prefix);
+
+    /** API-GL-01 — cascade-delete + ghi audit log trong 1 transaction (xem CaseDeleteService, qldv-db). */
+    @PostMapping("/delete-cascade")
+    BaseResponse<String> deleteCascade(@RequestBody CaseDeletePersistRequest request);
 }

@@ -23,4 +23,8 @@ public class Constants {
      * chung, vì cấp cơ sở (GRASSROOTS_LEVEL) có thể là Luồng B HOẶC C tuỳ kịch bản (SC-07, Sprint 5).
      */
     public static final String CASE_FLOW_BTCDU = "A";
+    /** PMDV_CASE.origin_flow — Luồng B: 1 cấp kiểm soát (R-KSCS) rồi thẳng R-PDCS (xem CaseWorkflowConfig). */
+    public static final String CASE_FLOW_B = "B";
+    /** PMDV_CASE.origin_flow — Luồng C: giống Luồng B tới "Trình cấp thẩm quyền cơ sở", rồi gửi trình lên BTCĐU. */
+    public static final String CASE_FLOW_C = "C";
 }
