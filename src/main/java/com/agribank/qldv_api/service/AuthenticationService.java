@@ -71,7 +71,7 @@ public class AuthenticationService {
             user.setDeleted(0);
             user.setAccountStatus(EAccountStatus.ACTIVE.getId());
             user.setCreatedBy(userRequested.getId());
-            user.setEmail(request.getUsername());
+            user.setEmail(registerRequest.getEmail());
             user.setStaffCode(Objects.nonNull(request.getStaffCode())
             ? request.getStaffCode() + ""
                     : null
