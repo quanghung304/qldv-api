@@ -23,4 +23,12 @@ public class Constants {
      * chung, vì cấp cơ sở (GRASSROOTS_LEVEL) có thể là Luồng B HOẶC C tuỳ kịch bản (SC-07, Sprint 5).
      */
     public static final String CASE_FLOW_BTCDU = "A";
+    /**
+     * PMDV_DOCUMENT.document_name của văn bản "Quyết định thành lập tổ chức đảng" (API-SC05-02,
+     * DecisionDocumentsService) — dùng chung để tra lại đúng document đó ở API-SC06-02
+     * (CaseCompleteService, map establish_decision_no/date sang PMDV_ORGANIZATION). PHẢI khớp
+     * NGUYÊN VĂN giá trị đã lưu — tách hằng số dùng chung để tránh 2 nơi tự gõ lại chuỗi này lệch
+     * nhau.
+     */
+    public static final String ESTABLISH_DECISION_DOCUMENT_NAME = "Quyết định thành lập tổ chức đảng";
 }
