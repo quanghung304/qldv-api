@@ -8,6 +8,7 @@ import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.ArchiveCaseResponse;
+import com.agribank.qldv_api.response.casemgmt.CaseDeleteResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.BoardReviewResponse;
 import com.agribank.qldv_api.response.casemgmt.CommitteeReviewResponse;
@@ -16,6 +17,7 @@ import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
+import com.agribank.qldv_api.service.CaseDeleteService;
 import com.agribank.qldv_api.service.ArchiveCaseService;
 import com.agribank.qldv_api.service.CaseCompleteService;
 import com.agribank.qldv_api.service.CaseService;
@@ -30,6 +32,7 @@ import com.agribank.qldvutils.response.casemgmt.CaseHistoryItemResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseListItemResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,6 +48,7 @@ import java.util.List;
 @RequestMapping("/api/v1/cases")
 public class CaseController {
     private final CaseService caseService;
+    private final CaseDeleteService caseDeleteService;
     private final EstablishmentCaseService establishmentCaseService;
     private final BoardReviewService boardReviewService;
     private final CommitteeReviewService committeeReviewService;
@@ -70,6 +74,17 @@ public class CaseController {
     @GetMapping("/{id}/history")
     public ResponseEntity<BaseResponse<List<CaseHistoryItemResponse>>> getHistory(@PathVariable String id) {
         return BaseResponse.success(caseService.getHistory(id));
+    }
+
+    /**
+     * API-GL-01 — xóa hồ sơ CHỈ khi còn "Đang thực hiện" lần đầu tiên (chưa từng Trình kiểm
+     * soát), áp dụng chung cho mọi loại nghiệp vụ (Thành lập TCĐ lẫn biến động). Guard chi tiết
+     * (role khớp luồng, status_id, PMDV_CASE_HISTORY rỗng) nằm ở CaseDeleteService.
+     */
+    @RequirePermission(function = "FN1", action = "DELETE")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<BaseResponse<CaseDeleteResponse>> deleteCase(@PathVariable String id) {
+        return BaseResponse.success(caseDeleteService.delete(id));
     }
 
     @RequirePermission(function = "FN2", action = "APPROVE")

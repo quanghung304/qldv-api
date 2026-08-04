@@ -31,4 +31,8 @@ public class Constants {
      * nhau.
      */
     public static final String ESTABLISH_DECISION_DOCUMENT_NAME = "Quyết định thành lập tổ chức đảng";
+    /** PMDV_CASE.origin_flow — Luồng B: 1 cấp kiểm soát (R-KSCS) rồi thẳng R-PDCS (xem CaseWorkflowConfig). */
+    public static final String CASE_FLOW_B = "B";
+    /** PMDV_CASE.origin_flow — Luồng C: giống Luồng B tới "Trình cấp thẩm quyền cơ sở", rồi gửi trình lên BTCĐU. */
+    public static final String CASE_FLOW_C = "C";
 }

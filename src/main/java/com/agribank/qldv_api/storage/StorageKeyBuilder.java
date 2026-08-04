@@ -32,4 +32,16 @@ public class StorageKeyBuilder {
                 storageProperties.getProjectPrefix(), createdAt.format(YEAR), createdAt.format(MONTH),
                 caseId, templateCode);
     }
+
+    /**
+     * {yyyy}/{MM} lấy từ case.createdAt (không đổi theo quy ước chung). Không có tham số
+     * attachmentId trong key — nếu 2 file trong CÙNG 1 lượt upload trùng tên gốc, AttachmentService
+     * chặn từ tầng validate (KHÔNG cho phép trùng tên trong 1 request) để tránh ghi đè lẫn nhau.
+     */
+    public String attachmentKey(String caseId, String workflowStage, String filename, Timestamp caseCreatedAt) {
+        LocalDate createdAt = caseCreatedAt.toLocalDateTime().toLocalDate();
+        return "%s/attachments/%s/%s/%s/%s/%s".formatted(
+                storageProperties.getProjectPrefix(), createdAt.format(YEAR), createdAt.format(MONTH),
+                caseId, workflowStage, filename);
+    }
 }
