@@ -19,6 +19,7 @@ import com.agribank.qldvutils.entity.CaseEstablishmentCommittee;
 import com.agribank.qldvutils.entity.CommitteeMember;
 import com.agribank.qldvutils.entity.Document;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.enums.ECaseWorkflowAction;
 import com.agribank.qldvutils.enums.ECommitteeMemberStatus;
 import com.agribank.qldvutils.enums.EOperationStatus;
 import com.agribank.qldvutils.exception.CommonException;
@@ -60,7 +61,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class CaseCompleteService {
-    private static final String APPROVE_COMPLETE_ACTION = "APPROVE_COMPLETE";
     private static final String ORGANIZATION_CODE_PREFIX = "TCD";
 
     private final CaseClient caseClient;
@@ -91,7 +91,7 @@ public class CaseCompleteService {
         request.setCommitteeMembers(committeeMembers);
         request.setFromStatusId(existingCase.getStatusId());
         request.setToStatusId(rule.toStatusCode().getCode());
-        request.setAction(APPROVE_COMPLETE_ACTION);
+        request.setAction(ECaseWorkflowAction.APPROVE_COMPLETE.name());
         request.setPerformedBy(user.getId());
         request.setPerformedRoleId(matchedRole);
 
@@ -117,7 +117,7 @@ public class CaseCompleteService {
         return CaseWorkflowConfig.RULES.stream()
                 .filter(r -> r.flowCode().equals(existingCase.getOriginFlow())
                         && r.fromStatusCode().getCode().equals(existingCase.getStatusId())
-                        && r.actionCode().equals(APPROVE_COMPLETE_ACTION))
+                        && r.actionCode().equals(ECaseWorkflowAction.APPROVE_COMPLETE.name()))
                 .findFirst()
                 .orElseThrow(() -> new ForbiddenException(
                         "ERR-SC03-01: Bạn không có quyền thực hiện thao tác này ở bước hiện tại"));
