@@ -7,15 +7,19 @@ import com.agribank.qldv_api.request.casemgmt.CommitteeReviewRequest;
 import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
+import com.agribank.qldv_api.response.casemgmt.ArchiveCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseDeleteResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.BoardReviewResponse;
 import com.agribank.qldv_api.response.casemgmt.CommitteeReviewResponse;
+import com.agribank.qldv_api.response.casemgmt.CompleteCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.CaseDeleteService;
+import com.agribank.qldv_api.service.ArchiveCaseService;
+import com.agribank.qldv_api.service.CaseCompleteService;
 import com.agribank.qldv_api.service.CaseService;
 import com.agribank.qldv_api.service.BoardReviewService;
 import com.agribank.qldv_api.service.CommitteeReviewService;
@@ -49,6 +53,8 @@ public class CaseController {
     private final BoardReviewService boardReviewService;
     private final CommitteeReviewService committeeReviewService;
     private final DecisionDocumentsService decisionDocumentsService;
+    private final ArchiveCaseService archiveCaseService;
+    private final CaseCompleteService caseCompleteService;
 
     @RequirePermission(function = "FN4", action = "VIEW")
     @PostMapping
@@ -154,5 +160,19 @@ public class CaseController {
             @PathVariable String id, @RequestBody DecisionDocumentsRequest request) {
         request.validate();
         return BaseResponse.success(decisionDocumentsService.upsert(id, request));
+    }
+
+    /** API-SC06-01 — kích hoạt lưu trữ (sinh 2 văn bản lưu trữ), guard status A-16/B-04 + role R-CV/R-BPTM (ở service). */
+    @RequirePermission(function = "FN3", action = "APPROVE")
+    @PostMapping("/{id}/archive")
+    public ResponseEntity<BaseResponse<ArchiveCaseResponse>> archiveCase(@PathVariable String id) {
+        return BaseResponse.success(archiveCaseService.archive(id));
+    }
+
+    /** API-SC06-02 — phê duyệt hoàn thành: tạo chính thức PMDV_ORGANIZATION, khóa hồ sơ (ở service). */
+    @RequirePermission(function = "FN3", action = "APPROVE")
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<BaseResponse<CompleteCaseResponse>> completeCase(@PathVariable String id) {
+        return BaseResponse.success(caseCompleteService.complete(id));
     }
 }

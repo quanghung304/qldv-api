@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Optional;
 
 @FeignClient(name = "organizationClient", url = "${qldv.database.url}" + "/api/v1/organization", configuration = DatabaseFeignConfiguration.class)
 public interface OrganizationClient extends BaseClient<Organization, String> {
@@ -33,4 +34,8 @@ public interface OrganizationClient extends BaseClient<Organization, String> {
 
     @GetMapping("/{organizationId}/subordinates")
     DefaultListResponse<OrganizationSubordinateRawResponse> findSubordinates(@PathVariable String organizationId);
+
+    /** API-SC06-02 — sinh organization_code sequential-per-prefix, cùng kiểu Case.generateCaseCode(). */
+    @GetMapping("/find-latest-by-prefix")
+    BaseResponse<Optional<Organization>> findLatestByPrefix(@RequestParam String prefix);
 }

@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.service;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.ECaseStatusCode;
 import com.agribank.qldv_api.exception.FieldValidationException;
 import com.agribank.qldv_api.exception.ForbiddenException;
@@ -53,7 +54,7 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class DecisionDocumentsService {
-    private static final String ESTABLISH_DECISION_NAME = "Quyết định thành lập tổ chức đảng";
+    private static final String ESTABLISH_DECISION_NAME = Constants.ESTABLISH_DECISION_DOCUMENT_NAME;
     private static final String COMMITTEE_APPOINTMENT_DECISION_NAME = "Quyết định chuẩn y cấp ủy";
     private static final String POLITICAL_STANDARD_CONCLUSION_NAME = "Kết luận tiêu chuẩn chính trị";
     private static final long POLITICAL_STANDARD_VALIDITY_MONTHS = 6;
