@@ -1,6 +1,7 @@
 package com.agribank.qldv_api.controller;
 
 import com.agribank.qldv_api.enums.Constants;
+import com.agribank.qldv_api.request.casemgmt.CaseChangeRequest;
 import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
 import com.agribank.qldv_api.request.casemgmt.BoardReviewRequest;
 import com.agribank.qldv_api.request.casemgmt.CommitteeReviewRequest;
@@ -8,6 +9,7 @@ import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.ArchiveCaseResponse;
+import com.agribank.qldv_api.response.casemgmt.CaseChangeResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseDeleteResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.BoardReviewResponse;
@@ -17,6 +19,7 @@ import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
+import com.agribank.qldv_api.service.CaseChangeService;
 import com.agribank.qldv_api.service.CaseDeleteService;
 import com.agribank.qldv_api.service.ArchiveCaseService;
 import com.agribank.qldv_api.service.CaseCompleteService;
@@ -50,6 +53,7 @@ public class CaseController {
     private final CaseService caseService;
     private final CaseDeleteService caseDeleteService;
     private final EstablishmentCaseService establishmentCaseService;
+    private final CaseChangeService caseChangeService;
     private final BoardReviewService boardReviewService;
     private final CommitteeReviewService committeeReviewService;
     private final DecisionDocumentsService decisionDocumentsService;
@@ -122,6 +126,28 @@ public class CaseController {
     public ResponseEntity<BaseResponse<EstablishmentCaseResponse>> updateEstablishment(@PathVariable String id, @RequestBody EstablishmentCaseRequest request) {
         request.validateForUpdate();
         return BaseResponse.success(establishmentCaseService.updateEstablishmentCase(id, request, null));
+    }
+
+    /**
+     * API-SC08-01 — Bước 1 dùng CHUNG cho 5 nghiệp vụ biến động TCĐ (Giải thể/Sáp nhập/Hợp
+     * nhất/Chia tách/Đổi tên). Cùng cách gọi service dùng chung với authorityLevel/originFlow cố
+     * định như createEstablishment (chỉ hỗ trợ R-CV/BANK_LEVEL/Luồng A ở task này — nhánh
+     * R-BPTM/GRASSROOTS_LEVEL CHƯA triển khai, tương tự SC-07 grassroots establishment).
+     */
+    @RequirePermission(function = "FN1", action = "CREATE")
+    @PostMapping("/changes")
+    public ResponseEntity<BaseResponse<CaseChangeResponse>> createCaseChange(@RequestBody CaseChangeRequest request) {
+        request.validate();
+        return BaseResponse.success(caseChangeService.createCaseChange(
+                request, EAuthorityLevel.BANK_LEVEL.getId(), Constants.CASE_FLOW_BTCDU));
+    }
+
+    /** API-SC08-02 — guard status đúng bước 1 của luồng hồ sơ này (ở service), caseTypeId bất biến. */
+    @RequirePermission(function = "FN1", action = "EDIT")
+    @PutMapping("/{id}/change")
+    public ResponseEntity<BaseResponse<CaseChangeResponse>> updateCaseChange(@PathVariable String id, @RequestBody CaseChangeRequest request) {
+        request.validateForUpdate();
+        return BaseResponse.success(caseChangeService.updateCaseChange(id, request));
     }
 
     @RequirePermission(function = "FN1", action = "EDIT")
