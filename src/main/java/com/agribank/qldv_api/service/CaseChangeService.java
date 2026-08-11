@@ -62,7 +62,6 @@ import java.util.stream.Collectors;
 public class CaseChangeService {
     private static final String DISSOLVE_CASE_TYPE_CODE = "DISSOLVE";
     private static final String MERGE_CASE_TYPE_CODE = "MERGE";
-    private static final int MAX_PROPOSED_TARGET_NAME_LENGTH = 250;
 
     private final CaseClient caseClient;
     private final CaseChangeClient caseChangeClient;
@@ -70,6 +69,7 @@ public class CaseChangeService {
     private final CaseTypeClient caseTypeClient;
     private final OrganizationClient organizationClient;
     private final UserService userService;
+    private final EstablishmentCaseService establishmentCaseService;
 
     public CaseChangeResponse createCaseChange(CaseChangeRequest request, Integer authorityLevel, String originFlow) {
         UserDetailsImpl user = requireUser();
@@ -112,7 +112,7 @@ public class CaseChangeService {
                 .caseTypeId(caseType.getId())
                 .authorityLevel(authorityLevel)
                 .originFlow(originFlow)
-                .statusId(initialStatusForFlow(originFlow))
+                .statusId(establishmentCaseService.initialStatusForFlow(originFlow))
                 .createdBy(user.getId())
                 .proposedOrganizationName(proposedTargetName)
                 .build();
@@ -151,7 +151,7 @@ public class CaseChangeService {
             throw new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ");
         }
 
-        String requiredStatus = initialStatusForFlow(existingCase.getOriginFlow());
+        String requiredStatus = establishmentCaseService.initialStatusForFlow(existingCase.getOriginFlow());
         if (!requiredStatus.equals(existingCase.getStatusId())) {
             throw new ForbiddenException("BR-SC08-06: Hồ sơ không còn ở bước 1 (" + requiredStatus + "), không thể chỉnh sửa");
         }
@@ -338,9 +338,9 @@ public class CaseChangeService {
     private void requireProposedTargetName(Map<String, String> errors, String proposedTargetName) {
         if (proposedTargetName == null || proposedTargetName.isBlank()) {
             errors.put("proposedTargetName", "ERR-SC08-03: proposedTargetName không được để trống với loại hình nghiệp vụ này");
-        } else if (proposedTargetName.length() > MAX_PROPOSED_TARGET_NAME_LENGTH) {
+        } else if (proposedTargetName.length() > Constants.MAX_ORGANIZATION_NAME_LENGTH) {
             errors.put("proposedTargetName", "ERR-SC08-03: proposedTargetName không được vượt quá "
-                    + MAX_PROPOSED_TARGET_NAME_LENGTH + " ký tự");
+                    + Constants.MAX_ORGANIZATION_NAME_LENGTH + " ký tự");
         }
     }
 
@@ -399,24 +399,6 @@ public class CaseChangeService {
             nextSeq = Integer.parseInt(latestCode.substring(latestCode.lastIndexOf('-') + 1)) + 1;
         }
         return prefix + "-" + String.format("%04d", nextSeq);
-    }
-
-    /**
-     * A-01/B-01/C-01 tuỳ origin_flow — cùng cách tra {@code CaseDeleteService.requireInitialStatus}
-     * (qldv-api), tránh hardcode A-01 để PUT /cases/{id}/change chạy đúng khi Luồng B/C được bổ
-     * sung sau này (hiện tại createCaseChange chỉ được gọi với originFlow="A", xem CaseController).
-     */
-    private String initialStatusForFlow(String originFlow) {
-        if (Constants.CASE_FLOW_BTCDU.equals(originFlow)) {
-            return ECaseStatusCode.A_01.getCode();
-        }
-        if (Constants.CASE_FLOW_B.equals(originFlow)) {
-            return ECaseStatusCode.B_01.getCode();
-        }
-        if (Constants.CASE_FLOW_C.equals(originFlow)) {
-            return ECaseStatusCode.C_01.getCode();
-        }
-        throw new CommonException("origin_flow không hợp lệ: " + originFlow);
     }
 
     private static <T> List<T> safeList(List<T> list) {

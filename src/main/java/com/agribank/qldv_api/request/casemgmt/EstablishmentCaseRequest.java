@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.casemgmt;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.exception.FieldValidationException;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -30,14 +31,8 @@ import java.util.Set;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EstablishmentCaseRequest {
-    private static final int MAX_STAFF_COUNT = 100000;
     private static final int MAX_LEADERSHIP_FREE_TEXT_LENGTH = 500;
-    private static final int MAX_BOARD_DECISION_NO_LENGTH = 100;
-    private static final int MAX_BOARD_DECISION_SUMMARY_LENGTH = 1000;
-    private static final int MAX_ORGANIZATION_NAME_LENGTH = 250;
     private static final int MAX_COMMITTEE_STRUCTURE_LENGTH = 500;
-    private static final int MAX_CONCLUSION_NO_LENGTH = 50;
-    private static final long POLITICAL_STANDARD_VALIDITY_MONTHS = 6;
     private static final Set<String> VALID_POSITIONS = Set.of("SECRETARY", "DEPUTY_SECRETARY", "MEMBER");
 
     Integer brcd;
@@ -65,24 +60,24 @@ public class EstablishmentCaseRequest {
     public void validate() {
         Map<String, String> errors = new LinkedHashMap<>();
         requirePositiveInt(errors, "brcd", brcd, null, "ERR-SC02-01: brcd (mã chi nhánh) không được để trống");
-        requirePositiveInt(errors, "staffCount", staffCount, MAX_STAFF_COUNT,
-                "ERR-SC02-02: staff_count phải là số nguyên dương, tối đa " + MAX_STAFF_COUNT);
+        requirePositiveInt(errors, "staffCount", staffCount, Constants.MAX_STAFF_COUNT,
+                "ERR-SC02-02: staff_count phải là số nguyên dương, tối đa " + Constants.MAX_STAFF_COUNT);
         validateLeadershipInfoFormat(errors);
-        requireText(errors, "boardDecisionNo", boardDecisionNo, MAX_BOARD_DECISION_NO_LENGTH,
-                "ERR-SC02-01: board_decision_no không được để trống, không vượt quá " + MAX_BOARD_DECISION_NO_LENGTH + " ký tự");
+        requireText(errors, "boardDecisionNo", boardDecisionNo, Constants.MAX_DECISION_NO_LENGTH,
+                "ERR-SC02-01: board_decision_no không được để trống, không vượt quá " + Constants.MAX_DECISION_NO_LENGTH + " ký tự");
         requirePastOrPresentDate(errors, "boardDecisionDate", boardDecisionDate,
                 "ERR-SC02-04: board_decision_date không được để trống và không được sau ngày hiện tại");
-        requireText(errors, "boardDecisionSummary", boardDecisionSummary, MAX_BOARD_DECISION_SUMMARY_LENGTH,
-                "ERR-SC02-01: board_decision_summary không được để trống, không vượt quá " + MAX_BOARD_DECISION_SUMMARY_LENGTH + " ký tự");
-        requireText(errors, "proposedOrganizationName", proposedOrganizationName, MAX_ORGANIZATION_NAME_LENGTH,
-                "ERR-SC02-01: proposed_organization_name không được để trống, không vượt quá " + MAX_ORGANIZATION_NAME_LENGTH + " ký tự");
+        requireText(errors, "boardDecisionSummary", boardDecisionSummary, Constants.MAX_BOARD_DECISION_SUMMARY_LENGTH,
+                "ERR-SC02-01: board_decision_summary không được để trống, không vượt quá " + Constants.MAX_BOARD_DECISION_SUMMARY_LENGTH + " ký tự");
+        requireText(errors, "proposedOrganizationName", proposedOrganizationName, Constants.MAX_ORGANIZATION_NAME_LENGTH,
+                "ERR-SC02-01: proposed_organization_name không được để trống, không vượt quá " + Constants.MAX_ORGANIZATION_NAME_LENGTH + " ký tự");
         requirePositiveInt(errors, "memberCount", memberCount, null, null);
         validateCommitteeMemberCountFormat(errors, committeeMemberCount, memberCount);
         requireText(errors, "committeeStructure", committeeStructure, MAX_COMMITTEE_STRUCTURE_LENGTH,
                 "ERR-SC02-01: committee_structure không được để trống, không vượt quá " + MAX_COMMITTEE_STRUCTURE_LENGTH + " ký tự");
-        validateProposedCommitteeMembersFormat(errors, committeeMemberCount);
-        requireText(errors, "politicalStandardConclusionNo", politicalStandardConclusionNo, MAX_CONCLUSION_NO_LENGTH,
-                "ERR-SC02-01: political_standard_conclusion_no không được để trống, không vượt quá " + MAX_CONCLUSION_NO_LENGTH + " ký tự");
+        validateProposedCommitteeMembersFormat(errors, proposedCommitteeMembers, committeeMemberCount);
+        requireText(errors, "politicalStandardConclusionNo", politicalStandardConclusionNo, Constants.MAX_CONCLUSION_NO_LENGTH,
+                "ERR-SC02-01: political_standard_conclusion_no không được để trống, không vượt quá " + Constants.MAX_CONCLUSION_NO_LENGTH + " ký tự");
         requirePastOrPresentDate(errors, "politicalStandardConclusionDate", politicalStandardConclusionDate,
                 "ERR-SC02-04: political_standard_conclusion_date không được để trống và không được sau ngày hiện tại");
         validatePoliticalStandardValidity(errors, politicalStandardConclusionDate);
@@ -101,27 +96,27 @@ public class EstablishmentCaseRequest {
             requirePositiveInt(errors, "brcd", brcd, null, "ERR-SC02-01: brcd (mã chi nhánh) không được để trống");
         }
         if (staffCount != null) {
-            requirePositiveInt(errors, "staffCount", staffCount, MAX_STAFF_COUNT,
-                    "ERR-SC02-02: staff_count phải là số nguyên dương, tối đa " + MAX_STAFF_COUNT);
+            requirePositiveInt(errors, "staffCount", staffCount, Constants.MAX_STAFF_COUNT,
+                    "ERR-SC02-02: staff_count phải là số nguyên dương, tối đa " + Constants.MAX_STAFF_COUNT);
         }
         if (leadershipInfo != null) {
             validateLeadershipInfoFormat(errors);
         }
         if (boardDecisionNo != null) {
-            requireText(errors, "boardDecisionNo", boardDecisionNo, MAX_BOARD_DECISION_NO_LENGTH,
-                    "ERR-SC02-01: board_decision_no không được để trống, không vượt quá " + MAX_BOARD_DECISION_NO_LENGTH + " ký tự");
+            requireText(errors, "boardDecisionNo", boardDecisionNo, Constants.MAX_DECISION_NO_LENGTH,
+                    "ERR-SC02-01: board_decision_no không được để trống, không vượt quá " + Constants.MAX_DECISION_NO_LENGTH + " ký tự");
         }
         if (boardDecisionDate != null) {
             requirePastOrPresentDate(errors, "boardDecisionDate", boardDecisionDate,
                     "ERR-SC02-04: board_decision_date không được sau ngày hiện tại");
         }
         if (boardDecisionSummary != null) {
-            requireText(errors, "boardDecisionSummary", boardDecisionSummary, MAX_BOARD_DECISION_SUMMARY_LENGTH,
-                    "ERR-SC02-01: board_decision_summary không được để trống, không vượt quá " + MAX_BOARD_DECISION_SUMMARY_LENGTH + " ký tự");
+            requireText(errors, "boardDecisionSummary", boardDecisionSummary, Constants.MAX_BOARD_DECISION_SUMMARY_LENGTH,
+                    "ERR-SC02-01: board_decision_summary không được để trống, không vượt quá " + Constants.MAX_BOARD_DECISION_SUMMARY_LENGTH + " ký tự");
         }
         if (proposedOrganizationName != null) {
-            requireText(errors, "proposedOrganizationName", proposedOrganizationName, MAX_ORGANIZATION_NAME_LENGTH,
-                    "ERR-SC02-01: proposed_organization_name không được để trống, không vượt quá " + MAX_ORGANIZATION_NAME_LENGTH + " ký tự");
+            requireText(errors, "proposedOrganizationName", proposedOrganizationName, Constants.MAX_ORGANIZATION_NAME_LENGTH,
+                    "ERR-SC02-01: proposed_organization_name không được để trống, không vượt quá " + Constants.MAX_ORGANIZATION_NAME_LENGTH + " ký tự");
         }
         if (memberCount != null) {
             requirePositiveInt(errors, "memberCount", memberCount, null, null);
@@ -134,11 +129,11 @@ public class EstablishmentCaseRequest {
                     "ERR-SC02-01: committee_structure không được để trống, không vượt quá " + MAX_COMMITTEE_STRUCTURE_LENGTH + " ký tự");
         }
         if (proposedCommitteeMembers != null) {
-            validateProposedCommitteeMembersFormat(errors, committeeMemberCount);
+            validateProposedCommitteeMembersFormat(errors, proposedCommitteeMembers, committeeMemberCount);
         }
         if (politicalStandardConclusionNo != null) {
-            requireText(errors, "politicalStandardConclusionNo", politicalStandardConclusionNo, MAX_CONCLUSION_NO_LENGTH,
-                    "ERR-SC02-01: political_standard_conclusion_no không được để trống, không vượt quá " + MAX_CONCLUSION_NO_LENGTH + " ký tự");
+            requireText(errors, "politicalStandardConclusionNo", politicalStandardConclusionNo, Constants.MAX_CONCLUSION_NO_LENGTH,
+                    "ERR-SC02-01: political_standard_conclusion_no không được để trống, không vượt quá " + Constants.MAX_CONCLUSION_NO_LENGTH + " ký tự");
         }
         if (politicalStandardConclusionDate != null) {
             requirePastOrPresentDate(errors, "politicalStandardConclusionDate", politicalStandardConclusionDate,
@@ -160,7 +155,8 @@ public class EstablishmentCaseRequest {
         // staff_id có tồn tại ở hệ thống GA hay không cần gọi EmployeeInfoClient — do service xử lý.
     }
 
-    private void validateCommitteeMemberCountFormat(Map<String, String> errors, Integer committeeMemberCount, Integer memberCount) {
+    /** package-private + static — dùng chung lại cho {@code GrassrootsEstablishmentCaseRequest} (SC-07, BR-SC02-08). */
+    static void validateCommitteeMemberCountFormat(Map<String, String> errors, Integer committeeMemberCount, Integer memberCount) {
         if (committeeMemberCount == null || committeeMemberCount < 0) {
             errors.put("committeeMemberCount", "ERR-SC02-08: committee_member_count phải >= 0");
             return;
@@ -170,7 +166,10 @@ public class EstablishmentCaseRequest {
         }
     }
 
-    private void validateProposedCommitteeMembersFormat(Map<String, String> errors, Integer committeeMemberCount) {
+    /** package-private + static — dùng chung lại cho {@code GrassrootsEstablishmentCaseRequest} (SC-07, BR-SC02-09/10). */
+    static void validateProposedCommitteeMembersFormat(Map<String, String> errors,
+                                                         List<ProposedCommitteeMemberRequest> proposedCommitteeMembers,
+                                                         Integer committeeMemberCount) {
         if (proposedCommitteeMembers == null || proposedCommitteeMembers.isEmpty()) {
             errors.put("proposedCommitteeMembers", "ERR-SC02-09: proposed_committee_members không được để trống");
             return;
@@ -210,7 +209,7 @@ public class EstablishmentCaseRequest {
 
     /** BR-SC02-02 — cảnh báo (không chặn lưu), quá 6 tháng kể từ ngày ban hành kết luận TCCT. */
     private void validatePoliticalStandardValidity(Map<String, String> errors, LocalDate conclusionDate) {
-        if (conclusionDate != null && conclusionDate.plusMonths(POLITICAL_STANDARD_VALIDITY_MONTHS).isBefore(LocalDate.now())) {
+        if (conclusionDate != null && conclusionDate.plusMonths(Constants.POLITICAL_STANDARD_VALIDITY_MONTHS).isBefore(LocalDate.now())) {
             errors.put("ERR-SC02-13", "Kết luận tiêu chuẩn chính trị đã quá 6 tháng kể từ ngày ban hành (BR-SC02-02) — "
                     + "cần cập nhật kết luận mới hoặc xác nhận ngoại lệ trước khi Trình kiểm soát");
         }

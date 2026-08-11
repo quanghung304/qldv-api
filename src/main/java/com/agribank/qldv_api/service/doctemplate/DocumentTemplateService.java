@@ -16,6 +16,7 @@ import com.agribank.qldvutils.dto.doctemplate.FieldConfigEntry;
 import com.agribank.qldvutils.dto.doctemplate.TemplateMappingConfig;
 import com.agribank.qldvutils.entity.CaseType;
 import com.agribank.qldvutils.entity.DocumentTemplate;
+import com.agribank.qldvutils.enums.Constants;
 import com.agribank.qldvutils.enums.ERoleCode;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.doctemplate.DocumentTemplatePersistRequest;
@@ -58,7 +59,6 @@ import java.util.stream.Collectors;
 public class DocumentTemplateService {
     private static final String DOCX_CONTENT_TYPE =
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    private static final String STATUS_ACTIVE = "ACTIVE";
 
     private final DocumentTemplateClient documentTemplateClient;
     private final CaseTypeClient caseTypeClient;
@@ -110,7 +110,7 @@ public class DocumentTemplateService {
 
         template.setTemplateName(filename);
         template.setStoragePath(storageKey);
-        template.setStatus(STATUS_ACTIVE);
+        template.setStatus(Constants.STATUS_ACTIVE);
         template.setFieldMappingConfig(writeJson(config));
 
         template = documentTemplateClient.save(template).getData();
@@ -147,9 +147,9 @@ public class DocumentTemplateService {
 
         boolean allMatched = !config.getFields().isEmpty()
                 && config.getFields().stream().allMatch(f -> f.getResolutionType() != null);
-        boolean becameActive = allMatched && !STATUS_ACTIVE.equals(template.getStatus());
+        boolean becameActive = allMatched && !Constants.STATUS_ACTIVE.equals(template.getStatus());
         if (becameActive) {
-            template.setStatus(STATUS_ACTIVE);
+            template.setStatus(Constants.STATUS_ACTIVE);
         }
         template.setFieldMappingConfig(writeJson(config));
 

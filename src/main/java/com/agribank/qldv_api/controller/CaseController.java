@@ -7,6 +7,7 @@ import com.agribank.qldv_api.request.casemgmt.BoardReviewRequest;
 import com.agribank.qldv_api.request.casemgmt.CommitteeReviewRequest;
 import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
+import com.agribank.qldv_api.request.casemgmt.GrassrootsEstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.ArchiveCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseChangeResponse;
@@ -28,6 +29,8 @@ import com.agribank.qldv_api.service.BoardReviewService;
 import com.agribank.qldv_api.service.CommitteeReviewService;
 import com.agribank.qldv_api.service.DecisionDocumentsService;
 import com.agribank.qldv_api.service.EstablishmentCaseService;
+import com.agribank.qldv_api.service.GrassrootsEstablishmentCaseService;
+import com.agribank.qldv_api.service.SubmitToParentService;
 import com.agribank.qldvutils.enums.EAuthorityLevel;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
@@ -54,6 +57,8 @@ public class CaseController {
     private final CaseService caseService;
     private final CaseDeleteService caseDeleteService;
     private final EstablishmentCaseService establishmentCaseService;
+    private final GrassrootsEstablishmentCaseService grassrootsEstablishmentCaseService;
+    private final SubmitToParentService submitToParentService;
     private final CaseChangeService caseChangeService;
     private final BoardReviewService boardReviewService;
     private final CommitteeReviewService committeeReviewService;
@@ -122,11 +127,39 @@ public class CaseController {
                 request, EAuthorityLevel.BANK_LEVEL.getId(), Constants.CASE_FLOW_BTCDU, null));
     }
 
+    @Operation(summary = "Chỉnh sửa hồ sơ Thành lập TCĐ (tất cả các cấp)")
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment")
     public ResponseEntity<BaseResponse<EstablishmentCaseResponse>> updateEstablishment(@PathVariable String id, @RequestBody EstablishmentCaseRequest request) {
         request.validateForUpdate();
         return BaseResponse.success(establishmentCaseService.updateEstablishmentCase(id, request, null));
+    }
+
+    /**
+     * API-SC07 — Thành lập TCĐ cấp cơ sở (chi bộ trực thuộc đảng bộ cơ sở), role R-BPTM.
+     * authorityLevel=GRASSROOTS_LEVEL cố định; originFlow lấy trực tiếp từ {@code flowType} của
+     * request (B hoặc C — chưa có quy tắc tự động chọn luồng, xem GrassrootsEstablishmentCaseService).
+     * Cập nhật DÙNG LẠI NGUYÊN VẸN {@code PUT /cases/{id}/establishment} ở trên — không có endpoint update riêng.
+     */
+    @Operation(summary = "Khởi tạo hồ sơ Thành lập TCĐ cấp cơ sở (chi bộ trực thuộc đảng bộ cơ sở)")
+    @RequirePermission(function = "FN1", action = "CREATE")
+    @PostMapping("/grassroots-establishments")
+    public ResponseEntity<BaseResponse<EstablishmentCaseResponse>> createGrassrootsEstablishment(
+            @RequestBody GrassrootsEstablishmentCaseRequest request) {
+        request.validate();
+        return BaseResponse.success(grassrootsEstablishmentCaseService.createGrassrootsEstablishmentCase(request));
+    }
+
+    /**
+     * BR-SC07-03 — R-PDCS gửi trình hồ sơ Luồng C lên BTCĐU (SUBMIT_TO_PARENT, C-03 → C-04).
+     * KHÔNG đi qua POST /cases/{id}/workflow-action dùng chung (action đặc biệt, xem WorkflowEngine).
+     */
+    @Operation(summary = "Gửi trình hồ sơ biến động/thành lập cấp cơ sở (Luồng C) lên BTCĐU")
+    @RequirePermission(function = "FN2", action = "APPROVE")
+    @PostMapping("/{id}/submit-to-parent")
+    public ResponseEntity<BaseResponse<String>> submitToParent(@PathVariable String id) {
+        submitToParentService.submitToParent(id);
+        return BaseResponse.success("Success");
     }
 
     /**
