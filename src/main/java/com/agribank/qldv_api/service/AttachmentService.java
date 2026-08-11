@@ -15,8 +15,6 @@ import com.agribank.qldv_api.storage.StorageKeyBuilder;
 import com.agribank.qldvutils.entity.Attachment;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.exception.CommonException;
-import com.agribank.qldvutils.request.attachment.AttachmentReplaceRequest;
-import com.agribank.qldvutils.response.attachment.AttachmentReplaceResult;
 import com.agribank.qldvutils.response.attachment.AttachmentSummaryResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseOrganizationSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +29,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * API-FN5 — đính kèm tài liệu, cơ chế THAY THẾ (replace) theo (case_id, workflow_stage) hiện tại
- * của hồ sơ, KHÔNG cộng dồn. Tái sử dụng nguyên vẹn {@link S3Service}/{@link StorageKeyBuilder}
- * (task sinh văn bản trước đó) và scope-check của {@link OrganizationService#resolveScope()} (đúng
- * pattern {@code CaseService}/{@code DocumentGenerationService} — KHÔNG viết lại logic phạm vi).
+ * API-FN5 — đính kèm tài liệu, cơ chế CỘNG DỒN: mỗi lần upload chỉ ghi thêm file mới, KHÔNG đụng
+ * tới file đã có (kể cả cùng case_id/workflow_stage). Xóa từng file cụ thể do người dùng tự thực
+ * hiện qua {@code DELETE /api/v1/attachments/{id}} (xem {@link #deleteAttachment(String)}), không
+ * còn cơ chế "thay thế theo bước" tự động như trước. Tái sử dụng nguyên vẹn {@link S3Service}/
+ * {@link StorageKeyBuilder} (task sinh văn bản trước đó) và scope-check của
+ * {@link OrganizationService#resolveScope()} (đúng pattern {@code CaseService}/
+ * {@code DocumentGenerationService} — KHÔNG viết lại logic phạm vi).
  */
 @Slf4j
 @Service
@@ -53,10 +54,10 @@ public class AttachmentService {
 
     /**
      * Thứ tự BẮT BUỘC: (1) upload toàn bộ file mới lên S3 trước — lỗi giữa chừng thì dọn rác S3,
-     * KHÔNG đụng dữ liệu cũ; (2) chỉ sau khi (1) xong hết mới gọi 1 lệnh duy nhất xuống qldv-db để
-     * xóa dòng cũ + insert dòng mới trong 1 transaction; (3) xóa S3 object cũ SAU KHI (2) đã xác
-     * nhận thành công (transaction DB đã commit) — không xóa S3 trước để tránh mất dữ liệu không
-     * khôi phục được nếu DB rollback.
+     * KHÔNG đụng dữ liệu cũ; (2) chỉ sau khi (1) xong hết mới insert các dòng mới xuống qldv-db
+     * (saveAll, 1 transaction — đủ atomic vì chỉ ghi 1 bảng, xem AttachmentController qldv-db).
+     * KHÔNG xóa/đụng tới attachment đã có — xóa từng file cụ thể do người dùng tự gọi
+     * {@code DELETE /api/v1/attachments/{id}}.
      */
     public AttachmentUploadResponse uploadAttachments(String caseId, UploadAttachmentsRequest request) {
         UserDetailsImpl user = requireUser();
@@ -92,22 +93,12 @@ public class AttachmentService {
             throw new CommonException("Upload tài liệu đính kèm thất bại, vui lòng thử lại: " + e.getMessage());
         }
 
-        AttachmentReplaceRequest replaceRequest = new AttachmentReplaceRequest();
-        replaceRequest.setCaseId(caseId);
-        replaceRequest.setWorkflowStage(workflowStage);
-        replaceRequest.setNewAttachments(newAttachments);
+        List<Attachment> saved = attachmentClient.saveAll(newAttachments).getData();
 
-        AttachmentReplaceResult result = attachmentClient.replace(replaceRequest).getData();
-
-        // Transaction DB đã commit thành công (Feign đồng bộ) — giờ mới xóa file CŨ trên S3.
-        for (String oldFilePath : result.getDeletedFilePaths()) {
-            safeDeleteObject(oldFilePath);
-        }
-
-        List<AttachmentItemResponse> savedFiles = result.getSavedAttachments().stream()
+        List<AttachmentItemResponse> savedFiles = saved.stream()
                 .map(a -> new AttachmentItemResponse(a.getId(), a.getFileName()))
                 .toList();
-        return new AttachmentUploadResponse(savedFiles, result.getDeletedFilePaths().size());
+        return new AttachmentUploadResponse(savedFiles);
     }
 
     public List<AttachmentSummaryResponse> listAttachments(String caseId, String workflowStage) {

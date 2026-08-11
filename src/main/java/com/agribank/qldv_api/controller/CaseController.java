@@ -33,6 +33,7 @@ import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseHistoryItemResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseListItemResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -134,6 +135,7 @@ public class CaseController {
      * định như createEstablishment (chỉ hỗ trợ R-CV/BANK_LEVEL/Luồng A ở task này — nhánh
      * R-BPTM/GRASSROOTS_LEVEL CHƯA triển khai, tương tự SC-07 grassroots establishment).
      */
+    @Operation(summary = "Khởi tạo hồ sơ biến động tổ chức đảng: Giải thể/Sáp nhập/Hợp nhất/Chia tách/Đổi tên")
     @RequirePermission(function = "FN1", action = "CREATE")
     @PostMapping("/changes")
     public ResponseEntity<BaseResponse<CaseChangeResponse>> createCaseChange(@RequestBody CaseChangeRequest request) {
@@ -143,6 +145,7 @@ public class CaseController {
     }
 
     /** API-SC08-02 — guard status đúng bước 1 của luồng hồ sơ này (ở service), caseTypeId bất biến. */
+    @Operation(summary = "Chỉnh sửa hồ sơ biến động tổ chức đảng: Giải thể/Sáp nhập/Hợp nhất/Chia tách/Đổi tên")
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/change")
     public ResponseEntity<BaseResponse<CaseChangeResponse>> updateCaseChange(@PathVariable String id, @RequestBody CaseChangeRequest request) {
