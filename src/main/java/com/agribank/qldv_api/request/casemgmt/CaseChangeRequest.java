@@ -27,6 +27,8 @@ import java.util.Map;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CaseChangeRequest {
+    private static final int MAX_PROPOSED_TARGET_NAME_LENGTH = 250;
+    private static final int MAX_BOARD_DECISION_NO_LENGTH = 100;
     String caseTypeId;
     List<String> organizationIds;
     String survivorOrganizationId;
@@ -47,8 +49,6 @@ public class CaseChangeRequest {
         requireText(errors, "boardDecisionNo", boardDecisionNo, Constants.MAX_DECISION_NO_LENGTH,
                 "ERR-SC08-01: boardDecisionNo không được để trống, không vượt quá " + Constants.MAX_DECISION_NO_LENGTH + " ký tự");
         validateTargetsFormat(errors);
-        requireText(errors, "boardDecisionNo", boardDecisionNo, MAX_BOARD_DECISION_NO_LENGTH,
-                "ERR-SC08-01: boardDecisionNo không được để trống, không vượt quá " + MAX_BOARD_DECISION_NO_LENGTH + " ký tự");
         requirePastOrPresentDate(errors, "boardDecisionDate", boardDecisionDate,
                 "ERR-SC08-01: boardDecisionDate không được để trống và không được sau ngày hiện tại");
         throwIfInvalid(errors);
