@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.casemgmt;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.exception.FieldValidationException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AccessLevel;
@@ -23,8 +24,6 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DecisionDocumentsRequest {
-    private static final int MAX_NO_LENGTH = 100;
-
     String establishDecisionNo;
     LocalDate establishDecisionIssueDate;
     LocalDate establishDecisionEffectiveDate;
@@ -56,8 +55,8 @@ public class DecisionDocumentsRequest {
         if (!anyProvided) {
             return;
         }
-        if (no == null || no.isBlank() || no.length() > MAX_NO_LENGTH) {
-            errors.put(noField, "ERR-SC05-01: " + noField + " không được để trống, không vượt quá " + MAX_NO_LENGTH + " ký tự");
+        if (no == null || no.isBlank() || no.length() > Constants.MAX_DECISION_NO_LENGTH) {
+            errors.put(noField, "ERR-SC05-01: " + noField + " không được để trống, không vượt quá " + Constants.MAX_DECISION_NO_LENGTH + " ký tự");
         }
         if (issueDate == null) {
             errors.put(issueField, "ERR-SC05-01: " + issueField + " là bắt buộc khi gửi bộ văn bản này");

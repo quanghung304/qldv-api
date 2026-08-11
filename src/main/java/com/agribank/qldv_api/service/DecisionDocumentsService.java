@@ -57,7 +57,6 @@ public class DecisionDocumentsService {
     private static final String ESTABLISH_DECISION_NAME = Constants.ESTABLISH_DECISION_DOCUMENT_NAME;
     private static final String COMMITTEE_APPOINTMENT_DECISION_NAME = "Quyết định chuẩn y cấp ủy";
     private static final String POLITICAL_STANDARD_CONCLUSION_NAME = "Kết luận tiêu chuẩn chính trị";
-    private static final long POLITICAL_STANDARD_VALIDITY_MONTHS = 6;
 
     private final CaseService caseService;
     private final CaseClient caseClient;
@@ -154,7 +153,7 @@ public class DecisionDocumentsService {
         if (effectiveDate == null || originalConclusionDate == null) {
             return;
         }
-        if (originalConclusionDate.plusMonths(POLITICAL_STANDARD_VALIDITY_MONTHS).isBefore(effectiveDate)) {
+        if (originalConclusionDate.plusMonths(Constants.POLITICAL_STANDARD_VALIDITY_MONTHS).isBefore(effectiveDate)) {
             warnings.put("ERR-SC02-13", "political_standard_conclusion_effective_date đã vượt quá 6 tháng kể từ "
                     + "ngày kết luận TCCT gốc (BR-SC02-02)");
         }

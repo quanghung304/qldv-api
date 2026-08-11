@@ -1,5 +1,6 @@
 package com.agribank.qldv_api.request.casemgmt;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.exception.FieldValidationException;
 import com.agribank.qldvutils.enums.ECommitteePosition;
 import lombok.AccessLevel;
@@ -26,9 +27,6 @@ import java.util.Map;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CaseChangeRequest {
-    private static final int MAX_PROPOSED_TARGET_NAME_LENGTH = 250;
-    private static final int MAX_BOARD_DECISION_NO_LENGTH = 100;
-
     String caseTypeId;
     List<String> organizationIds;
     String survivorOrganizationId;
@@ -46,6 +44,8 @@ public class CaseChangeRequest {
         validateOrganizationIdsFormat(errors, true);
         validateSurvivorOrganizationIdFormat(errors);
         validateProposedTargetNameFormat(errors);
+        requireText(errors, "boardDecisionNo", boardDecisionNo, Constants.MAX_DECISION_NO_LENGTH,
+                "ERR-SC08-01: boardDecisionNo không được để trống, không vượt quá " + Constants.MAX_DECISION_NO_LENGTH + " ký tự");
         validateTargetsFormat(errors);
         requireText(errors, "boardDecisionNo", boardDecisionNo, MAX_BOARD_DECISION_NO_LENGTH,
                 "ERR-SC08-01: boardDecisionNo không được để trống, không vượt quá " + MAX_BOARD_DECISION_NO_LENGTH + " ký tự");
@@ -73,8 +73,8 @@ public class CaseChangeRequest {
             validateTargetsFormat(errors);
         }
         if (boardDecisionNo != null) {
-            requireText(errors, "boardDecisionNo", boardDecisionNo, MAX_BOARD_DECISION_NO_LENGTH,
-                    "ERR-SC08-01: boardDecisionNo không được để trống, không vượt quá " + MAX_BOARD_DECISION_NO_LENGTH + " ký tự");
+            requireText(errors, "boardDecisionNo", boardDecisionNo, Constants.MAX_DECISION_NO_LENGTH,
+                    "ERR-SC08-01: boardDecisionNo không được để trống, không vượt quá " + Constants.MAX_DECISION_NO_LENGTH + " ký tự");
         }
         if (boardDecisionDate != null) {
             requirePastOrPresentDate(errors, "boardDecisionDate", boardDecisionDate,
@@ -113,9 +113,9 @@ public class CaseChangeRequest {
     }
 
     private void validateProposedTargetNameFormat(Map<String, String> errors) {
-        if (proposedTargetName != null && proposedTargetName.length() > MAX_PROPOSED_TARGET_NAME_LENGTH) {
+        if (proposedTargetName != null && proposedTargetName.length() > Constants.MAX_ORGANIZATION_NAME_LENGTH) {
             errors.put("proposedTargetName", "ERR-SC08-03: proposedTargetName không được vượt quá "
-                    + MAX_PROPOSED_TARGET_NAME_LENGTH + " ký tự");
+                    + Constants.MAX_ORGANIZATION_NAME_LENGTH + " ký tự");
         }
     }
 

@@ -1,10 +1,10 @@
 package com.agribank.qldv_api.service;
 
+import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.enums.ECaseStatusCode;
 import com.agribank.qldv_api.exception.FieldValidationException;
 import com.agribank.qldv_api.exception.ForbiddenException;
 import com.agribank.qldv_api.exception.NotFoundException;
-import com.agribank.qldv_api.gateway.AttachmentClient;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseEstablishmentClient;
 import com.agribank.qldv_api.gateway.CaseEstablishmentCommitteeClient;
@@ -20,7 +20,6 @@ import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.ProposedCommitteeMemberDetailResponse;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
-import com.agribank.qldvutils.entity.Attachment;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseEstablishment;
 import com.agribank.qldvutils.entity.CaseEstablishmentCommittee;
@@ -78,7 +77,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EstablishmentCaseService {
     private static final String ESTABLISH_CASE_TYPE_CODE = "ESTABLISH";
-    private static final String INITIAL_STATUS_CODE = ECaseStatusCode.A_01.getCode();
 
     private final CaseClient caseClient;
     private final CaseEstablishmentClient caseEstablishmentClient;
@@ -87,7 +85,6 @@ public class EstablishmentCaseService {
     private final OrganizationTypeClient organizationTypeClient;
     private final OrganizationClient organizationClient;
     private final EmployeeInfoClient employeeInfoClient;
-    private final AttachmentClient attachmentClient;
     private final UserService userService;
 
     /**
@@ -124,7 +121,7 @@ public class EstablishmentCaseService {
                 .caseTypeId(caseType.getId())
                 .authorityLevel(authorityLevel)
                 .originFlow(originFlow)
-                .statusId(INITIAL_STATUS_CODE)
+                .statusId(initialStatusForFlow(originFlow))
                 .createdBy(user.getId())
                 .proposedOrganizationName(request.getProposedOrganizationName())
                 // NULLABLE, không validate bắt buộc ở đây — chỉ kiểm tra ở API sinh văn bản
@@ -158,8 +155,10 @@ public class EstablishmentCaseService {
         if (existingCase == null) {
             throw new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ");
         }
-        if (!INITIAL_STATUS_CODE.equals(existingCase.getStatusId())) {
-            throw new ForbiddenException("BR-SC02-05: Hồ sơ không còn ở trạng thái Đang thực hiện (A-01), không thể chỉnh sửa");
+
+        String requiredStatus = initialStatusForFlow(existingCase.getOriginFlow());
+        if (!requiredStatus.equals(existingCase.getStatusId())) {
+            throw new ForbiddenException("BR-SC02-05: Hồ sơ không còn ở bước 1 (" + requiredStatus + "), không thể chỉnh sửa");
         }
 
         CaseEstablishment existing = caseEstablishmentClient.findByCaseId(caseId).getData().orElse(
@@ -311,6 +310,25 @@ public class EstablishmentCaseService {
             throw new ForbiddenException("ERR-GL-02: Không xác thực được người dùng");
         }
         return user;
+    }
+
+    /**
+     * A-01/B-01/C-01 tuỳ origin_flow — trước đây hardcode A-01 (chỉ đúng khi Establishment luôn
+     * gọi với Luồng A); SC-07 (grassroots, GrassrootsEstablishmentCaseService) gọi lại đúng hàm
+     * dùng chung này với originFlow="B"/"C" nên PHẢI tổng quát hoá (cùng cách CaseDeleteService/
+     * ArchiveCaseService đã tra theo origin_flow, KHÔNG hardcode 1 status_code cố định).
+     */
+    public String initialStatusForFlow(String originFlow) {
+        if (Constants.CASE_FLOW_BTCDU.equals(originFlow)) {
+            return ECaseStatusCode.A_01.getCode();
+        }
+        if (Constants.CASE_FLOW_B.equals(originFlow)) {
+            return ECaseStatusCode.B_01.getCode();
+        }
+        if (Constants.CASE_FLOW_C.equals(originFlow)) {
+            return ECaseStatusCode.C_01.getCode();
+        }
+        throw new CommonException("origin_flow không hợp lệ: " + originFlow);
     }
 
     private CaseType requireEstablishCaseType() {

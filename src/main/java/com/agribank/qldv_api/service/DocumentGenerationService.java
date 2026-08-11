@@ -59,7 +59,6 @@ import java.util.stream.Collectors;
 public class DocumentGenerationService {
     private static final String DOCX_CONTENT_TYPE =
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    private static final String EXTERNAL_LOOKUP = "EXTERNAL_LOOKUP";
     private static final String BRANCH_NAME_BY_BRCD = "BRANCH_NAME_BY_BRCD";
 
     private final CaseClient caseClient;
@@ -205,20 +204,19 @@ public class DocumentGenerationService {
      * cấu hình, trả về false để cả document bị đánh dấu MAPPING_INCOMPLETE — nhất quán với cách
      * qldv-db xử lý resolver_id không hợp lệ.
      */
-    private boolean resolveExternalLookupFields(String caseId, String fieldMappingConfigJson, Map<String, String> values) {
+    private void resolveExternalLookupFields(String caseId, String fieldMappingConfigJson, Map<String, String> values) {
         TemplateMappingConfig config = parseConfig(fieldMappingConfigJson);
         for (FieldConfigEntry field : config.getFields()) {
-            if (!EXTERNAL_LOOKUP.equals(field.getResolutionType())) {
+            if (!FieldCatalog.EXTERNAL_LOOKUP.equals(field.getResolutionType())) {
                 continue;
             }
             if (!BRANCH_NAME_BY_BRCD.equals(field.getResolverId())) {
                 log.warn("field_mapping_config: resolver_id '{}' (placeholder '{}') không có ở qldv-api",
                         field.getResolverId(), field.getPlaceholder());
-                return false;
+                return;
             }
             values.put(field.getPlaceholder(), branchNameByBrcdResolver.resolve(caseId));
         }
-        return true;
     }
 
     private TemplateMappingConfig parseConfig(String json) {

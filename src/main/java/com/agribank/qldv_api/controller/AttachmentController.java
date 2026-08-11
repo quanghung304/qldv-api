@@ -40,8 +40,8 @@ public class AttachmentController {
     @Value("${attachment.max-size}")
     private long maxTotalSizeKb;
 
-    @Operation(summary = "Đính kèm tài liệu cho hồ sơ (THAY THẾ, không cộng dồn)",
-            description = "Toàn bộ tài liệu cũ thuộc đúng (case_id, workflow_stage hiện tại) bị thay thế hoàn toàn bởi danh sách file mới")
+    @Operation(summary = "Đính kèm tài liệu cho hồ sơ (CỘNG DỒN, không xóa file cũ)",
+            description = "Chỉ ghi thêm file mới, không đụng tới tài liệu đã có — muốn xóa file cụ thể, gọi DELETE /api/v1/attachments/{id}")
     @RequirePermission(function = "FN5", action = "CREATE")
     @PostMapping(value = "/{caseId}", consumes = "multipart/form-data")
     public ResponseEntity<BaseResponse<AttachmentUploadResponse>> upload(

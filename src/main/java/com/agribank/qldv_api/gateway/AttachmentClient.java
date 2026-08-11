@@ -2,15 +2,10 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.Attachment;
-import com.agribank.qldvutils.request.attachment.AttachmentReplaceRequest;
-import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.DefaultListResponse;
-import com.agribank.qldvutils.response.attachment.AttachmentReplaceResult;
 import com.agribank.qldvutils.response.attachment.AttachmentSummaryResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -23,8 +18,4 @@ public interface AttachmentClient extends BaseClient<Attachment, String> {
     @GetMapping("/find-summary-by-case-id")
     DefaultListResponse<AttachmentSummaryResponse> findSummaryByCaseId(@RequestParam String caseId,
                                                                         @RequestParam(required = false) String workflowStage);
-
-    /** PHẢI gọi qua đây thay vì save/delete rời rạc — xem coding-convention.md mục 9. */
-    @PostMapping("/replace")
-    BaseResponse<AttachmentReplaceResult> replace(@RequestBody AttachmentReplaceRequest request);
 }
