@@ -6,7 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-/** Response của API-SC06-02 (POST /cases/{id}/complete). */
+import java.util.List;
+
+/**
+ * Response của API-SC06-02 (POST /cases/{id}/complete) — dùng chung cho cả 6 loại nghiệp vụ.
+ * {@code organizations}: tổ chức vừa tạo (Thành lập/Sáp nhập/Hợp nhất=1, Chia tách=N, rỗng với
+ * Giải thể/Đổi tên). {@code affectedOrganizationIds}: TOÀN BỘ tổ chức bị đổi trạng thái/tên (kể
+ * cả tổ chức con bị kéo theo khi cascade giải thể).
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,6 +21,6 @@ import lombok.experimental.FieldDefaults;
 public class CompleteCaseResponse {
     String caseId;
     String statusId;
-    String organizationId;
-    String organizationCode;
+    List<CompletedOrganizationResponse> organizations;
+    List<String> affectedOrganizationIds;
 }

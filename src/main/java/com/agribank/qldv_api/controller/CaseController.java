@@ -195,7 +195,11 @@ public class CaseController {
         return BaseResponse.success(archiveCaseService.archive(id));
     }
 
-    /** API-SC06-02 — phê duyệt hoàn thành: tạo chính thức PMDV_ORGANIZATION, khóa hồ sơ (ở service). */
+    /**
+     * API-SC06-02 — phê duyệt hoàn thành cho cả 6 loại nghiệp vụ (Thành lập/Giải thể/Sáp nhập/Hợp
+     * nhất/Chia tách/Đổi tên). KHÔNG có request body — toàn bộ dữ liệu TCĐ đích (Sáp nhập/Hợp
+     * nhất/Chia tách) đã được nhập từ Bước 1 (API-SC08-01/02), service chỉ đọc lại.
+     */
     @RequirePermission(function = "FN3", action = "APPROVE")
     @PostMapping("/{id}/complete")
     public ResponseEntity<BaseResponse<CompleteCaseResponse>> completeCase(@PathVariable String id) {

@@ -9,30 +9,43 @@ import com.agribank.qldv_api.gateway.CaseChangeClient;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseOrganizationClient;
 import com.agribank.qldv_api.gateway.CaseTypeClient;
+import com.agribank.qldv_api.gateway.CommitteeMemberClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
+import com.agribank.qldv_api.gateway.OrganizationTypeClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.request.casemgmt.CaseChangeCommitteeMemberRequest;
 import com.agribank.qldv_api.request.casemgmt.CaseChangeRequest;
+import com.agribank.qldv_api.request.casemgmt.CaseChangeTargetRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseChangeResponse;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseChange;
+import com.agribank.qldvutils.entity.CaseChangeTarget;
+import com.agribank.qldvutils.entity.CaseChangeTargetCommittee;
 import com.agribank.qldvutils.entity.CaseOrganization;
 import com.agribank.qldvutils.entity.CaseType;
 import com.agribank.qldvutils.entity.Organization;
+import com.agribank.qldvutils.entity.OrganizationType;
+import com.agribank.qldvutils.enums.ECommitteeMemberStatus;
+import com.agribank.qldvutils.enums.ECommitteePosition;
 import com.agribank.qldvutils.enums.ELinkRole;
 import com.agribank.qldvutils.enums.EOperationStatus;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.casemgmt.CaseChangePersistRequest;
+import com.agribank.qldvutils.request.casemgmt.CaseChangeTargetEntry;
 import com.agribank.qldvutils.response.casemgmt.CaseOrganizationSummaryResponse;
+import com.agribank.qldvutils.response.organization.CommitteeMemberResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -47,14 +60,20 @@ import java.util.stream.Collectors;
  * {@code PMDV_CASE_TYPE.min/max_organization_count} — KHÔNG hardcode ngưỡng theo từng case_type
  * trong code (đúng coding-convention.md mục 11, khác với gợi ý liệt kê số cứng trong đặc tả gốc).
  *
- * {@code DISSOLVE_CASE_TYPE_CODE}/{@code MERGE_CASE_TYPE_CODE} là 2 mã case_type CẦN phân biệt
- * riêng (Giải thể ẩn field 3; Sáp nhập mới cần survivorOrganizationId) — theo cùng convention với
- * {@code ESTABLISH_CASE_TYPE_CODE} của EstablishmentCaseService. Repo hiện KHÔNG có enum liệt kê
- * đủ 9 mã case_type nên 2 hằng số này là GIẢ ĐỊNH theo đúng convention đặt tên "ESTABLISH" đã thấy
- * — cần đối chiếu lại với dữ liệu PMDV_CASE_TYPE.code thật đã seed trước khi đưa vào production.
+ * {@code DISSOLVE/MERGE/CONSOLIDATE/SPLIT_CASE_TYPE_CODE} là 4 mã case_type CẦN phân biệt riêng —
+ * theo cùng convention với {@code ESTABLISH_CASE_TYPE_CODE} của EstablishmentCaseService. Repo
+ * hiện KHÔNG có enum liệt kê đủ 9 mã case_type nên các hằng số này là GIẢ ĐỊNH — cần đối chiếu lại
+ * với dữ liệu PMDV_CASE_TYPE.code thật đã seed trước khi đưa vào production.
  *
- * Toàn bộ thao tác GHI (Case + CaseChange + CaseOrganization) gói thành 1
- * {@link CaseChangePersistRequest} gửi xuống qldv-db bằng ĐÚNG 1 lệnh
+ * {@code targets} (Sáp nhập/Hợp nhất=1 phần tử, Chia tách≥2, Giải thể/Đổi tên=0) — nhận NGAY Ở
+ * BƯỚC 1 (không đợi tới API-SC06-02/Hoàn thành mới nhập) để `/complete` không cần request body,
+ * đồng nhất với Thành lập/Giải thể/Đổi tên. Đây là quyết định thiết kế đổi từ bản đầu (targets
+ * nhập ở /complete) sau khi review — {@code organizationTypeId}/{@code committee} của TCĐ đích vẫn
+ * nhận qua field riêng (không sửa lại {@code proposedTargetName} cũ) vì Chia tách cần N tên khác
+ * nhau, 1 field text đơn không đủ.
+ *
+ * Toàn bộ thao tác GHI (Case + CaseChange + CaseOrganization + CaseChangeTarget(Committee)) gói
+ * thành 1 {@link CaseChangePersistRequest} gửi xuống qldv-db bằng ĐÚNG 1 lệnh
  * ({@code CaseChangeClient.persist}), chạy trong 1 transaction ({@code CaseChangePersistService}).
  */
 @Service
@@ -62,6 +81,8 @@ import java.util.stream.Collectors;
 public class CaseChangeService {
     private static final String DISSOLVE_CASE_TYPE_CODE = "DISSOLVE";
     private static final String MERGE_CASE_TYPE_CODE = "MERGE";
+    private static final String CONSOLIDATE_CASE_TYPE_CODE = "CONSOLIDATE";
+    private static final String SPLIT_CASE_TYPE_CODE = "SPLIT";
     private static final int MAX_PROPOSED_TARGET_NAME_LENGTH = 250;
 
     private final CaseClient caseClient;
@@ -69,6 +90,8 @@ public class CaseChangeService {
     private final CaseOrganizationClient caseOrganizationClient;
     private final CaseTypeClient caseTypeClient;
     private final OrganizationClient organizationClient;
+    private final OrganizationTypeClient organizationTypeClient;
+    private final CommitteeMemberClient committeeMemberClient;
     private final UserService userService;
 
     public CaseChangeResponse createCaseChange(CaseChangeRequest request, Integer authorityLevel, String originFlow) {
@@ -82,6 +105,8 @@ public class CaseChangeService {
         }
         boolean isDissolve = DISSOLVE_CASE_TYPE_CODE.equals(caseType.getCode());
         boolean isMerge = MERGE_CASE_TYPE_CODE.equals(caseType.getCode());
+        boolean isConsolidate = CONSOLIDATE_CASE_TYPE_CODE.equals(caseType.getCode());
+        boolean isSplit = SPLIT_CASE_TYPE_CODE.equals(caseType.getCode());
 
         String proposedTargetName = isDissolve ? null : request.getProposedTargetName();
         String survivorOrganizationId = isMerge ? request.getSurvivorOrganizationId() : null;
@@ -100,7 +125,15 @@ public class CaseChangeService {
         }
 
         if (!isDissolve && proposedTargetName != null) {
-            validateOrganizationNameUnique(errors, proposedTargetName);
+            validateOrganizationNameUnique(errors, "proposedTargetName", proposedTargetName);
+        }
+
+        validateTargetsCount(errors, request.getTargets(), isMerge, isConsolidate, isSplit);
+        if (errors.isEmpty() && (isMerge || isConsolidate || isSplit)) {
+            validateTargetsAgainstDb(errors, request.getTargets());
+        }
+        if (errors.isEmpty() && isSplit) {
+            validateSplitTargets(errors, request.getTargets(), organizations, request.getOrganizationIds());
         }
 
         if (!errors.isEmpty()) {
@@ -131,6 +164,8 @@ public class CaseChangeService {
         persistRequest.setCaseChange(caseChange);
         persistRequest.setOrganizations(buildCaseOrganizationRows(request.getOrganizationIds()));
         persistRequest.setReplaceOrganizations(true);
+        persistRequest.setTargets(buildTargetEntries(request.getTargets()));
+        persistRequest.setReplaceTargets(true);
 
         Case savedCase = caseChangeClient.persist(persistRequest).getData();
 
@@ -143,6 +178,9 @@ public class CaseChangeService {
      * phép khi status_id đang đúng bước 1 CỦA ĐÚNG LUỒNG hồ sơ này (A-01/B-01/C-01 tuỳ
      * origin_flow đã lưu — KHÔNG hardcode A-01, xem {@link #initialStatusForFlow}). caseTypeId
      * BẤT BIẾN, luôn lấy từ hồ sơ gốc — request.getCaseTypeId() (nếu có gửi) bị bỏ qua hoàn toàn.
+     * {@code targets}: null = không đổi (giữ nguyên danh sách cũ); non-null (kể cả rỗng) = thay
+     * TOÀN BỘ bằng danh sách mới — cùng ngữ nghĩa "tất cả hoặc không gì" với {@code organizationIds}
+     * (không merge từng phần tử).
      */
     public CaseChangeResponse updateCaseChange(String caseId, CaseChangeRequest request) {
         requireUser();
@@ -162,6 +200,8 @@ public class CaseChangeService {
         CaseType caseType = requireCaseType(existingCase.getCaseTypeId());
         boolean isDissolve = DISSOLVE_CASE_TYPE_CODE.equals(caseType.getCode());
         boolean isMerge = MERGE_CASE_TYPE_CODE.equals(caseType.getCode());
+        boolean isConsolidate = CONSOLIDATE_CASE_TYPE_CODE.equals(caseType.getCode());
+        boolean isSplit = SPLIT_CASE_TYPE_CODE.equals(caseType.getCode());
 
         Map<String, String> errors = new LinkedHashMap<>();
         Map<String, String> warnings = new LinkedHashMap<>();
@@ -204,7 +244,18 @@ public class CaseChangeService {
                 && (existingChange.getProposedTargetName() == null
                     || !effectiveProposedTargetName.equalsIgnoreCase(existingChange.getProposedTargetName()));
         if (!isDissolve && nameChanged) {
-            validateOrganizationNameUnique(errors, effectiveProposedTargetName);
+            validateOrganizationNameUnique(errors, "proposedTargetName", effectiveProposedTargetName);
+        }
+
+        boolean replaceTargets = request.getTargets() != null;
+        if (replaceTargets) {
+            validateTargetsCount(errors, request.getTargets(), isMerge, isConsolidate, isSplit);
+            if (errors.isEmpty() && (isMerge || isConsolidate || isSplit)) {
+                validateTargetsAgainstDb(errors, request.getTargets());
+            }
+            if (errors.isEmpty() && isSplit) {
+                validateSplitTargets(errors, request.getTargets(), organizations, effectiveOrganizationIds);
+            }
         }
 
         if (!errors.isEmpty()) {
@@ -230,6 +281,8 @@ public class CaseChangeService {
         persistRequest.setCaseChange(existingChange);
         persistRequest.setOrganizations(replaceOrganizations ? buildCaseOrganizationRows(effectiveOrganizationIds) : null);
         persistRequest.setReplaceOrganizations(replaceOrganizations);
+        persistRequest.setTargets(replaceTargets ? buildTargetEntries(request.getTargets()) : null);
+        persistRequest.setReplaceTargets(replaceTargets);
 
         Case savedCase = caseChangeClient.persist(persistRequest).getData();
 
@@ -324,13 +377,13 @@ public class CaseChangeService {
         return organizationIds.stream().map(byId::get).toList();
     }
 
-    private void validateOrganizationNameUnique(Map<String, String> errors, String proposedTargetName) {
+    private void validateOrganizationNameUnique(Map<String, String> errors, String fieldKey, String organizationName) {
         Boolean exists = organizationClient
-                .existsActiveByName(proposedTargetName, EOperationStatus.ACTIVE.getId())
+                .existsActiveByName(organizationName, EOperationStatus.ACTIVE.getId())
                 .getData();
 
         if (Boolean.TRUE.equals(exists)) {
-            errors.put("proposedTargetName", "ERR-SC08-03: proposedTargetName đã trùng tên 1 tổ chức đảng đang Hoạt động");
+            errors.put(fieldKey, "ERR-SC02-05: " + fieldKey + " đã trùng tên 1 tổ chức đảng đang Hoạt động");
         }
     }
 
@@ -359,6 +412,119 @@ public class CaseChangeService {
         if (survivorOrganizationId != null && (organizationIds == null || !organizationIds.contains(survivorOrganizationId))) {
             errors.put("survivorOrganizationId", "ERR-SC08-05: survivorOrganizationId phải nằm trong danh sách organizationIds");
         }
+    }
+
+    /** Sáp nhập/Hợp nhất=đúng 1, Chia tách=>=2, Giải thể/Đổi tên=0 (chưa biết case_type khác thì chặn luôn nếu có gửi). */
+    private void validateTargetsCount(Map<String, String> errors, List<CaseChangeTargetRequest> targets,
+                                       boolean isMerge, boolean isConsolidate, boolean isSplit) {
+        int count = targets == null ? 0 : targets.size();
+        if (isMerge || isConsolidate) {
+            if (count != 1) {
+                errors.put("targets", "ERR-SC08-08: Sáp nhập/Hợp nhất cần đúng 1 phần tử trong targets");
+            }
+        } else if (isSplit) {
+            if (count < 2) {
+                errors.put("targets", "ERR-SC08-08: Chia tách cần >= 2 phần tử trong targets");
+            }
+        } else if (count > 0) {
+            errors.put("targets", "ERR-SC08-08: targets chỉ áp dụng cho Sáp nhập/Hợp nhất/Chia tách");
+        }
+    }
+
+    /**
+     * organizationTypeId tra hàng loạt (IN) qua OrganizationTypeClient.findAllById — tránh N+1
+     * khi Chia tách có nhiều targets. organizationName KHÔNG batch được (existsActiveByName chỉ
+     * nhận 1 tên/lần, chưa có endpoint batch) — targets thực tế luôn nhỏ (Sáp nhập/Hợp nhất=1,
+     * Chia tách hiếm khi quá vài phần tử) nên N lệnh gọi riêng cho tên là chấp nhận được, không
+     * đáng thêm 1 tầng API mới chỉ để tiết kiệm vài lệnh gọi.
+     */
+    private void validateTargetsAgainstDb(Map<String, String> errors, List<CaseChangeTargetRequest> targets) {
+        List<String> organizationTypeIds = targets.stream()
+                .map(CaseChangeTargetRequest::getOrganizationTypeId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Set<String> existingOrganizationTypeIds = organizationTypeIds.isEmpty() ? Set.of()
+                : safeList(organizationTypeClient.findAllById(organizationTypeIds).getData()).stream()
+                        .map(OrganizationType::getId)
+                        .collect(Collectors.toSet());
+
+        for (int i = 0; i < targets.size(); i++) {
+            CaseChangeTargetRequest target = targets.get(i);
+            String prefix = "targets[" + i + "].";
+            if (target.getOrganizationTypeId() != null && !existingOrganizationTypeIds.contains(target.getOrganizationTypeId())) {
+                errors.put(prefix + "organizationTypeId", "ERR-SC08-04: organizationTypeId không thuộc danh mục loại hình tổ chức đảng");
+            }
+            if (target.getOrganizationName() != null) {
+                validateOrganizationNameUnique(errors, prefix + "organizationName", target.getOrganizationName());
+            }
+        }
+    }
+
+    /** Chia tách — SUM(targets[].memberCount) phải khớp member_count TCĐ nguồn + phân bổ đủ cấp ủy OFFICIAL của nguồn, không thiếu/dư/trùng. */
+    private void validateSplitTargets(Map<String, String> errors, List<CaseChangeTargetRequest> targets,
+                                       List<Organization> sourceOrganizations, List<String> sourceOrganizationIds) {
+        int sum = targets.stream().mapToInt(t -> t.getMemberCount() == null ? 0 : t.getMemberCount()).sum();
+        int expected = sumMemberCount(sourceOrganizations);
+        if (sum != expected) {
+            errors.put("targets", "ERR-SC08-09: Tổng memberCount các TCĐ đích (" + sum + ") phải bằng member_count TCĐ nguồn (" + expected + ")");
+        }
+
+        if (sourceOrganizationIds == null || sourceOrganizationIds.size() != 1) {
+            return;
+        }
+        List<CommitteeMemberResponse> sourceCommittee = safeList(
+                committeeMemberClient.findByOrganizationIdAndStatus(sourceOrganizationIds.get(0), ECommitteeMemberStatus.OFFICIAL.getId()).getData());
+        Set<String> expectedStaffCodes = sourceCommittee.stream().map(CommitteeMemberResponse::getStaffCode).collect(Collectors.toSet());
+
+        List<String> providedStaffCodes = targets.stream()
+                .flatMap(t -> safeList(t.getCommittee()).stream())
+                .map(CaseChangeCommitteeMemberRequest::getStaffCode)
+                .toList();
+
+        Set<String> seen = new HashSet<>();
+        List<String> duplicated = providedStaffCodes.stream().filter(code -> !seen.add(code)).distinct().toList();
+        Set<String> providedSet = new HashSet<>(providedStaffCodes);
+        List<String> missing = expectedStaffCodes.stream().filter(code -> !providedSet.contains(code)).toList();
+        List<String> extra = providedSet.stream().filter(code -> !expectedStaffCodes.contains(code)).toList();
+
+        if (!missing.isEmpty()) {
+            errors.put("targets.committee.missing", "ERR-SC08-10: Thiếu cấp ủy chưa được phân bổ vào TCĐ đích nào: " + String.join(", ", missing));
+        }
+        if (!extra.isEmpty()) {
+            errors.put("targets.committee.extra", "ERR-SC08-10: Có staff_code không thuộc cấp ủy TCĐ nguồn: " + String.join(", ", extra));
+        }
+        if (!duplicated.isEmpty()) {
+            errors.put("targets.committee.duplicated", "ERR-SC08-10: Cấp ủy bị phân bổ trùng vào nhiều TCĐ đích: " + String.join(", ", duplicated));
+        }
+    }
+
+    private List<CaseChangeTargetEntry> buildTargetEntries(List<CaseChangeTargetRequest> targets) {
+        if (targets == null || targets.isEmpty()) {
+            return List.of();
+        }
+        return targets.stream().map(target -> {
+            CaseChangeTargetEntry entry = new CaseChangeTargetEntry();
+            entry.setTarget(CaseChangeTarget.builder()
+                    .organizationName(target.getOrganizationName())
+                    .organizationTypeId(target.getOrganizationTypeId())
+                    .memberCount(target.getMemberCount())
+                    .build());
+            entry.setCommittee(buildTargetCommittee(target.getCommittee()));
+            return entry;
+        }).toList();
+    }
+
+    private List<CaseChangeTargetCommittee> buildTargetCommittee(List<CaseChangeCommitteeMemberRequest> committee) {
+        if (committee == null || committee.isEmpty()) {
+            return List.of();
+        }
+        return committee.stream()
+                .map(member -> CaseChangeTargetCommittee.builder()
+                        .staffCode(member.getStaffCode())
+                        .proposedPosition(ECommitteePosition.valueOf(member.getPosition()).getId())
+                        .build())
+                .toList();
     }
 
     private List<String> currentOrganizationIds(String caseId) {
