@@ -102,8 +102,6 @@ public class DecisionDocumentsService {
                 request.getPoliticalStandardConclusionNoFinal(), request.getPoliticalStandardConclusionIssueDate(),
                 request.getPoliticalStandardConclusionEffectiveDate(), user.getId(), EDocumentOrigin.REFERENCE.getId());
 
-        List<Document> documents = Stream.of(establishDoc, committeeDoc, politicalDoc).filter(Objects::nonNull).toList();
-
         Map<String, String> missing = computeMissing(establishDoc, committeeDoc, politicalDoc);
 
         String statusId = existingCase.getStatusId();
@@ -113,7 +111,50 @@ public class DecisionDocumentsService {
             statusId = ECaseStatusCode.A_16.getCode();
         }
 
-        return new DecisionDocumentsResponse(caseId, statusId, documents, missing, warnings);
+        return buildResponse(caseId, statusId, establishDoc, committeeDoc, politicalDoc, missing, warnings);
+    }
+
+    /** Xem lại dữ liệu 3 văn bản Bước 3 GĐ2 đã nhập (nếu có) — không đổi trạng thái, không guard status A-15. */
+    public DecisionDocumentsResponse get(String caseId) {
+        Case existingCase = requireCaseInScope(caseId);
+
+        Document establishDoc = findDocument(caseId, ESTABLISH_DECISION_NAME);
+        Document committeeDoc = findDocument(caseId, COMMITTEE_APPOINTMENT_DECISION_NAME);
+        Document politicalDoc = findDocument(caseId, POLITICAL_STANDARD_CONCLUSION_NAME);
+
+        Map<String, String> missing = computeMissing(establishDoc, committeeDoc, politicalDoc);
+
+        return buildResponse(caseId, existingCase.getStatusId(), establishDoc, committeeDoc, politicalDoc, missing, Map.of());
+    }
+
+    /** Ánh xạ lại 3 Document (schema chung document_name/document_no/document_date) sang ĐÚNG tên field của request, dễ đối chiếu. */
+    private DecisionDocumentsResponse buildResponse(String caseId, String statusId, Document establishDoc,
+                                                      Document committeeDoc, Document politicalDoc,
+                                                      Map<String, String> missing, Map<String, String> warnings) {
+        DecisionDocumentsResponse response = new DecisionDocumentsResponse();
+        response.setCaseId(caseId);
+        response.setStatusId(statusId);
+        if (establishDoc != null) {
+            response.setEstablishDecisionId(establishDoc.getId());
+            response.setEstablishDecisionNo(establishDoc.getDocumentNo());
+            response.setEstablishDecisionIssueDate(establishDoc.getDocumentDate());
+            response.setEstablishDecisionEffectiveDate(establishDoc.getEffectiveDate());
+        }
+        if (committeeDoc != null) {
+            response.setCommitteeAppointmentDecisionId(committeeDoc.getId());
+            response.setCommitteeAppointmentDecisionNo(committeeDoc.getDocumentNo());
+            response.setCommitteeAppointmentIssueDate(committeeDoc.getDocumentDate());
+            response.setCommitteeAppointmentEffectiveDate(committeeDoc.getEffectiveDate());
+        }
+        if (politicalDoc != null) {
+            response.setPoliticalStandardConclusionId(politicalDoc.getId());
+            response.setPoliticalStandardConclusionNoFinal(politicalDoc.getDocumentNo());
+            response.setPoliticalStandardConclusionIssueDate(politicalDoc.getDocumentDate());
+            response.setPoliticalStandardConclusionEffectiveDate(politicalDoc.getEffectiveDate());
+        }
+        response.setMissing(missing);
+        response.setWarnings(warnings);
+        return response;
     }
 
     // ---------------------------------------------------------------- helpers
