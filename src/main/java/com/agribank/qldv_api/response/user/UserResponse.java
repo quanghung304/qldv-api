@@ -21,6 +21,6 @@ public class UserResponse {
     String branchName;
     List<String> roles;
     List<String> roleIds;
-    String organizationCode;
+    String organizationId;
     String createdBy;
 }
