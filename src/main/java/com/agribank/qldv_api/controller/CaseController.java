@@ -231,7 +231,7 @@ public class CaseController {
         return BaseResponse.success(decisionDocumentsService.get(id));
     }
 
-    /** API-SC06-01 — kích hoạt lưu trữ (sinh 2 văn bản lưu trữ), guard status A-16/B-04 + role R-CV/R-BPTM (ở service). */
+    /** API-SC06-01 — kích hoạt lưu trữ (sinh 2 văn bản lưu trữ), guard status A-14/B-04 + role R-CV/R-BPTM (ở service). */
     @RequirePermission(function = "FN3", action = "APPROVE")
     @PostMapping("/{id}/archive")
     public ResponseEntity<BaseResponse<ArchiveCaseResponse>> archiveCase(@PathVariable String id) {

@@ -47,13 +47,13 @@ import java.util.Optional;
  * tại và ĐÃ được {@code EstablishmentCaseService} ghi từ lúc tạo case (field 7, SC-02). Gap nêu ở
  * prompt_S3-03 mục 6 KHÔNG áp dụng cho codebase hiện tại — không cần thêm cột mới.
  *
- * [GC-S3-03-04] Không cần đặt mã action riêng cho A-15→A-16 — transition đó đã tồn tại sẵn
- * (REGISTER_SIGNED_DOC, DecisionDocumentsService) từ trước khi task này được code, xem
- * {@link ArchiveCaseService}.
+ * [GC-S3-03-04] A-12→A-14 (Luồng A) đi qua cụm kiểm soát A-13 bằng 2 action dùng chung
+ * (SUBMIT_CONTROL/APPROVE_FORWARD, xem {@code CaseWorkflowConfig.RULES}) — KHÔNG cần mã action
+ * riêng, không tự động (khác thiết kế S3-02 gốc), xem {@link ArchiveCaseService}.
  *
  * Khóa hồ sơ (BR-SC06-03) KHÔNG cần thêm cột/flag mới: mọi endpoint ghi dữ liệu Bước 1-3
  * (EstablishmentCaseService/BoardReviewService/CommitteeReviewService/DecisionDocumentsService)
- * đã tự guard đúng 1 status_id bắt buộc riêng (A-01/A-04/A-08/A-15) — A-17 không khớp bất kỳ guard
+ * đã tự guard đúng 1 status_id bắt buộc riêng (A-01/A-04/A-08/A-12) — A-15 không khớp bất kỳ guard
  * nào trong số đó nên tự động read-only "by construction", không cần cơ chế khóa riêng.
  * BR-SC06-04 (không cho xóa PMDV_ATTACHMENT dù Admin) hiện chưa có endpoint xóa attachment nào
  * trong dự án để áp dụng guard này — ghi nhận là gap, ngoài phạm vi 2 API của task này.

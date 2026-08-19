@@ -42,7 +42,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AttachmentService {
     private static final Set<String> FINAL_STATUS_CODES = Set.of(
-            ECaseStatusCode.A_17.getCode(), ECaseStatusCode.B_05.getCode());
+            ECaseStatusCode.A_15.getCode(), ECaseStatusCode.B_05.getCode());
 
     private final CaseClient caseClient;
     private final CaseOrganizationClient caseOrganizationClient;
@@ -139,7 +139,7 @@ public class AttachmentService {
     }
 
     /**
-     * "Hoàn thành/khóa" xác định qua status_id thuộc 2 trạng thái cuối A-17/B-05 (WorkflowEngine
+     * "Hoàn thành/khóa" xác định qua status_id thuộc 2 trạng thái cuối A-15/B-05 (WorkflowEngine
      * cập nhật status_id ở MỌI transition, tín hiệu real-time đáng tin cậy) — KHÔNG dùng
      * Case.completedAt hay Attachment.is_locked vì 2 field đó hiện CHƯA có bất kỳ luồng ghi nào
      * gán giá trị (xem báo cáo cuối task).
