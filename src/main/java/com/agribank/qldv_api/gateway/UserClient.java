@@ -47,4 +47,9 @@ public interface UserClient extends BaseClient<User, String> {
 
     @PostMapping("/save-entity")
     DefaultResponse<String> saveEntity(@RequestBody UserEntityRequest request);
+
+    @GetMapping("/find-by-username-existed")
+    DefaultResponse<User> findByUsernameExisted(
+            @RequestParam(name = "username") String username
+    );
 }

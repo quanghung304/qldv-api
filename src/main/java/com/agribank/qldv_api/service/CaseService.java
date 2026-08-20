@@ -56,6 +56,7 @@ public class CaseService {
         query.setCreatedTo(exclusiveEndOfDay(request.getCreatedTo()));
         query.setCompletedFrom(startOfDay(request.getCompletedFrom()));
         query.setCompletedTo(exclusiveEndOfDay(request.getCompletedTo()));
+        query.setSort(request.getSort());
         query.setPage(request.getPage());
         query.setPageSize(request.getPageSize());
         query.setAllowedOrganizationIds(scope.isFull() ? null : List.copyOf(scope.getAllowedIds()));
