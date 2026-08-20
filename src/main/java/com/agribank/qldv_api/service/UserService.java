@@ -442,8 +442,12 @@ public class UserService {
         Map<Integer, BranchResponse> branchResponseMap = getBranchInfo(brcds);
         BranchResponse branchResponse = branchResponseMap.getOrDefault(user.getBrcd(), null);
 
-        Staff staff =  staffClient.findByStaffCode(user.getStaffCode()).getData();
-        if (Objects.nonNull(branchResponse)) {
+        Staff staff =  null;
+        if (Objects.nonNull(user.getStaffCode())){
+            staff = staffClient.findByStaffCode(user.getStaffCode()).getData();
+        }
+
+        if (Objects.nonNull(staff)) {
             userResponse.setOrganizationId(staff.getOrganizationId());
         }
 
