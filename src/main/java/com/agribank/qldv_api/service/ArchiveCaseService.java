@@ -13,22 +13,20 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
- * API-SC06-01 (POST /cases/{id}/archive, prompt_S3-03) — theo ĐÚNG codebase hiện tại, KHÔNG theo
- * nghĩa đen của prompt: guard "đủ 3 văn bản Bước 3 + đủ file scan" (BR-SC05-02) và transition
- * A-15→A-16 (Luồng A) / B-04 (Luồng B) ĐÃ được {@link DecisionDocumentsService} (API-SC05-02) tự
- * động thực hiện xong khi đủ điều kiện — action REGISTER_SIGNED_DOC trong
- * {@code CaseWorkflowConfig.RULES} CHÍNH LÀ transition đó, không có state trung gian riêng nào
- * khác giữa "đủ văn bản Bước 3" và "Lưu trữ" trong Workflow SM thật của dự án này
- * (GC-S3-03-01 — code theo Workflow SM, đúng đề xuất ưu tiên của prompt).
+ * API-SC06-01 (POST /cases/{id}/archive) — guard case đã đạt "Lưu trữ" (A-14 Luồng A / B-04 Luồng
+ * B). Với Luồng A, A-14 chỉ đạt được sau khi đi qua ĐỦ chuỗi thủ công: nhập 3 văn bản Bước 3 tại
+ * A-12 ({@link DecisionDocumentsService}, KHÔNG tự động chuyển trạng thái) → R-CV tự gọi
+ * {@code POST /cases/{id}/workflow-action} (SUBMIT_CONTROL) trình kiểm soát (A-12→A-13) → R-KS
+ * APPROVE_FORWARD (A-13→A-14) — xem {@code CaseWorkflowConfig.RULES}. Với Luồng B, B-04 đạt được
+ * qua action APPROVE_ISSUE (R-BPTM/R-PDCS), cũng KHÔNG tự động.
  *
- * Vì vậy endpoint này KHÔNG lặp lại guard/transition đó (đã được đảm bảo by construction: case
- * chỉ đạt A-16/B-04 SAU KHI DecisionDocumentsService xác nhận đủ điều kiện) — việc còn lại DUY
- * NHẤT của API-SC06-01 là sinh 2 văn bản lưu trữ ("Danh mục hồ sơ lưu trữ", "Biên bản bàn giao lưu
- * trữ"), tái dùng NGUYÊN VẸN engine sinh văn bản đã có sẵn ({@link DocumentGenerationService}) —
- * GC-S3-03-02 chọn phương án (a) của prompt: nối nội bộ (service gọi service), không qua HTTP.
+ * Việc còn lại DUY NHẤT của API-SC06-01 (không tự lặp lại guard chuyển trạng thái, case đã ở đúng
+ * A-14/B-04 rồi mới gọi được endpoint này) là sinh 2 văn bản lưu trữ ("Danh mục hồ sơ lưu trữ",
+ * "Biên bản bàn giao lưu trữ"), tái dùng NGUYÊN VẸN engine sinh văn bản đã có sẵn
+ * ({@link DocumentGenerationService}) — nối nội bộ (service gọi service), không qua HTTP.
  *
  * Yêu cầu vận hành (KHÔNG code được, cần Admin thao tác riêng): phải seed 2 dòng
- * PMDV_DOCUMENT_TEMPLATE với workflow_stage="A-16" (hoặc "B-04" cho Luồng B) qua flow upload
+ * PMDV_DOCUMENT_TEMPLATE với workflow_stage="A-14" (hoặc "B-04" cho Luồng B) qua flow upload
  * template hiện có (DocumentTemplateController, role R-ADM) thì lệnh gọi này mới thực sự sinh ra
  * văn bản — nếu chưa seed, generateDocuments() vẫn trả 200 kèm message "Chưa cấu hình sinh văn bản
  * động cho bước này" (hành vi có sẵn của engine), KHÔNG coi là lỗi ở endpoint này.
@@ -78,14 +76,14 @@ public class ArchiveCaseService {
     }
 
     /**
-     * BR-SC06-01 — "đủ điều kiện Lưu trữ" = case đã đạt A-16 (Luồng A) / B-04 (Luồng B). Trạng
+     * BR-SC06-01 — "đủ điều kiện Lưu trữ" = case đã đạt A-14 (Luồng A) / B-04 (Luồng B). Trạng
      * thái này CHỈ đạt được sau khi API-SC05-02 xác nhận đủ 3 văn bản + scan (xem class javadoc) —
      * Luồng C không có trạng thái "Lưu trữ" riêng (bàn giao hẳn sang Luồng A trước đó).
      */
     private void requireArchivedStage(Case existingCase) {
         String archivedStatus;
         if (Constants.CASE_FLOW_BTCDU.equals(existingCase.getOriginFlow())) {
-            archivedStatus = ECaseStatusCode.A_16.getCode();
+            archivedStatus = ECaseStatusCode.A_14.getCode();
         } else if ("B".equals(existingCase.getOriginFlow())) {
             archivedStatus = ECaseStatusCode.B_04.getCode();
         } else {

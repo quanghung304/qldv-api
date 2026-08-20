@@ -224,7 +224,14 @@ public class CaseController {
         return BaseResponse.success(decisionDocumentsService.upsert(id, request));
     }
 
-    /** API-SC06-01 — kích hoạt lưu trữ (sinh 2 văn bản lưu trữ), guard status A-16/B-04 + role R-CV/R-BPTM (ở service). */
+    /** Xem lại dữ liệu 3 văn bản Bước 3 GĐ2 đã nhập (nếu có) — không yêu cầu hồ sơ đang ở A-15. */
+    @RequirePermission(function = "FN1", action = "VIEW")
+    @GetMapping("/{id}/establishment/decision-documents")
+    public ResponseEntity<BaseResponse<DecisionDocumentsResponse>> getDecisionDocuments(@PathVariable String id) {
+        return BaseResponse.success(decisionDocumentsService.get(id));
+    }
+
+    /** API-SC06-01 — kích hoạt lưu trữ (sinh 2 văn bản lưu trữ), guard status A-14/B-04 + role R-CV/R-BPTM (ở service). */
     @RequirePermission(function = "FN3", action = "APPROVE")
     @PostMapping("/{id}/archive")
     public ResponseEntity<BaseResponse<ArchiveCaseResponse>> archiveCase(@PathVariable String id) {

@@ -12,12 +12,10 @@ import com.agribank.qldv_api.gateway.DocumentClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
-import com.agribank.qldv_api.workflow.WorkflowEngine;
 import com.agribank.qldvutils.entity.Attachment;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseEstablishment;
 import com.agribank.qldvutils.entity.Document;
-import com.agribank.qldvutils.enums.ECaseWorkflowAction;
 import com.agribank.qldvutils.enums.EDocumentOrigin;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,10 +44,12 @@ import java.util.stream.Stream;
  * record căn cứ đó chưa tồn tại, đồng thời vẫn đúng hành vi "update" khi record đã có sẵn.
  *
  * GC-S3-02-04 (dung hòa): luôn cho lưu dữ liệu hợp lệ của bất kỳ bộ nào được gửi (kể cả chưa đủ
- * cả 3 bộ) — chỉ tự động gọi thẳng {@link WorkflowEngine} (action REGISTER_SIGNED_DOC, ĐẶC BIỆT
- * không qua endpoint workflow-action dùng chung, theo đúng thiết kế của workflow-states.md) khi
- * SAU KHI lưu, cả 3 document đều đủ document_no/document_date/effective_date VÀ mỗi document đều
- * có >= 1 attachment (scan) liên kết.
+ * cả 3 bộ) — cho phép lưu nháp từng phần, guard status CHỈ A-12.
+ *
+ * KHÔNG tự động chuyển trạng thái (khác thiết kế S3-02 gốc) — Luồng A đã khôi phục 1 cấp kiểm
+ * soát riêng cho cụm "ban hành QĐ" (A-13), nên sau khi lưu đủ 3 văn bản R-CV phải tự gọi
+ * {@code POST /cases/{id}/workflow-action} (action SUBMIT_CONTROL) để trình kiểm soát, giống hệt
+ * 3 cụm duyệt khác của Luồng A — xem {@link com.agribank.qldv_api.workflow.CaseWorkflowConfig}.
  */
 @Service
 @RequiredArgsConstructor
@@ -63,13 +63,12 @@ public class DecisionDocumentsService {
     private final CaseEstablishmentClient caseEstablishmentClient;
     private final DocumentClient documentClient;
     private final AttachmentClient attachmentClient;
-    private final WorkflowEngine workflowEngine;
     private final UserService userService;
 
     public DecisionDocumentsResponse upsert(String caseId, DecisionDocumentsRequest request) {
         Case existingCase = requireCaseInScope(caseId);
-        if (!ECaseStatusCode.A_15.getCode().equals(existingCase.getStatusId())) {
-            throw new ForbiddenException("ERR-SC03-01: Hồ sơ không ở trạng thái A-15");
+        if (!ECaseStatusCode.A_12.getCode().equals(existingCase.getStatusId())) {
+            throw new ForbiddenException("ERR-SC03-01: Hồ sơ không ở trạng thái A-12");
         }
         UserDetailsImpl user = requireUser();
 
@@ -102,18 +101,56 @@ public class DecisionDocumentsService {
                 request.getPoliticalStandardConclusionNoFinal(), request.getPoliticalStandardConclusionIssueDate(),
                 request.getPoliticalStandardConclusionEffectiveDate(), user.getId(), EDocumentOrigin.REFERENCE.getId());
 
-        List<Document> documents = Stream.of(establishDoc, committeeDoc, politicalDoc).filter(Objects::nonNull).toList();
+        Map<String, String> missing = computeMissing(establishDoc, committeeDoc, politicalDoc);
+
+        // KHÔNG tự động chuyển trạng thái nữa (khác BR-SC05-02 gốc) — R-CV phải tự gọi
+        // POST /cases/{id}/workflow-action (SUBMIT_CONTROL) để trình kiểm soát (A-13) sau khi đã
+        // nhập đủ dữ liệu, cùng cách 3 cụm duyệt khác trong Luồng A. `missing` chỉ còn ý nghĩa
+        // THÔNG TIN (đã đủ điều kiện để trình kiểm soát hay chưa), không phải điều kiện auto-trigger.
+        return buildResponse(caseId, existingCase.getStatusId(), establishDoc, committeeDoc, politicalDoc, missing, warnings);
+    }
+
+    /** Xem lại dữ liệu 3 văn bản Bước 3 GĐ2 đã nhập (nếu có) — không đổi trạng thái, không guard status A-15. */
+    public DecisionDocumentsResponse get(String caseId) {
+        Case existingCase = requireCaseInScope(caseId);
+
+        Document establishDoc = findDocument(caseId, ESTABLISH_DECISION_NAME);
+        Document committeeDoc = findDocument(caseId, COMMITTEE_APPOINTMENT_DECISION_NAME);
+        Document politicalDoc = findDocument(caseId, POLITICAL_STANDARD_CONCLUSION_NAME);
 
         Map<String, String> missing = computeMissing(establishDoc, committeeDoc, politicalDoc);
 
-        String statusId = existingCase.getStatusId();
-        if (missing.isEmpty()) {
-            workflowEngine.transition(caseId, ECaseWorkflowAction.REGISTER_SIGNED_DOC.name(),
-                    user.getRoleCodes(), user.getId(), null);
-            statusId = ECaseStatusCode.A_16.getCode();
-        }
+        return buildResponse(caseId, existingCase.getStatusId(), establishDoc, committeeDoc, politicalDoc, missing, Map.of());
+    }
 
-        return new DecisionDocumentsResponse(caseId, statusId, documents, missing, warnings);
+    /** Ánh xạ lại 3 Document (schema chung document_name/document_no/document_date) sang ĐÚNG tên field của request, dễ đối chiếu. */
+    private DecisionDocumentsResponse buildResponse(String caseId, String statusId, Document establishDoc,
+                                                      Document committeeDoc, Document politicalDoc,
+                                                      Map<String, String> missing, Map<String, String> warnings) {
+        DecisionDocumentsResponse response = new DecisionDocumentsResponse();
+        response.setCaseId(caseId);
+        response.setStatusId(statusId);
+        if (establishDoc != null) {
+            response.setEstablishDecisionId(establishDoc.getId());
+            response.setEstablishDecisionNo(establishDoc.getDocumentNo());
+            response.setEstablishDecisionIssueDate(establishDoc.getDocumentDate());
+            response.setEstablishDecisionEffectiveDate(establishDoc.getEffectiveDate());
+        }
+        if (committeeDoc != null) {
+            response.setCommitteeAppointmentDecisionId(committeeDoc.getId());
+            response.setCommitteeAppointmentDecisionNo(committeeDoc.getDocumentNo());
+            response.setCommitteeAppointmentIssueDate(committeeDoc.getDocumentDate());
+            response.setCommitteeAppointmentEffectiveDate(committeeDoc.getEffectiveDate());
+        }
+        if (politicalDoc != null) {
+            response.setPoliticalStandardConclusionId(politicalDoc.getId());
+            response.setPoliticalStandardConclusionNoFinal(politicalDoc.getDocumentNo());
+            response.setPoliticalStandardConclusionIssueDate(politicalDoc.getDocumentDate());
+            response.setPoliticalStandardConclusionEffectiveDate(politicalDoc.getEffectiveDate());
+        }
+        response.setMissing(missing);
+        response.setWarnings(warnings);
+        return response;
     }
 
     // ---------------------------------------------------------------- helpers
@@ -176,7 +213,7 @@ public class DecisionDocumentsService {
         return documentClient.save(target).getData();
     }
 
-    /** BR-SC05-02 — đủ điều kiện tự động chuyển A-15 → A-16 khi CẢ 3 document đã đủ dữ liệu + có scan. */
+    /** Chỉ mang tính THÔNG TIN (đủ điều kiện để trình kiểm soát chưa) — không còn tự động chuyển trạng thái. */
     private Map<String, String> computeMissing(Document establishDoc, Document committeeDoc, Document politicalDoc) {
         List<String> allDocIds = Stream.of(establishDoc, committeeDoc, politicalDoc)
                 .filter(Objects::nonNull).map(Document::getId).toList();

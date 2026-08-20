@@ -53,7 +53,6 @@ public class UserRoleService {
 
             if (Objects.isNull(roleDB)) {
                 userRoles.add(UserRole.builder()
-                        .id(UUID.randomUUID().toString())
                         .roleId(role.getId())
                         .userId(userRoleRequest.getUserId())
                         .build());

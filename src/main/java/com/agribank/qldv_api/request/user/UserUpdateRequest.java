@@ -17,6 +17,7 @@ public class UserUpdateRequest {
     Integer depId;
     String fullName;
     List<String> roleIds;
+    String organizationId;
 
     public void validate(){
         if (Objects.isNull(id)) {

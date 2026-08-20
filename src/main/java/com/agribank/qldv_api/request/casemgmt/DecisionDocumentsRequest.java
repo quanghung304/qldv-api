@@ -18,7 +18,8 @@ import java.util.Map;
  * GC-S3-02-04 (dung hòa FSD vs Workflow SM): mỗi "bộ" (establishDecision/committeeAppointment/
  * politicalStandardConclusion) là ĐỘC LẬP — cho phép gửi 1 hoặc cả 3 bộ trong 1 lần gọi (lưu nháp
  * từng phần), validate() ở đây chỉ kiểm tra NỘI TẠI của bộ nào ĐƯỢC gửi (còn thiếu bộ khác không
- * chặn lưu — chỉ chặn việc tự động chuyển A-15→A-16, xử lý ở service).
+ * chặn lưu). API này CHỈ lưu dữ liệu, KHÔNG tự chuyển trạng thái — sau khi đủ 3 bộ, R-CV phải tự
+ * gọi {@code POST /cases/{id}/workflow-action} (SUBMIT_CONTROL) để trình kiểm soát (xem service).
  */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -20,6 +20,7 @@ import com.agribank.qldv_api.service.role.UserRoleService;
 import com.agribank.qldv_api.utils.CommonUtils;
 import com.agribank.qldvutils.dto.UserDto;
 import com.agribank.qldvutils.entity.Role;
+import com.agribank.qldvutils.entity.Staff;
 import com.agribank.qldvutils.entity.User;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.SearchUserRequest;
@@ -48,6 +49,8 @@ public class UserService {
     private Integer QLDV_APP_ID;
     private final IAMClient iamClient;
     private final UserClient userClient;
+    private final StaffClient staffClient;
+    private final OrganizationClient organizationClient;
     private final ModelMapper modelMapper;
     private final UserLogService userLogService;
     private final UserRoleService userRoleService;
@@ -339,6 +342,15 @@ public class UserService {
         user.setDepId(userUpdateRequest.getDepId());
         user.setFullName(userUpdateRequest.getFullName());
 
+        Staff staff = null;
+        if (Objects.nonNull(userUpdateRequest.getOrganizationId())){
+            organizationClient.findById(userUpdateRequest.getOrganizationId()).getData().orElseThrow(() -> new CommonException("Kiểm tra lại Tổ chức Đảng"));
+            staff = staffClient.findByStaffCode(user.getStaffCode()).getData();
+        }
+        if (Objects.nonNull(staff)){
+            staff.setOrganizationId(userUpdateRequest.getOrganizationId());
+        }
+
         try {
             iamClient.updateUserIAM(getAuthorHeader(), userIAMUpdate);
 
@@ -351,6 +363,8 @@ public class UserService {
                         .build();
                 userRoleService.assignUserRole(userRoleRequest);
             }
+
+            staffClient.save(staff);
 
             userLogService.handlerWriteLogUpdate(userOld, user);
             return "Thành công";
@@ -427,6 +441,11 @@ public class UserService {
         brcds.add(user.getBrcd());
         Map<Integer, BranchResponse> branchResponseMap = getBranchInfo(brcds);
         BranchResponse branchResponse = branchResponseMap.getOrDefault(user.getBrcd(), null);
+
+        Staff staff =  staffClient.findByStaffCode(user.getStaffCode()).getData();
+        if (Objects.nonNull(branchResponse)) {
+            userResponse.setOrganizationId(staff.getOrganizationId());
+        }
 
         if(Objects.nonNull(branchResponse)){
             userResponse.setBranchName(branchResponse.getLclbrnm());

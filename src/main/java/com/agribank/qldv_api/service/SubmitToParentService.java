@@ -17,10 +17,10 @@ import java.util.List;
  * (transition SUBMIT_TO_PARENT, C-03 → C-04). ĐẶC BIỆT action, KHÔNG đi qua
  * {@code POST /cases/{id}/workflow-action} dùng chung (đúng thiết kế ghi trong
  * {@link WorkflowEngine} javadoc) — endpoint riêng này tự kiểm tra điều kiện của riêng bước này
- * (đã có >= 1 tài liệu đính kèm) TRƯỚC KHI gọi thẳng {@code WorkflowEngine.transition(...)}, cùng
- * pattern với {@code DecisionDocumentsService} (action REGISTER_SIGNED_DOC). status/role hiện tại
- * có đúng bước C-03 + role R-PDCS hay không do CHÍNH {@code WorkflowEngine.transition()} tự đối
- * chiếu {@code CaseWorkflowConfig.RULES} — KHÔNG lặp lại guard đó ở đây.
+ * (đã có >= 1 tài liệu đính kèm) TRƯỚC KHI gọi thẳng {@code WorkflowEngine.transition(...)}.
+ * status/role hiện tại có đúng bước C-03 + role R-PDCS hay không do CHÍNH
+ * {@code WorkflowEngine.transition()} tự đối chiếu {@code CaseWorkflowConfig.RULES} — KHÔNG lặp
+ * lại guard đó ở đây.
  */
 @Service
 @RequiredArgsConstructor
