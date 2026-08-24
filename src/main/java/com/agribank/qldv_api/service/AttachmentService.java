@@ -12,6 +12,7 @@ import com.agribank.qldv_api.response.attachment.AttachmentItemResponse;
 import com.agribank.qldv_api.response.attachment.AttachmentUploadResponse;
 import com.agribank.qldv_api.storage.S3Service;
 import com.agribank.qldv_api.storage.StorageKeyBuilder;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldvutils.entity.Attachment;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.exception.CommonException;
@@ -51,6 +52,7 @@ public class AttachmentService {
     private final UserService userService;
     private final S3Service s3Service;
     private final StorageKeyBuilder storageKeyBuilder;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
     /**
      * Thứ tự BẮT BUỘC: (1) upload toàn bộ file mới lên S3 trước — lỗi giữa chừng thì dọn rác S3,
@@ -63,6 +65,7 @@ public class AttachmentService {
         UserDetailsImpl user = requireUser();
         Case caseEntity = requireCaseInScope(caseId);
         requireNotCompleted(caseEntity);
+        workflowAssigneeGuard.requireAssignee(caseEntity, user.getId());
 
         String workflowStage = caseEntity.getStatusId();
         List<MultipartFile> files = request.getFiles();
@@ -117,9 +120,11 @@ public class AttachmentService {
     }
 
     public void deleteAttachment(String id) {
+        UserDetailsImpl user = requireUser();
         Attachment attachment = requireAttachment(id);
         Case caseEntity = requireCaseInScope(attachment.getCaseId());
         requireNotCompleted(caseEntity);
+        workflowAssigneeGuard.requireAssignee(caseEntity, user.getId());
 
         s3Service.deleteObject(attachment.getFilePath());
         attachmentClient.deleteById(id);

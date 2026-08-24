@@ -9,7 +9,11 @@ import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
+import com.agribank.qldv_api.response.casemgmt.EligibleAssigneeResponse;
+import com.agribank.qldv_api.response.casemgmt.EligibleAssigneesResponse;
 import com.agribank.qldv_api.workflow.WorkflowEngine;
+import com.agribank.qldv_api.workflow.WorkflowRoleResolver;
+import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.request.casemgmt.CaseSearchQuery;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseHistoryItemResponse;
@@ -32,6 +36,8 @@ public class CaseService {
     private final OrganizationService organizationService;
     private final UserService userService;
     private final WorkflowEngine workflowEngine;
+    private final WorkflowRoleResolver workflowRoleResolver;
+    private final EligibleAssigneeService eligibleAssigneeService;
     private final ModelMapper modelMapper;
 
     /**
@@ -105,7 +111,29 @@ public class CaseService {
             throw new ForbiddenException("ERR-GL-02: Không xác thực được người dùng");
         }
         workflowEngine.transition(caseId, request.getAction(), userRequested.getRoleCodes(),
-                userRequested.getId(), request.getComment());
+                userRequested.getId(), request.getComment(), request.getAssignedUserId());
+    }
+
+    /**
+     * GET /cases/{caseId}/eligible-assignees — dùng ĐÚNG WorkflowRoleResolver (Phần 2) để suy ra
+     * role cần gán tiếp theo từ (currentStatus, action), rồi tìm user đủ điều kiện qua
+     * EligibleAssigneeService (Phần 3). requiredRole = null (bước không cần gán tiếp, VD trạng
+     * thái FINAL/không xác định được transition) -> trả danh sách rỗng + message giải thích.
+     */
+    public EligibleAssigneesResponse getEligibleAssignees(String caseId, String action) {
+        Case existingCase = caseClient.findById(caseId).getData()
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ"));
+
+        String requiredRole = workflowRoleResolver.resolveRequiredRoleForNextActor(existingCase.getStatusId(), action);
+        if (requiredRole == null) {
+            return new EligibleAssigneesResponse(List.of(), "Bước này không cần gán người xử lý tiếp theo");
+        }
+
+        List<String> caseOrganizationIds = safeList(caseOrganizationClient.findWithOrganizationByCaseId(caseId).getData())
+                .stream().map(CaseOrganizationSummaryResponse::getOrganizationId).toList();
+        List<EligibleAssigneeResponse> assignees = eligibleAssigneeService.findEligibleAssignees(requiredRole, caseOrganizationIds);
+
+        return new EligibleAssigneesResponse(assignees, null);
     }
 
     /**

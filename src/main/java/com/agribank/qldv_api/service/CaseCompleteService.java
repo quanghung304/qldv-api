@@ -12,6 +12,7 @@ import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.response.casemgmt.CompleteCaseResponse;
 import com.agribank.qldv_api.workflow.CaseWorkflowConfig;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldv_api.workflow.WorkflowTransitionRule;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseEstablishment;
@@ -25,6 +26,7 @@ import com.agribank.qldvutils.enums.EOperationStatus;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.casemgmt.CaseCompletePersistRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -58,6 +60,7 @@ import java.util.Optional;
  * BR-SC06-04 (không cho xóa PMDV_ATTACHMENT dù Admin) hiện chưa có endpoint xóa attachment nào
  * trong dự án để áp dụng guard này — ghi nhận là gap, ngoài phạm vi 2 API của task này.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CaseCompleteService {
@@ -69,6 +72,7 @@ public class CaseCompleteService {
     private final DocumentClient documentClient;
     private final OrganizationClient organizationClient;
     private final UserService userService;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
     public CompleteCaseResponse complete(String caseId) {
         Case existingCase = requireCase(caseId);
@@ -76,6 +80,7 @@ public class CaseCompleteService {
 
         WorkflowTransitionRule rule = requireMatchingRule(existingCase);
         String matchedRole = requireMatchedRole(rule, user.getRoleCodes());
+        workflowAssigneeGuard.requireAssignee(existingCase, user.getId());
 
         CaseEstablishment establishment = requireEstablishment(caseId);
         Document establishDoc = requireEstablishDecisionDocument(caseId);
@@ -94,6 +99,7 @@ public class CaseCompleteService {
         request.setAction(ECaseWorkflowAction.APPROVE_COMPLETE.name());
         request.setPerformedBy(user.getId());
         request.setPerformedRoleId(matchedRole);
+        request.setAssignedUserId(null);
 
         Organization saved = caseClient.completeCase(request).getData();
         return new CompleteCaseResponse(caseId, rule.toStatusCode().getCode(), saved.getId(), saved.getOrganizationCode());

@@ -9,10 +9,12 @@ import com.agribank.qldv_api.gateway.DocumentTemplateClient;
 import com.agribank.qldv_api.gateway.FieldMappingClient;
 import com.agribank.qldv_api.response.doctemplate.GenerateDocumentResultResponse;
 import com.agribank.qldv_api.response.doctemplate.GenerateDocumentsResponse;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.service.doctemplate.BranchNameByBrcdResolver;
 import com.agribank.qldv_api.service.doctemplate.FieldCatalog;
 import com.agribank.qldv_api.storage.S3Service;
 import com.agribank.qldv_api.storage.StorageKeyBuilder;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldvutils.dto.doctemplate.FieldConfigEntry;
 import com.agribank.qldvutils.dto.doctemplate.TemplateMappingConfig;
 import com.agribank.qldvutils.entity.Case;
@@ -67,6 +69,8 @@ public class DocumentGenerationService {
     private final FieldMappingClient fieldMappingClient;
     private final CaseOrganizationClient caseOrganizationClient;
     private final OrganizationService organizationService;
+    private final UserService userService;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
     private final BranchNameByBrcdResolver branchNameByBrcdResolver;
     private final S3Service s3Service;
     private final StorageKeyBuilder storageKeyBuilder;
@@ -82,6 +86,7 @@ public class DocumentGenerationService {
             throw new CommonException("Hồ sơ hiện không ở bước " + caseEntity.getStatusId()
                     + ", không thể sinh văn bản cho bước " + workflowStage);
         }
+        workflowAssigneeGuard.requireAssignee(caseEntity, requireUser().getId());
 
         List<DocumentTemplate> activeTemplates = safeList(documentTemplateClient.findActiveByStage(
                 caseEntity.getCaseTypeId(), caseEntity.getAuthorityLevel(), workflowStage).getData());
@@ -288,6 +293,14 @@ public class DocumentGenerationService {
         }
         XWPFRun run = paragraph.createRun();
         run.setText(replaced.toString());
+    }
+
+    private UserDetailsImpl requireUser() {
+        UserDetailsImpl user = userService.getUserRequested();
+        if (user == null) {
+            throw new ForbiddenException("ERR-GL-02: Không xác thực được người dùng");
+        }
+        return user;
     }
 
     private void verifyCaseAccess(String caseId) {

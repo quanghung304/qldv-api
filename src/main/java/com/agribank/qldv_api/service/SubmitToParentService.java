@@ -36,7 +36,7 @@ public class SubmitToParentService {
         requireAtLeastOneAttachment(caseId);
 
         workflowEngine.transition(caseId, ECaseWorkflowAction.SUBMIT_TO_PARENT.name(),
-                user.getRoleCodes(), user.getId(), null);
+                user.getRoleCodes(), user.getId(), null, null);
     }
 
     private void requireCase(String caseId) {
