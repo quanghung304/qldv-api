@@ -13,6 +13,7 @@ import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.CaseChangeRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseChangeResponse;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseChange;
 import com.agribank.qldvutils.entity.CaseOrganization;
@@ -70,6 +71,7 @@ public class CaseChangeService {
     private final OrganizationClient organizationClient;
     private final UserService userService;
     private final EstablishmentCaseService establishmentCaseService;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
     public CaseChangeResponse createCaseChange(CaseChangeRequest request, Integer authorityLevel, String originFlow) {
         UserDetailsImpl user = requireUser();
@@ -114,6 +116,10 @@ public class CaseChangeService {
                 .originFlow(originFlow)
                 .statusId(establishmentCaseService.initialStatusForFlow(originFlow))
                 .createdBy(user.getId())
+                // Cùng nguyên tắc với EstablishmentCaseService: bước 1 luôn do chính người tạo
+                // tiếp tục thao tác (không có trong prompt gốc của task assigned-user, tự áp dụng
+                // nhất quán cho cả hồ sơ biến động — xem báo cáo cuối task).
+                .assignedUserId(user.getId())
                 .proposedOrganizationName(proposedTargetName)
                 .build();
 
@@ -145,7 +151,7 @@ public class CaseChangeService {
      * BẤT BIẾN, luôn lấy từ hồ sơ gốc — request.getCaseTypeId() (nếu có gửi) bị bỏ qua hoàn toàn.
      */
     public CaseChangeResponse updateCaseChange(String caseId, CaseChangeRequest request) {
-        requireUser();
+        UserDetailsImpl user = requireUser();
         Case existingCase = caseClient.findById(caseId).getData().orElse(null);
         if (existingCase == null) {
             throw new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ");
@@ -155,6 +161,7 @@ public class CaseChangeService {
         if (!requiredStatus.equals(existingCase.getStatusId())) {
             throw new ForbiddenException("BR-SC08-06: Hồ sơ không còn ở bước 1 (" + requiredStatus + "), không thể chỉnh sửa");
         }
+        workflowAssigneeGuard.requireAssignee(existingCase, user.getId());
 
         CaseChange existingChange = caseChangeClient.findByCaseId(caseId).getData().orElse(
                 CaseChange.builder().caseId(caseId).build());

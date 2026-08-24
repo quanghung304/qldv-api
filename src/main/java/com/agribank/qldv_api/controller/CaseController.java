@@ -17,6 +17,7 @@ import com.agribank.qldv_api.response.casemgmt.BoardReviewResponse;
 import com.agribank.qldv_api.response.casemgmt.CommitteeReviewResponse;
 import com.agribank.qldv_api.response.casemgmt.CompleteCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
+import com.agribank.qldv_api.response.casemgmt.EligibleAssigneesResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
@@ -46,6 +47,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -78,6 +80,17 @@ public class CaseController {
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<CaseDetailResponse>> getById(@PathVariable String id) {
         return BaseResponse.success(caseService.getById(id));
+    }
+
+    /**
+     * Hỗ trợ FE hiển thị dropdown chọn người xử lý tiếp theo khi gọi SUBMIT_CONTROL/APPROVE_FORWARD
+     * — API hỗ trợ luồng, KHÔNG phải API ghi (FN2, VIEW thay vì FN2, APPROVE).
+     */
+    @RequirePermission(function = "FN2", action = "VIEW")
+    @GetMapping("/{caseId}/eligible-assignees")
+    public ResponseEntity<BaseResponse<EligibleAssigneesResponse>> getEligibleAssignees(
+            @PathVariable String caseId, @RequestParam String action) {
+        return BaseResponse.success(caseService.getEligibleAssignees(caseId, action));
     }
 
     @RequirePermission(function = "FN4", action = "VIEW")

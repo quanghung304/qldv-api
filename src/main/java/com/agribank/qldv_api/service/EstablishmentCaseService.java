@@ -19,6 +19,7 @@ import com.agribank.qldv_api.request.casemgmt.ProposedCommitteeMemberRequest;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.ProposedCommitteeMemberDetailResponse;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseEstablishment;
@@ -86,6 +87,7 @@ public class EstablishmentCaseService {
     private final OrganizationClient organizationClient;
     private final EmployeeInfoClient employeeInfoClient;
     private final UserService userService;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
     /**
      * API-SC02-01. {@code allowedOrganizationTypeId} null ở Sprint 2 (client tự chọn trong danh
@@ -123,6 +125,9 @@ public class EstablishmentCaseService {
                 .originFlow(originFlow)
                 .statusId(initialStatusForFlow(originFlow))
                 .createdBy(user.getId())
+                // Bước 1 (status khởi tạo) luôn do chính người tạo tiếp tục thao tác (Lưu nháp,
+                // Trình kiểm soát) — gán assignedUserId ngay lúc tạo hồ sơ.
+                .assignedUserId(user.getId())
                 .proposedOrganizationName(request.getProposedOrganizationName())
                 // NULLABLE, không validate bắt buộc ở đây — chỉ kiểm tra ở API sinh văn bản
                 // theo bước (DocumentGenerationService), theo đúng phạm vi đã chốt.
@@ -150,7 +155,7 @@ public class EstablishmentCaseService {
      */
     public EstablishmentCaseResponse updateEstablishmentCase(String caseId, EstablishmentCaseRequest request,
                                                               String allowedOrganizationTypeId) {
-        requireUser();
+        UserDetailsImpl user = requireUser();
         Case existingCase = caseClient.findById(caseId).getData().orElse(null);
         if (existingCase == null) {
             throw new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ");
@@ -160,6 +165,7 @@ public class EstablishmentCaseService {
         if (!requiredStatus.equals(existingCase.getStatusId())) {
             throw new ForbiddenException("BR-SC02-05: Hồ sơ không còn ở bước 1 (" + requiredStatus + "), không thể chỉnh sửa");
         }
+        workflowAssigneeGuard.requireAssignee(existingCase, user.getId());
 
         CaseEstablishment existing = caseEstablishmentClient.findByCaseId(caseId).getData().orElse(
                 CaseEstablishment.builder().caseId(caseId).build());
