@@ -2,12 +2,12 @@ package com.agribank.qldv_api.gateway;
 
 import com.agribank.qldv_api.gateway.config.DatabaseFeignConfiguration;
 import com.agribank.qldvutils.entity.Case;
-import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.request.casemgmt.CaseCompletePersistRequest;
 import com.agribank.qldvutils.request.casemgmt.CaseDeletePersistRequest;
 import com.agribank.qldvutils.request.casemgmt.CaseSearchQuery;
 import com.agribank.qldvutils.response.BaseResponse;
 import com.agribank.qldvutils.response.PageResponse;
+import com.agribank.qldvutils.response.casemgmt.CaseCompleteResult;
 import com.agribank.qldvutils.response.casemgmt.CaseListItemResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +33,7 @@ public interface CaseClient extends BaseClient<Case, String> {
 
     /** API-SC06-02 — cascade-persist Organization/CaseOrganization/CommitteeMember + transition trong 1 transaction (CaseCompleteService, qldv-db). */
     @PostMapping("/complete-case")
-    BaseResponse<Organization> completeCase(@RequestBody CaseCompletePersistRequest request);
+    BaseResponse<CaseCompleteResult> completeCase(@RequestBody CaseCompletePersistRequest request);
 
     /** API-GL-01 — cascade-delete + ghi audit log trong 1 transaction (xem CaseDeleteService, qldv-db). */
     @PostMapping("/delete-cascade")

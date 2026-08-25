@@ -2,6 +2,7 @@ package com.agribank.qldv_api.request.casemgmt;
 
 import com.agribank.qldv_api.enums.Constants;
 import com.agribank.qldv_api.exception.FieldValidationException;
+import com.agribank.qldvutils.enums.ECommitteePosition;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -26,12 +27,16 @@ import java.util.Map;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CaseChangeRequest {
+    private static final int MAX_PROPOSED_TARGET_NAME_LENGTH = 250;
+    private static final int MAX_BOARD_DECISION_NO_LENGTH = 100;
     String caseTypeId;
     List<String> organizationIds;
     String survivorOrganizationId;
     String proposedTargetName;
     String boardDecisionNo;
     LocalDate boardDecisionDate;
+    /** Sáp nhập/Hợp nhất (đúng 1 phần tử)/Chia tách (≥2 phần tử) — null/rỗng với Giải thể/Đổi tên. Số lượng đúng bao nhiêu tuỳ case_type nên chỉ validate FORMAT ở đây, đếm số lượng ở service (cần DB). */
+    List<CaseChangeTargetRequest> targets;
 
     /** API-SC08-01 (tạo mới) — caseTypeId/organizationIds/boardDecisionNo/boardDecisionDate bắt buộc có giá trị. */
     public void validate() {
@@ -43,6 +48,7 @@ public class CaseChangeRequest {
         validateProposedTargetNameFormat(errors);
         requireText(errors, "boardDecisionNo", boardDecisionNo, Constants.MAX_DECISION_NO_LENGTH,
                 "ERR-SC08-01: boardDecisionNo không được để trống, không vượt quá " + Constants.MAX_DECISION_NO_LENGTH + " ký tự");
+        validateTargetsFormat(errors);
         requirePastOrPresentDate(errors, "boardDecisionDate", boardDecisionDate,
                 "ERR-SC08-01: boardDecisionDate không được để trống và không được sau ngày hiện tại");
         throwIfInvalid(errors);
@@ -62,6 +68,9 @@ public class CaseChangeRequest {
         }
         if (proposedTargetName != null) {
             validateProposedTargetNameFormat(errors);
+        }
+        if (targets != null) {
+            validateTargetsFormat(errors);
         }
         if (boardDecisionNo != null) {
             requireText(errors, "boardDecisionNo", boardDecisionNo, Constants.MAX_DECISION_NO_LENGTH,
@@ -107,6 +116,45 @@ public class CaseChangeRequest {
         if (proposedTargetName != null && proposedTargetName.length() > Constants.MAX_ORGANIZATION_NAME_LENGTH) {
             errors.put("proposedTargetName", "ERR-SC08-03: proposedTargetName không được vượt quá "
                     + Constants.MAX_ORGANIZATION_NAME_LENGTH + " ký tự");
+        }
+    }
+
+    /**
+     * Chỉ kiểm tra format tự thân của từng target — SỐ LƯỢNG đúng bao nhiêu theo case_type (Sáp
+     * nhập/Hợp nhất=1, Chia tách≥2, Giải thể/Đổi tên=0) nằm ở service vì cần DB (case_type.code).
+     */
+    private void validateTargetsFormat(Map<String, String> errors) {
+        if (targets == null) {
+            return;
+        }
+        for (int i = 0; i < targets.size(); i++) {
+            CaseChangeTargetRequest target = targets.get(i);
+            String prefix = "targets[" + i + "].";
+            if (target.getOrganizationName() == null || target.getOrganizationName().isBlank()
+                    || target.getOrganizationName().length() > MAX_PROPOSED_TARGET_NAME_LENGTH) {
+                errors.put(prefix + "organizationName", "ERR-SC08-03: organizationName không được để trống, không vượt quá "
+                        + MAX_PROPOSED_TARGET_NAME_LENGTH + " ký tự");
+            }
+            if (target.getOrganizationTypeId() == null || target.getOrganizationTypeId().isBlank()) {
+                errors.put(prefix + "organizationTypeId", "ERR-SC08-03: organizationTypeId không được để trống");
+            }
+            if (target.getMemberCount() != null && target.getMemberCount() < 0) {
+                errors.put(prefix + "memberCount", "ERR-SC08-03: memberCount không được âm");
+            }
+            List<CaseChangeCommitteeMemberRequest> committee = target.getCommittee();
+            if (committee == null) {
+                continue;
+            }
+            for (int j = 0; j < committee.size(); j++) {
+                CaseChangeCommitteeMemberRequest member = committee.get(j);
+                String memberPrefix = prefix + "committee[" + j + "].";
+                if (member.getStaffCode() == null || member.getStaffCode().isBlank()) {
+                    errors.put(memberPrefix + "staffCode", "ERR-SC08-03: staffCode không được để trống");
+                }
+                if (member.getPosition() == null || ECommitteePosition.getValue(member.getPosition()) == -1) {
+                    errors.put(memberPrefix + "position", "ERR-SC08-03: position phải thuộc SECRETARY/DEPUTY_SECRETARY/MEMBER");
+                }
+            }
         }
     }
 
