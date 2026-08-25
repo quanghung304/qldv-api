@@ -19,6 +19,7 @@ import com.agribank.qldv_api.request.casemgmt.ProposedCommitteeMemberRequest;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.ProposedCommitteeMemberDetailResponse;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseEstablishment;
@@ -86,6 +87,7 @@ public class EstablishmentCaseService {
     private final OrganizationClient organizationClient;
     private final EmployeeInfoClient employeeInfoClient;
     private final UserService userService;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
     /**
      * API-SC02-01. {@code allowedOrganizationTypeId} null ở Sprint 2 (client tự chọn trong danh
@@ -123,6 +125,9 @@ public class EstablishmentCaseService {
                 .originFlow(originFlow)
                 .statusId(initialStatusForFlow(originFlow))
                 .createdBy(user.getId())
+                // Bước 1 (status khởi tạo) luôn do chính người tạo tiếp tục thao tác (Lưu nháp,
+                // Trình kiểm soát) — gán assignedUserId ngay lúc tạo hồ sơ.
+                .assignedUserId(user.getId())
                 .proposedOrganizationName(request.getProposedOrganizationName())
                 // NULLABLE, không validate bắt buộc ở đây — chỉ kiểm tra ở API sinh văn bản
                 // theo bước (DocumentGenerationService), theo đúng phạm vi đã chốt.
@@ -145,21 +150,27 @@ public class EstablishmentCaseService {
 
     /**
      * API-SC02-02. Cập nhật MỘT PHẦN — field null trong request nghĩa là "không đổi". BR-SC02-05:
-     * chỉ cho phép khi status_id = A-01, chặn ở BE bất kể FE có ẩn field hay không. Request đã
-     * được {@code request.validateForUpdate()} chạy TRƯỚC ở controller.
+     * cho phép khi status_id đang ở bước 1 (A-01/B-01/C-01 tuỳ origin_flow) HOẶC đang ở bước
+     * "Trình kiểm soát" kế tiếp (A-02/B-02/C-02 — {@link #controlStatusForFlow}) để Kiểm soát
+     * viên (R-KS/R-KSCS) đang được giao xử lý hồ sơ ở bước kiểm soát cũng sửa được nội dung Bước
+     * 1, chặn ở BE bất kể FE có ẩn field hay không. Request đã được
+     * {@code request.validateForUpdate()} chạy TRƯỚC ở controller.
      */
     public EstablishmentCaseResponse updateEstablishmentCase(String caseId, EstablishmentCaseRequest request,
                                                               String allowedOrganizationTypeId) {
-        requireUser();
+        UserDetailsImpl user = requireUser();
         Case existingCase = caseClient.findById(caseId).getData().orElse(null);
         if (existingCase == null) {
             throw new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ");
         }
 
-        String requiredStatus = initialStatusForFlow(existingCase.getOriginFlow());
-        if (!requiredStatus.equals(existingCase.getStatusId())) {
-            throw new ForbiddenException("BR-SC02-05: Hồ sơ không còn ở bước 1 (" + requiredStatus + "), không thể chỉnh sửa");
+        String initialStatus = initialStatusForFlow(existingCase.getOriginFlow());
+        String controlStatus = controlStatusForFlow(existingCase.getOriginFlow());
+        if (!initialStatus.equals(existingCase.getStatusId()) && !controlStatus.equals(existingCase.getStatusId())) {
+            throw new ForbiddenException("BR-SC02-05: Hồ sơ không ở bước 1 (" + initialStatus + ") hoặc bước kiểm soát ("
+                    + controlStatus + "), không thể chỉnh sửa");
         }
+        workflowAssigneeGuard.requireAssignee(existingCase, user.getId());
 
         CaseEstablishment existing = caseEstablishmentClient.findByCaseId(caseId).getData().orElse(
                 CaseEstablishment.builder().caseId(caseId).build());
@@ -327,6 +338,26 @@ public class EstablishmentCaseService {
         }
         if (Constants.CASE_FLOW_C.equals(originFlow)) {
             return ECaseStatusCode.C_01.getCode();
+        }
+        throw new CommonException("origin_flow không hợp lệ: " + originFlow);
+    }
+
+    /**
+     * A-02/B-02/C-02 tuỳ origin_flow — bước "Trình kiểm soát" ngay sau bước 1
+     * ({@link #initialStatusForFlow}), dùng để mở quyền sửa nội dung Bước 1 cho Kiểm soát viên
+     * (R-KS Luồng A, R-KSCS Luồng B/C) đang được giao xử lý hồ sơ ở bước này (BR-SC02-05/
+     * BR-SC08-06 mở rộng). Cùng cách tra theo origin_flow như {@link #initialStatusForFlow},
+     * KHÔNG hardcode 1 status_code cố định.
+     */
+    public String controlStatusForFlow(String originFlow) {
+        if (Constants.CASE_FLOW_BTCDU.equals(originFlow)) {
+            return ECaseStatusCode.A_02.getCode();
+        }
+        if (Constants.CASE_FLOW_B.equals(originFlow)) {
+            return ECaseStatusCode.B_02.getCode();
+        }
+        if (Constants.CASE_FLOW_C.equals(originFlow)) {
+            return ECaseStatusCode.C_02.getCode();
         }
         throw new CommonException("origin_flow không hợp lệ: " + originFlow);
     }

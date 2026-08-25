@@ -17,6 +17,7 @@ import com.agribank.qldv_api.response.casemgmt.BoardReviewResponse;
 import com.agribank.qldv_api.response.casemgmt.CommitteeReviewResponse;
 import com.agribank.qldv_api.response.casemgmt.CompleteCaseResponse;
 import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
+import com.agribank.qldv_api.response.casemgmt.EligibleAssigneesResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.EstablishmentCaseResponse;
 import com.agribank.qldv_api.security.RequirePermission;
@@ -46,6 +47,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -78,6 +80,17 @@ public class CaseController {
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<CaseDetailResponse>> getById(@PathVariable String id) {
         return BaseResponse.success(caseService.getById(id));
+    }
+
+    /**
+     * Hỗ trợ FE hiển thị dropdown chọn người xử lý tiếp theo khi gọi SUBMIT_CONTROL/APPROVE_FORWARD
+     * — API hỗ trợ luồng, KHÔNG phải API ghi (FN2, VIEW thay vì FN2, APPROVE).
+     */
+    @RequirePermission(function = "FN2", action = "VIEW")
+    @GetMapping("/{caseId}/eligible-assignees")
+    public ResponseEntity<BaseResponse<EligibleAssigneesResponse>> getEligibleAssignees(
+            @PathVariable String caseId, @RequestParam String action) {
+        return BaseResponse.success(caseService.getEligibleAssignees(caseId, action));
     }
 
     @RequirePermission(function = "FN4", action = "VIEW")
@@ -127,6 +140,7 @@ public class CaseController {
                 request, EAuthorityLevel.BANK_LEVEL.getId(), Constants.CASE_FLOW_BTCDU, null));
     }
 
+    /** API-SC02-02 — guard status bước 1 (A-01/B-01/C-01) hoặc bước kiểm soát kế tiếp (A-02/B-02/C-02, R-KS/R-KSCS) của đúng luồng hồ sơ này (ở service). */
     @Operation(summary = "Chỉnh sửa hồ sơ Thành lập TCĐ (tất cả các cấp)")
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment")
@@ -177,7 +191,7 @@ public class CaseController {
                 request, EAuthorityLevel.BANK_LEVEL.getId(), Constants.CASE_FLOW_BTCDU));
     }
 
-    /** API-SC08-02 — guard status đúng bước 1 của luồng hồ sơ này (ở service), caseTypeId bất biến. */
+    /** API-SC08-02 — guard status bước 1 hoặc bước kiểm soát kế tiếp (R-KS/R-KSCS) của đúng luồng hồ sơ này (ở service), caseTypeId bất biến. */
     @Operation(summary = "Chỉnh sửa hồ sơ biến động tổ chức đảng: Giải thể/Sáp nhập/Hợp nhất/Chia tách/Đổi tên")
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/change")
@@ -186,6 +200,7 @@ public class CaseController {
         return BaseResponse.success(caseChangeService.updateCaseChange(id, request));
     }
 
+    /** API-SC04-01 — guard status A-04 (R-CV) hoặc A-06 ("Trình kiểm soát (trước họp BCH)", R-KS) + assignedUserId (ở service). */
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment/board-review")
     public ResponseEntity<BaseResponse<BoardReviewResponse>> updateBoardReview(
@@ -200,7 +215,10 @@ public class CaseController {
         return BaseResponse.success(boardReviewService.get(id));
     }
 
-    /** API-SC05-01 — Bước 3 giai đoạn 1 (trước ban hành), guard status A-08 + role R-CV (ở service). */
+    /**
+     * API-SC05-01 — Bước 3 giai đoạn 1 (trước ban hành), guard status A-08 (R-CV) hoặc A-10
+     * ("Trình kiểm soát (ban hành QĐ)", R-KS) + assignedUserId (ở service).
+     */
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment/committee-review")
     public ResponseEntity<BaseResponse<CommitteeReviewResponse>> updateCommitteeReview(
@@ -215,7 +233,9 @@ public class CaseController {
         return BaseResponse.success(committeeReviewService.get(id));
     }
 
-    /** API-SC05-02 — Bước 3 giai đoạn 2 (sau ban hành), guard status A-15 + role R-CV (ở service). */
+    /**
+     * API-SC05-02 — Bước 3 giai đoạn 2 (sau ban hành), guard status A-12
+     */
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment/decision-documents")
     public ResponseEntity<BaseResponse<DecisionDocumentsResponse>> updateDecisionDocuments(

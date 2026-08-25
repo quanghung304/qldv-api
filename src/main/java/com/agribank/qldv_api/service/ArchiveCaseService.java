@@ -56,7 +56,7 @@ public class ArchiveCaseService {
         Case existingCase = requireCase(caseId);
         UserDetailsImpl user = requireUser();
         caseFlowRoleGuard.requireCaseworkerRoleForFlow(existingCase, user.getRoleCodes());
-        requireArchivedStage(existingCase);
+//        requireArchivedStage(existingCase);
 
         GenerateDocumentsResponse documents = documentGenerationService.generateDocuments(caseId, existingCase.getStatusId());
         return new ArchiveCaseResponse(caseId, existingCase.getStatusId(), documents);
@@ -83,7 +83,7 @@ public class ArchiveCaseService {
     private void requireArchivedStage(Case existingCase) {
         String archivedStatus;
         if (Constants.CASE_FLOW_BTCDU.equals(existingCase.getOriginFlow())) {
-            archivedStatus = ECaseStatusCode.A_14.getCode();
+            archivedStatus = ECaseStatusCode.A_12.getCode();
         } else if ("B".equals(existingCase.getOriginFlow())) {
             archivedStatus = ECaseStatusCode.B_04.getCode();
         } else {

@@ -54,6 +54,10 @@ public class SecurityConfiguration {
                                 .requestMatchers("/api/v1/check/health").permitAll()
                                 .requestMatchers("/swagger-ui/**").permitAll()
                                 .requestMatchers("/v3/api-docs/**").permitAll()
+                                // JwtTokenFilter chỉ xác thực qua header Authorization — WebSocket handshake không
+                                // set được header tùy ý (giới hạn trình duyệt), tự xác thực riêng qua token ở query
+                                // param (xem WebSocketAuthHandshakeInterceptor), nên phải permitAll ở tầng HTTP này.
+                                .requestMatchers("/ws/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

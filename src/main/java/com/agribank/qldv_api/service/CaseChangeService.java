@@ -17,6 +17,7 @@ import com.agribank.qldv_api.request.casemgmt.CaseChangeCommitteeMemberRequest;
 import com.agribank.qldv_api.request.casemgmt.CaseChangeRequest;
 import com.agribank.qldv_api.request.casemgmt.CaseChangeTargetRequest;
 import com.agribank.qldv_api.response.casemgmt.CaseChangeResponse;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseChange;
 import com.agribank.qldvutils.entity.CaseChangeTarget;
@@ -94,6 +95,7 @@ public class CaseChangeService {
     private final CommitteeMemberClient committeeMemberClient;
     private final UserService userService;
     private final EstablishmentCaseService establishmentCaseService;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
     public CaseChangeResponse createCaseChange(CaseChangeRequest request, Integer authorityLevel, String originFlow) {
         UserDetailsImpl user = requireUser();
@@ -148,6 +150,10 @@ public class CaseChangeService {
                 .originFlow(originFlow)
                 .statusId(establishmentCaseService.initialStatusForFlow(originFlow))
                 .createdBy(user.getId())
+                // Cùng nguyên tắc với EstablishmentCaseService: bước 1 luôn do chính người tạo
+                // tiếp tục thao tác (không có trong prompt gốc của task assigned-user, tự áp dụng
+                // nhất quán cho cả hồ sơ biến động — xem báo cáo cuối task).
+                .assignedUserId(user.getId())
                 .proposedOrganizationName(proposedTargetName)
                 .build();
 
@@ -182,18 +188,28 @@ public class CaseChangeService {
      * {@code targets}: null = không đổi (giữ nguyên danh sách cũ); non-null (kể cả rỗng) = thay
      * TOÀN BỘ bằng danh sách mới — cùng ngữ nghĩa "tất cả hoặc không gì" với {@code organizationIds}
      * (không merge từng phần tử).
+     * API-SC08-02. Cập nhật MỘT PHẦN — field null trong request nghĩa là "không đổi". Cho phép
+     * khi status_id đang đúng bước 1 CỦA ĐÚNG LUỒNG hồ sơ này (A-01/B-01/C-01 tuỳ origin_flow đã
+     * lưu — KHÔNG hardcode A-01, xem {@link EstablishmentCaseService#initialStatusForFlow}) HOẶC
+     * đang ở bước "Trình kiểm soát" kế tiếp (A-02/B-02/C-02 —
+     * {@link EstablishmentCaseService#controlStatusForFlow}) để Kiểm soát viên (R-KS/R-KSCS)
+     * đang được giao xử lý hồ sơ ở bước kiểm soát cũng sửa được. caseTypeId BẤT BIẾN, luôn lấy từ
+     * hồ sơ gốc — request.getCaseTypeId() (nếu có gửi) bị bỏ qua hoàn toàn.
      */
     public CaseChangeResponse updateCaseChange(String caseId, CaseChangeRequest request) {
-        requireUser();
+        UserDetailsImpl user = requireUser();
         Case existingCase = caseClient.findById(caseId).getData().orElse(null);
         if (existingCase == null) {
             throw new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ");
         }
 
-        String requiredStatus = establishmentCaseService.initialStatusForFlow(existingCase.getOriginFlow());
-        if (!requiredStatus.equals(existingCase.getStatusId())) {
-            throw new ForbiddenException("BR-SC08-06: Hồ sơ không còn ở bước 1 (" + requiredStatus + "), không thể chỉnh sửa");
+        String initialStatus = establishmentCaseService.initialStatusForFlow(existingCase.getOriginFlow());
+        String controlStatus = establishmentCaseService.controlStatusForFlow(existingCase.getOriginFlow());
+        if (!initialStatus.equals(existingCase.getStatusId()) && !controlStatus.equals(existingCase.getStatusId())) {
+            throw new ForbiddenException("BR-SC08-06: Hồ sơ không ở bước 1 (" + initialStatus + ") hoặc bước kiểm soát ("
+                    + controlStatus + "), không thể chỉnh sửa");
         }
+        workflowAssigneeGuard.requireAssignee(existingCase, user.getId());
 
         CaseChange existingChange = caseChangeClient.findByCaseId(caseId).getData().orElse(
                 CaseChange.builder().caseId(caseId).build());
