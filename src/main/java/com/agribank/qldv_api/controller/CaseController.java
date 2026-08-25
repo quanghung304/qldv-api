@@ -140,6 +140,7 @@ public class CaseController {
                 request, EAuthorityLevel.BANK_LEVEL.getId(), Constants.CASE_FLOW_BTCDU, null));
     }
 
+    /** API-SC02-02 — guard status bước 1 (A-01/B-01/C-01) hoặc bước kiểm soát kế tiếp (A-02/B-02/C-02, R-KS/R-KSCS) của đúng luồng hồ sơ này (ở service). */
     @Operation(summary = "Chỉnh sửa hồ sơ Thành lập TCĐ (tất cả các cấp)")
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment")
@@ -190,7 +191,7 @@ public class CaseController {
                 request, EAuthorityLevel.BANK_LEVEL.getId(), Constants.CASE_FLOW_BTCDU));
     }
 
-    /** API-SC08-02 — guard status đúng bước 1 của luồng hồ sơ này (ở service), caseTypeId bất biến. */
+    /** API-SC08-02 — guard status bước 1 hoặc bước kiểm soát kế tiếp (R-KS/R-KSCS) của đúng luồng hồ sơ này (ở service), caseTypeId bất biến. */
     @Operation(summary = "Chỉnh sửa hồ sơ biến động tổ chức đảng: Giải thể/Sáp nhập/Hợp nhất/Chia tách/Đổi tên")
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/change")
@@ -199,6 +200,7 @@ public class CaseController {
         return BaseResponse.success(caseChangeService.updateCaseChange(id, request));
     }
 
+    /** API-SC04-01 — guard status A-04 (R-CV) hoặc A-06 ("Trình kiểm soát (trước họp BCH)", R-KS) + assignedUserId (ở service). */
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment/board-review")
     public ResponseEntity<BaseResponse<BoardReviewResponse>> updateBoardReview(
@@ -213,7 +215,10 @@ public class CaseController {
         return BaseResponse.success(boardReviewService.get(id));
     }
 
-    /** API-SC05-01 — Bước 3 giai đoạn 1 (trước ban hành), guard status A-08 + role R-CV (ở service). */
+    /**
+     * API-SC05-01 — Bước 3 giai đoạn 1 (trước ban hành), guard status A-08 (R-CV) hoặc A-10
+     * ("Trình kiểm soát (ban hành QĐ)", R-KS) + assignedUserId (ở service).
+     */
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment/committee-review")
     public ResponseEntity<BaseResponse<CommitteeReviewResponse>> updateCommitteeReview(
@@ -228,7 +233,9 @@ public class CaseController {
         return BaseResponse.success(committeeReviewService.get(id));
     }
 
-    /** API-SC05-02 — Bước 3 giai đoạn 2 (sau ban hành), guard status A-15 + role R-CV (ở service). */
+    /**
+     * API-SC05-02 — Bước 3 giai đoạn 2 (sau ban hành), guard status A-12
+     */
     @RequirePermission(function = "FN1", action = "EDIT")
     @PutMapping("/{id}/establishment/decision-documents")
     public ResponseEntity<BaseResponse<DecisionDocumentsResponse>> updateDecisionDocuments(

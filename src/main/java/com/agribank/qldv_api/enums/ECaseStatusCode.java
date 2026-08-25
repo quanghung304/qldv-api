@@ -24,20 +24,18 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum ECaseStatusCode {
     // Luồng A — BTCĐU tự khởi tạo và phê duyệt (15 trạng thái, đã rút gọn 1 phần — xem javadoc lớp)
-    A_01("A-01", "Đang thực hiện (trước họp BTV)"),
+    A_01("A-01", "Khởi tạo hồ sơ"),
     A_02("A-02", "Trình kiểm soát (trước họp BTV)"),
     A_03("A-03", "Trình lãnh đạo ban (trước họp BTV)"),
     A_04("A-04", "Trình Ban Thường vụ"),
-    A_05("A-05", "Đang thực hiện (sau họp BTV)"),
-    A_06("A-06", "Trình kiểm soát (sau họp BTV)"),
-    A_07("A-07", "Trình lãnh đạo ban (sau họp BTV)"),
+    A_06("A-06", "Trình kiểm soát (trước họp BCH)"),
+    A_07("A-07", "Trình lãnh đạo ban (trước họp BCH)"),
     A_08("A-08", "Trình Ban Chấp hành"),
-    A_09("A-09", "Đang thực hiện (sau họp BCH)"),
-    A_10("A-10", "Trình kiểm soát (sau họp BCH)"),
-    A_11("A-11", "Trình lãnh đạo ban (sau họp BCH)"),
-    A_12("A-12", "Đang thực hiện (ban hành QĐ)"),
-    A_13("A-13", "Trình kiểm soát (ban hành QĐ)"),
-    A_14("A-14", "Lưu trữ"),
+    A_10("A-10", "Trình kiểm soát (ban hành QĐ)"),
+    A_11("A-11", "Trình lãnh đạo ban (ban hành QĐ)"),
+    A_12("A-12", "Trình Bí thư (ban hành QĐ)"),
+    A_13("A-13", "Trình kiểm soát (Lưu trữ)"),
+    A_14("A-14", "Trình lãnh đạo ban (Lưu trữ)"),
     A_15("A-15", "Hoàn thành"),
 
     // Luồng B — Đảng bộ cơ sở tự khởi tạo và phê duyệt (5 trạng thái)
