@@ -60,7 +60,16 @@ public class AuthenticationService {
             if (Objects.isNull(adResponse) || Objects.isNull(adResponse.getData())) {
                 throw new CommonException("Email không đúng định dạng Agribank vui lòng kiểm tra lại");
             }
-            User user = new User();
+
+            User user = null;
+
+            user = userClient.findByUsernameExisted(request.getUsername()).getData();
+            if (Objects.nonNull(user)) {
+                throw new CommonException(String.format("Username '%s' đã tồn tại chi nhánh: %d. Vui lòng kiểm tra lại thông tin user", request.getUsername(), user.getBrcd()));
+            }else {
+                user = new  User();
+            }
+
             user.setUsername(registerRequest.getUsername());
 
             UserDetailsImpl userRequested = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
