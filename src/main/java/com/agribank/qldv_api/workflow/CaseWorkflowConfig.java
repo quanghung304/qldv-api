@@ -74,12 +74,10 @@ public final class CaseWorkflowConfig {
             rule("A", A_10, ECaseWorkflowAction.APPROVE_FORWARD, A_11, ERoleCode.R_KS),
             rule("A", A_11, ECaseWorkflowAction.RETURN, A_08, ERoleCode.R_LD),
             rule("A", A_11, ECaseWorkflowAction.APPROVE, A_12, ERoleCode.R_LD),
-            // Cụm "ban hành QĐ" — CHỈ 1 cấp kiểm soát (A-13), KHÔNG có cấp "lãnh đạo ban" như 3
-            // cụm trên. Bước 4 (decision-documents) nhập tại A-12 KHÔNG tự động chuyển trạng thái
-            // — R-CV phải tự gọi SUBMIT_CONTROL (qua endpoint dùng chung) sau khi nhập đủ dữ liệu.
             rule("A", A_12, ECaseWorkflowAction.SUBMIT_CONTROL, A_13, ERoleCode.R_CV),
             rule("A", A_13, ECaseWorkflowAction.RETURN, A_12, ERoleCode.R_KS),
             rule("A", A_13, ECaseWorkflowAction.APPROVE_FORWARD, A_14, ERoleCode.R_KS),
+            rule("A", A_14, ECaseWorkflowAction.RETURN, A_12, ERoleCode.R_LD),
             rule("A", A_14, ECaseWorkflowAction.APPROVE_COMPLETE, A_15, ERoleCode.R_LD),
 
             // Luồng B — 5 transition

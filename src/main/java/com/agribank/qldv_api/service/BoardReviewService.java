@@ -28,10 +28,17 @@ public class BoardReviewService {
     private final UserService userService;
     private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
+    /**
+     * BR-SC04 mở rộng: cho sửa khi hồ sơ đang ở A-04 ("Trình Ban Thường vụ", R-CV nhập liệu) HOẶC
+     * A-06 ("Trình kiểm soát (trước họp BCH)") để Kiểm soát viên (R-KS) đang được giao xử lý hồ sơ
+     * ở bước kiểm soát cũng sửa được ý kiến Ban Thường vụ.
+     */
     public BoardReviewResponse upsert(String caseId, BoardReviewRequest request) {
         Case existingCase = requireCaseInScope(caseId);
-        if (!ECaseStatusCode.A_04.getCode().equals(existingCase.getStatusId())) {
-            throw new ForbiddenException("ERR-SC03-01: Hồ sơ không ở trạng thái A-04");
+        boolean atWorkingStatus = ECaseStatusCode.A_04.getCode().equals(existingCase.getStatusId());
+        boolean atControlStatus = ECaseStatusCode.A_06.getCode().equals(existingCase.getStatusId());
+        if (!atWorkingStatus && !atControlStatus) {
+            throw new ForbiddenException("ERR-SC03-01: Hồ sơ không ở trạng thái A-04 hoặc A-06");
         }
         workflowAssigneeGuard.requireAssignee(existingCase, requireUser().getId());
         CaseEstablishment establishment = establishmentClient.findByCaseId(caseId).getData().orElseThrow(

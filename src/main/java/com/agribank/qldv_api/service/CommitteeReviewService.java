@@ -7,8 +7,10 @@ import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.CaseBoardReviewClient;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseCommitteeReviewClient;
+import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.CommitteeReviewRequest;
 import com.agribank.qldv_api.response.casemgmt.CommitteeReviewResponse;
+import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseBoardReview;
 import com.agribank.qldvutils.entity.CaseCommitteeReview;
@@ -32,12 +34,24 @@ public class CommitteeReviewService {
     private final CaseClient caseClient;
     private final CaseBoardReviewClient boardReviewClient;
     private final CaseCommitteeReviewClient committeeReviewClient;
+    private final UserService userService;
+    private final WorkflowAssigneeGuard workflowAssigneeGuard;
 
+    /**
+     * BR mở rộng: cho sửa khi hồ sơ đang ở A-08 ("Trình Ban Chấp hành", R-CV nhập liệu) HOẶC A-10
+     * ("Trình kiểm soát (ban hành QĐ)") để Kiểm soát viên (R-KS) đang được giao xử lý hồ sơ ở bước
+     * kiểm soát cũng sửa được ý kiến Ban Chấp hành. Trước đây service này KHÔNG check
+     * {@code assignedUserId} (khác các service Bước khác) — bổ sung cho nhất quán, cần thiết để
+     * chặn đúng "chỉ người được giao" khi mở thêm bước A-10.
+     */
     public CommitteeReviewResponse upsert(String caseId, CommitteeReviewRequest request) {
         Case existingCase = requireCaseInScope(caseId);
-        if (!ECaseStatusCode.A_08.getCode().equals(existingCase.getStatusId())) {
-            throw new ForbiddenException("ERR-SC03-01: Hồ sơ không ở trạng thái A-08");
+        boolean atWorkingStatus = ECaseStatusCode.A_08.getCode().equals(existingCase.getStatusId());
+        boolean atControlStatus = ECaseStatusCode.A_10.getCode().equals(existingCase.getStatusId());
+        if (!atWorkingStatus && !atControlStatus) {
+            throw new ForbiddenException("ERR-SC03-01: Hồ sơ không ở trạng thái A-08 hoặc A-10");
         }
+        workflowAssigneeGuard.requireAssignee(existingCase, requireUser().getId());
         validateCommitteeDocumentDateAgainstBoardReview(caseId, request);
 
         CaseCommitteeReview saved = committeeReviewClient.upsert(toEntity(caseId, request)).getData();
@@ -71,6 +85,14 @@ public class CommitteeReviewService {
         CaseCommitteeReview review = committeeReviewClient.findByCaseId(caseId).getData().orElseThrow(
                 () -> new NotFoundException("Không tìm thấy dữ liệu ghi nhận ý kiến Ban Chấp hành"));
         return new CommitteeReviewResponse(caseId, existingCase.getStatusId(), review);
+    }
+
+    private UserDetailsImpl requireUser() {
+        UserDetailsImpl user = userService.getUserRequested();
+        if (user == null) {
+            throw new ForbiddenException("ERR-GL-02: Không xác thực được người dùng");
+        }
+        return user;
     }
 
     private Case requireCaseInScope(String caseId) {
