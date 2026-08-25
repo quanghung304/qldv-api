@@ -5,6 +5,8 @@ import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseHistoryClient;
 import com.agribank.qldv_api.gateway.CaseOrganizationClient;
+import com.agribank.qldv_api.gateway.CaseTypeClient;
+import com.agribank.qldv_api.gateway.NotificationClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.CaseSearchRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
@@ -14,12 +16,20 @@ import com.agribank.qldv_api.response.casemgmt.EligibleAssigneesResponse;
 import com.agribank.qldv_api.workflow.WorkflowEngine;
 import com.agribank.qldv_api.workflow.WorkflowRoleResolver;
 import com.agribank.qldvutils.entity.Case;
+import com.agribank.qldvutils.entity.CaseType;
+import com.agribank.qldvutils.enums.ECaseWorkflowAction;
+import com.agribank.qldvutils.enums.ENotificationType;
+import com.agribank.qldvutils.entity.NotificationRecipient;
 import com.agribank.qldvutils.request.casemgmt.CaseSearchQuery;
+import com.agribank.qldvutils.request.notification.NotificationPersistRequest;
 import com.agribank.qldvutils.response.PageResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseHistoryItemResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseListItemResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseOrganizationSummaryResponse;
+import com.agribank.qldvutils.response.notification.NotificationItemResponse;
+import com.agribank.qldvutils.response.notification.NotificationPersistResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -27,12 +37,16 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CaseService {
     private final CaseClient caseClient;
     private final CaseOrganizationClient caseOrganizationClient;
     private final CaseHistoryClient caseHistoryClient;
+    private final CaseTypeClient caseTypeClient;
+    private final NotificationClient notificationClient;
+    private final NotificationPushService notificationPushService;
     private final OrganizationService organizationService;
     private final UserService userService;
     private final WorkflowEngine workflowEngine;
@@ -112,6 +126,106 @@ public class CaseService {
         }
         workflowEngine.transition(caseId, request.getAction(), userRequested.getRoleCodes(),
                 userRequested.getId(), request.getComment(), request.getAssignedUserId());
+        notifyAfterWorkflowAction(caseId, request.getAction(), request.getComment());
+    }
+
+    /**
+     * Tạo PMDV_NOTIFICATION sau khi transition thành công — người xử lý bước kế tiếp (mọi action)
+     * hoặc người vừa bị trả hồ sơ (RETURN). Đọc lại Case SAU transition vì WorkflowEngine đã tự
+     * resolve/ghi assignedUserId mới vào đó (xem WorkflowEngine#resolveNewAssigneeId) — không tính
+     * lại logic gán người ở đây, chỉ suy ra thêm nhóm broadcast khi chưa gán được 1 người cụ thể.
+     * Lỗi ở bước này KHÔNG được làm hỏng transition chính (đã persist xong) — chỉ log warn.
+     */
+    private void notifyAfterWorkflowAction(String caseId, String action, String comment) {
+        try {
+            Case updatedCase = caseClient.findById(caseId).getData().orElse(null);
+            if (updatedCase == null) {
+                return;
+            }
+            List<String> recipientUserIds = resolveNotificationRecipients(updatedCase, action);
+            if (recipientUserIds.isEmpty()) {
+                return;
+            }
+            boolean isReturn = ECaseWorkflowAction.RETURN.name().equals(action);
+
+            NotificationPersistRequest notification = new NotificationPersistRequest();
+            notification.setRefId(caseId);
+            notification.setType((isReturn ? ENotificationType.CASE_RETURNED : ENotificationType.TASK_ASSIGNED).name());
+            notification.setTitle(buildNotificationTitle(updatedCase, isReturn));
+            notification.setContent(buildNotificationContent(updatedCase, isReturn, comment));
+            notification.setScreen(resolveScreen(updatedCase));
+            notification.setRecipientUserIds(recipientUserIds);
+
+            NotificationPersistResult result = notificationClient.persist(notification).getData();
+            pushToRecipients(result);
+        } catch (Exception e) {
+            log.warn("Tạo thông báo sau workflow-action thất bại (case {}, action {}): {}", caseId, action, e.getMessage(), e);
+        }
+    }
+
+    /** Đẩy real-time qua WebSocket cho từng recipient vừa lưu (đã có id thật, dùng để FE gọi API đánh dấu đã xem) — xem NotificationPushService. */
+    private void pushToRecipients(NotificationPersistResult result) {
+        if (result == null || result.getNotification() == null) {
+            return;
+        }
+        for (NotificationRecipient recipient : safeList(result.getRecipients())) {
+            NotificationItemResponse payload = new NotificationItemResponse(
+                    recipient.getId(),
+                    result.getNotification().getRefId(),
+                    result.getNotification().getTitle(),
+                    result.getNotification().getContent(),
+                    result.getNotification().getType(),
+                    result.getNotification().getScreen(),
+                    recipient.getIsSeen(),
+                    result.getNotification().getCreatedAt());
+            notificationPushService.push(recipient.getUserId(), payload);
+        }
+    }
+
+    /**
+     * assignedUserId đã resolve được 1 người cụ thể (kể cả RETURN, xem WorkflowEngine) -> đúng
+     * người đó. Còn lại (role bước mới thuộc nhóm full-scope, chưa gán ai cụ thể) -> broadcast cho
+     * TOÀN BỘ user đủ điều kiện của role đó (EligibleAssigneeService, giống GET
+     * /cases/{caseId}/eligible-assignees) — CHỈ áp dụng cho action tiến (KHÔNG áp dụng cho RETURN,
+     * RETURN luôn nhắm đúng 1 người hoặc không ai, không có khái niệm "nhóm" cần trả lại).
+     */
+    private List<String> resolveNotificationRecipients(Case updatedCase, String action) {
+        if (updatedCase.getAssignedUserId() != null) {
+            return List.of(updatedCase.getAssignedUserId());
+        }
+        if (ECaseWorkflowAction.RETURN.name().equals(action)) {
+            return List.of();
+        }
+        String requiredRole = workflowRoleResolver.resolveRequiredRoleForNextActor(updatedCase.getStatusId(), null);
+        List<String> caseOrganizationIds = safeList(
+                caseOrganizationClient.findWithOrganizationByCaseId(updatedCase.getId()).getData())
+                .stream().map(CaseOrganizationSummaryResponse::getOrganizationId).toList();
+        return eligibleAssigneeService.findEligibleAssignees(requiredRole, caseOrganizationIds).stream()
+                .map(EligibleAssigneeResponse::getUserId)
+                .toList();
+    }
+
+    /** screen của Notification = CaseType.code (ESTABLISH/DISSOLVE/MERGE/...) — cho FE biết điều hướng về màn nào khi bấm vào thông báo. Không tìm thấy case type -> null (không chặn tạo thông báo). */
+    private String resolveScreen(Case updatedCase) {
+        return caseTypeClient.findById(updatedCase.getCaseTypeId()).getData()
+                .map(CaseType::getCode)
+                .orElse(null);
+    }
+
+    private String buildNotificationTitle(Case updatedCase, boolean isReturn) {
+        return isReturn
+                ? "Hồ sơ " + updatedCase.getCaseCode() + " bị trả lại"
+                : "Hồ sơ " + updatedCase.getCaseCode() + " cần bạn xử lý";
+    }
+
+    private String buildNotificationContent(Case updatedCase, boolean isReturn, String comment) {
+        String orgName = updatedCase.getProposedOrganizationName();
+        String suffix = (orgName == null || orgName.isBlank()) ? "" : " (" + orgName + ")";
+        if (isReturn) {
+            String reason = (comment == null || comment.isBlank()) ? "" : ": " + comment;
+            return "Hồ sơ " + updatedCase.getCaseCode() + suffix + " đã bị trả lại" + reason;
+        }
+        return "Hồ sơ " + updatedCase.getCaseCode() + suffix + " đang chờ bạn xử lý ở bước tiếp theo";
     }
 
     /**
