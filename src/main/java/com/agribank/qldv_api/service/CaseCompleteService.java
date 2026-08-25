@@ -119,10 +119,6 @@ public class CaseCompleteService {
         String matchedRole = requireMatchedRole(rule, user.getRoleCodes());
         workflowAssigneeGuard.requireAssignee(existingCase, user.getId());
 
-        CaseEstablishment establishment = requireEstablishment(caseId);
-        Document establishDoc = requireEstablishDecisionDocument(caseId);
-        String organizationName = requireOrganizationName(existingCase);
-        requireOrganizationNameUnique(organizationName);
         CaseType caseType = requireCaseType(existingCase.getCaseTypeId());
 
         CaseCompletePersistRequest persistRequest = switch (caseType.getCode()) {
@@ -142,8 +138,6 @@ public class CaseCompleteService {
 
         CaseCompletePersistRequest request = new CaseCompletePersistRequest();
         request.setCaseId(caseId);
-        request.setOrganization(organization);
-        request.setCommitteeMembers(committeeMembers);
         request.setFromStatusId(existingCase.getStatusId());
         request.setToStatusId(rule.toStatusCode().getCode());
         request.setAction(ECaseWorkflowAction.APPROVE_COMPLETE.name());
