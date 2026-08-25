@@ -342,13 +342,20 @@ public class UserService {
         user.setDepId(userUpdateRequest.getDepId());
         user.setFullName(userUpdateRequest.getFullName());
 
-        Staff staff = null;
         if (Objects.nonNull(userUpdateRequest.getOrganizationId())){
             organizationClient.findById(userUpdateRequest.getOrganizationId()).getData().orElseThrow(() -> new CommonException("Kiểm tra lại Tổ chức Đảng"));
-            staff = staffClient.findByStaffCode(user.getStaffCode()).getData();
         }
+
+        Staff staff = Objects.nonNull(user.getStaffCode())
+                ? staffClient.findByStaffCode(user.getStaffCode()).getData()
+                : null;
+
         if (Objects.nonNull(staff)){
-            staff.setOrganizationId(userUpdateRequest.getOrganizationId());
+            staff.setFullName(userUpdateRequest.getFullName());
+            staff.setBrcd(userUpdateRequest.getBrcd());
+            if (Objects.nonNull(userUpdateRequest.getOrganizationId())){
+                staff.setOrganizationId(userUpdateRequest.getOrganizationId());
+            }
         }
 
         try {
@@ -364,7 +371,9 @@ public class UserService {
                 userRoleService.assignUserRole(userRoleRequest);
             }
 
-            staffClient.save(staff);
+            if (Objects.nonNull(staff)){
+                staffClient.save(staff);
+            }
 
             userLogService.handlerWriteLogUpdate(userOld, user);
             return "Thành công";
