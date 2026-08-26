@@ -39,7 +39,8 @@ public class EstablishmentCaseRequest {
     /**
      * Hình thức xử lý DỰ KIẾN của Ban Thường vụ Đảng ủy (1=MEETING, 2=BALLOT) — NULLABLE, KHÔNG
      * validate bắt buộc ở API tạo hồ sơ (chỉ được kiểm tra ở đúng 1 chỗ: API sinh văn bản theo
-     * bước, xem DocumentGenerationService). KHÔNG liên quan CaseBoardReview.method (Bước 2).
+     * bước, xem WorkflowConditionResolver/DocumentContentGenerationService). KHÔNG liên quan
+     * CaseBoardReview.method (Bước 2).
      */
     Integer btvMethod;
     Integer staffCount;

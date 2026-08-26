@@ -5,54 +5,41 @@ import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.CaseTypeClient;
 import com.agribank.qldv_api.gateway.DocumentTemplateClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
-import com.agribank.qldv_api.request.doctemplate.PlaceholderMappingItemRequest;
 import com.agribank.qldv_api.request.doctemplate.UploadDocumentTemplateRequest;
 import com.agribank.qldv_api.response.doctemplate.DocumentTemplateResponse;
-import com.agribank.qldv_api.response.doctemplate.PlaceholderMappingResponse;
 import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldv_api.storage.S3Service;
 import com.agribank.qldv_api.storage.StorageKeyBuilder;
-import com.agribank.qldvutils.dto.doctemplate.FieldConfigEntry;
-import com.agribank.qldvutils.dto.doctemplate.TemplateMappingConfig;
 import com.agribank.qldvutils.entity.CaseType;
 import com.agribank.qldvutils.entity.DocumentTemplate;
 import com.agribank.qldvutils.enums.Constants;
 import com.agribank.qldvutils.enums.ERoleCode;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.doctemplate.DocumentTemplatePersistRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDate;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Admin API quản lý mẫu văn bản (FN10 chưa seed permission — dùng tạm hardcode role R-ADM thay
- * vì {@code @RequirePermission}, xem {@link #requireAdmin()}).
+ * Admin API quản lý mẫu văn bản (FN10 chưa seed permission — dùng tạm hardcode role R-ADM thay vì
+ * {@code @RequirePermission}, xem {@link #requireAdmin()}).
  *
- * PMDV_DOCUMENT_TYPE/PMDV_DOCUMENT_RULE KHÔNG còn dùng nữa (xem PMDV_DOCUMENT_TEMPLATE) — mọi
- * thông tin "văn bản nào dùng cho hồ sơ loại gì, bước nào" nay nằm thẳng trên
- * {@link DocumentTemplate} (caseTypeId/authorityLevel/workflowStage/templateCode/conditionKey), không
- * cần bảng rule riêng để "khai báo bắt buộc" nữa.
+ * Sinh văn bản lần 3 — mỗi template gắn 1 {@code generator_key} (gõ tay lúc upload, khớp tên bean
+ * {@code DocumentContentProvider} ở qldv-db) THAY THẾ HOÀN TOÀN cơ chế auto-match placeholder theo
+ * field_mapping_config (schema v2, đã xoá cùng {@code FieldCatalog}/{@code TemplateMappingConfig})
+ * — không còn khái niệm "chưa khớp hết placeholder, chờ admin gán tay" nên upload LUÔN kích hoạt
+ * ACTIVE ngay (không còn trạng thái PENDING_REVIEW chờ mapping); {@code generator_key} không khớp
+ * bean nào chỉ báo lỗi LÚC GỌI API sinh draft (xem {@code DocumentContentGenerationService}), không
+ * chặn upload — vì thứ tự thực tế có thể là đăng ký template trước, dev viết hàm Java sau.
  *
- * field_mapping_config schema v2 — xem {@link TemplateMappingConfig}. Auto-match lúc upload tra
- * {@link FieldCatalog} để gán {@code resolutionType} (SIMPLE/DERIVED/EXTERNAL_LOOKUP) cho từng
- * placeholder; placeholder không auto-match được lưu với {@code resolutionType=null}, chờ admin
- * gán thủ công qua {@link #updateMapping}.
- *
- * Cả upload lẫn update-mapping đều ghi PMDV_DOCUMENT_TEMPLATE + (có thể) chuyển các bản ACTIVE
- * khác cùng "template family" về INACTIVE — 2+ dòng liên quan trong 1 request, nên PHẢI gói thành 1
- * lệnh {@code documentTemplateClient.persist(...)} chạy 1 transaction ở qldv-db
- * (coding-convention.md mục 9), KHÔNG gọi rời rạc nhiều lệnh save/update.
+ * Upload vẫn ghi PMDV_DOCUMENT_TEMPLATE + chuyển các bản ACTIVE khác cùng "template family" về
+ * INACTIVE trong CÙNG 1 transaction (coding-convention.md mục 9), KHÔNG gọi save() rời rạc.
  */
 @Service
 @RequiredArgsConstructor
@@ -65,13 +52,11 @@ public class DocumentTemplateService {
     private final S3Service s3Service;
     private final StorageKeyBuilder storageKeyBuilder;
     private final UserService userService;
-    private final ObjectMapper objectMapper;
 
     public DocumentTemplateResponse uploadTemplate(UploadDocumentTemplateRequest request) {
         requireAdmin();
 
         Optional<CaseType> caseType = caseTypeClient.findById(request.getCaseTypeId()).getData();
-
         if (caseType.isEmpty()) {
             throw new NotFoundException("Không tìm thấy loại hồ sơ");
         }
@@ -83,9 +68,7 @@ public class DocumentTemplateService {
         String templateCode = request.getTemplateCode();
         String conditionKey = request.getConditionKey();
 
-
         DocumentTemplate template = documentTemplateClient.findTemplate(caseTypeId, authorityLevel, workflowStage, templateCode, conditionKey).getData();
-
         if (Objects.isNull(template)) {
             template = DocumentTemplate.builder()
                     .caseTypeId(caseTypeId)
@@ -96,69 +79,22 @@ public class DocumentTemplateService {
                     .build();
         }
 
-        Set<String> placeholderKeys = extractPlaceholders(file);
-        List<FieldConfigEntry> fields = buildFieldEntries(placeholderKeys);
-
-        TemplateMappingConfig config = new TemplateMappingConfig();
-        config.setFields(fields);
-
         String filename = file.getOriginalFilename();
         String storageObject = caseType.get().getCode() + authorityLevel + workflowStage + templateCode;
-
         String storageKey = storageKeyBuilder.templateKey(storageObject, filename, LocalDate.now());
         s3Service.uploadObject(storageKey, readBytes(file), DOCX_CONTENT_TYPE);
 
         template.setTemplateName(filename);
         template.setStoragePath(storageKey);
+        template.setGeneratorKey(request.getGeneratorKey());
         template.setStatus(Constants.STATUS_ACTIVE);
-        template.setFieldMappingConfig(writeJson(config));
-
-        template = documentTemplateClient.save(template).getData();
-        return toResponse(template, fields);
-    }
-
-    public DocumentTemplateResponse updateMapping(String templateId, List<PlaceholderMappingItemRequest> manualMappings) {
-        requireAdmin();
-        DocumentTemplate template = documentTemplateClient.findById(templateId).getData().orElse(null);
-        if (template == null) {
-            throw new NotFoundException("Không tìm thấy mẫu văn bản");
-        }
-
-        TemplateMappingConfig config = readConfig(template.getFieldMappingConfig());
-        Map<String, String> manualByPlaceholder = manualMappings.stream()
-                .collect(Collectors.toMap(PlaceholderMappingItemRequest::getPlaceholder,
-                        PlaceholderMappingItemRequest::getFieldPath, (a, b) -> b));
-
-        for (FieldConfigEntry field : config.getFields()) {
-            String manualFieldPath = manualByPlaceholder.get(field.getPlaceholder());
-            if (manualFieldPath == null) {
-                continue;
-            }
-            boolean validFieldPath = FieldCatalog.ENTRIES.stream()
-                    .anyMatch(e -> FieldCatalog.SIMPLE.equals(e.resolutionType()) && manualFieldPath.equals(e.fieldPath()));
-            if (!validFieldPath) {
-                throw new CommonException("field_path '" + manualFieldPath + "' không thuộc FieldPathRegistry (SIMPLE)");
-            }
-            field.setResolutionType(FieldCatalog.SIMPLE);
-            field.setFieldPath(manualFieldPath);
-            field.setResolverId(null);
-            field.setResolverParams(null);
-        }
-
-        boolean allMatched = !config.getFields().isEmpty()
-                && config.getFields().stream().allMatch(f -> f.getResolutionType() != null);
-        boolean becameActive = allMatched && !Constants.STATUS_ACTIVE.equals(template.getStatus());
-        if (becameActive) {
-            template.setStatus(Constants.STATUS_ACTIVE);
-        }
-        template.setFieldMappingConfig(writeJson(config));
 
         DocumentTemplatePersistRequest persistRequest = new DocumentTemplatePersistRequest();
         persistRequest.setTemplate(template);
-        persistRequest.setDeactivateSiblings(becameActive);
+        persistRequest.setDeactivateSiblings(true);
 
         DocumentTemplate saved = documentTemplateClient.persist(persistRequest).getData();
-        return toResponse(saved, config.getFields());
+        return toResponse(saved);
     }
 
     public DocumentTemplateResponse getById(String id) {
@@ -167,7 +103,7 @@ public class DocumentTemplateService {
         if (template == null) {
             throw new NotFoundException("Không tìm thấy mẫu văn bản");
         }
-        return toResponse(template, readConfig(template.getFieldMappingConfig()).getFields());
+        return toResponse(template);
     }
 
     public List<DocumentTemplateResponse> search(String caseTypeId, Integer authorityLevel, String workflowStage,
@@ -175,9 +111,7 @@ public class DocumentTemplateService {
         requireAdmin();
         List<DocumentTemplate> templates = safeList(
                 documentTemplateClient.search(caseTypeId, authorityLevel, workflowStage, templateCode, status).getData());
-        return templates.stream()
-                .map(t -> toResponse(t, readConfig(t.getFieldMappingConfig()).getFields()))
-                .toList();
+        return templates.stream().map(this::toResponse).toList();
     }
 
     private void requireAdmin() {
@@ -191,35 +125,7 @@ public class DocumentTemplateService {
         }
     }
 
-    private Set<String> extractPlaceholders(MultipartFile file) {
-        LinkedHashSet<String> keys = new LinkedHashSet<>();
-        try (InputStream is = file.getInputStream(); XWPFDocument document = new XWPFDocument(is)) {
-            for (XWPFParagraph paragraph : document.getParagraphs()) {
-                Matcher matcher = FieldCatalog.PLACEHOLDER_PATTERN.matcher(paragraph.getText());
-                while (matcher.find()) {
-                    keys.add(matcher.group(1));
-                }
-            }
-        } catch (IOException e) {
-            throw new CommonException("Không đọc được file .docx, vui lòng kiểm tra lại file upload");
-        }
-        return keys;
-    }
-
-    private List<FieldConfigEntry> buildFieldEntries(Set<String> placeholderKeys) {
-        return placeholderKeys.stream()
-                .map(key -> {
-                    FieldCatalog.Entry entry = FieldCatalog.findByKey(key);
-                    if (entry == null) {
-                        return new FieldConfigEntry(key, null, null, null, null);
-                    }
-                    return new FieldConfigEntry(key, entry.resolutionType(), entry.fieldPath(),
-                            entry.resolverId(), entry.resolverParams());
-                })
-                .toList();
-    }
-
-    private DocumentTemplateResponse toResponse(DocumentTemplate template, List<FieldConfigEntry> fields) {
+    private DocumentTemplateResponse toResponse(DocumentTemplate template) {
         DocumentTemplateResponse response = new DocumentTemplateResponse();
         response.setId(template.getId());
         response.setCaseTypeId(template.getCaseTypeId());
@@ -230,32 +136,10 @@ public class DocumentTemplateService {
         response.setTemplateName(template.getTemplateName());
         response.setStoragePath(template.getStoragePath());
         response.setStatus(template.getStatus());
-        response.setPlaceholders(fields.stream()
-                .map(f -> new PlaceholderMappingResponse(f.getPlaceholder(), f.getResolutionType(),
-                        f.getFieldPath(), f.getResolverId(), f.getResolverParams()))
-                .toList());
+        response.setGeneratorKey(template.getGeneratorKey());
         response.setCreatedAt(template.getCreatedAt());
         response.setUpdatedAt(template.getUpdatedAt());
         return response;
-    }
-
-    private TemplateMappingConfig readConfig(String json) {
-        if (json == null || json.isBlank()) {
-            return new TemplateMappingConfig();
-        }
-        try {
-            return objectMapper.readValue(json, TemplateMappingConfig.class);
-        } catch (JsonProcessingException e) {
-            throw new CommonException("field_mapping_config lưu trong DB bị lỗi định dạng JSON");
-        }
-    }
-
-    private String writeJson(TemplateMappingConfig config) {
-        try {
-            return objectMapper.writeValueAsString(config);
-        } catch (JsonProcessingException e) {
-            throw new CommonException("Không serialize được field_mapping_config");
-        }
     }
 
     private static byte[] readBytes(MultipartFile file) {

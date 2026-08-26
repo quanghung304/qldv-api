@@ -130,7 +130,7 @@ public class EstablishmentCaseService {
                 .assignedUserId(user.getId())
                 .proposedOrganizationName(request.getProposedOrganizationName())
                 // NULLABLE, không validate bắt buộc ở đây — chỉ kiểm tra ở API sinh văn bản
-                // theo bước (DocumentGenerationService), theo đúng phạm vi đã chốt.
+                // theo bước (DocumentContentGenerationService), theo đúng phạm vi đã chốt.
                 .btvMethod(request.getBtvMethod())
                 .build();
 
