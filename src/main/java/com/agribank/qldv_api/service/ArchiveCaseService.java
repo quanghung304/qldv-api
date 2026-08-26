@@ -23,33 +23,38 @@ import org.springframework.stereotype.Service;
  * Việc còn lại DUY NHẤT của API-SC06-01 (không tự lặp lại guard chuyển trạng thái, case đã ở đúng
  * A-14/B-04 rồi mới gọi được endpoint này) là sinh 2 văn bản lưu trữ ("Danh mục hồ sơ lưu trữ",
  * "Biên bản bàn giao lưu trữ"), tái dùng NGUYÊN VẸN engine sinh văn bản đã có sẵn
- * ({@link DocumentGenerationService}) — nối nội bộ (service gọi service), không qua HTTP.
+ * ({@link DocumentContentGenerationService#generateAllForStage}) — nối nội bộ (service gọi
+ * service), không qua HTTP. Sinh văn bản lần 3 (generator_key/DocumentContentProvider) đã thay thế
+ * hoàn toàn cơ chế field_mapping_config cũ — {@code DocumentGenerationService} cũ đã bị xoá,
+ * ArchiveCaseService chuyển sang gọi {@link DocumentContentGenerationService}, giữ nguyên hành vi
+ * (guard status/assignee/RBAC bên trong không đổi, chỉ đổi cơ chế tra nội dung placeholder).
  *
  * Yêu cầu vận hành (KHÔNG code được, cần Admin thao tác riêng): phải seed 2 dòng
  * PMDV_DOCUMENT_TEMPLATE với workflow_stage="A-14" (hoặc "B-04" cho Luồng B) qua flow upload
  * template hiện có (DocumentTemplateController, role R-ADM) thì lệnh gọi này mới thực sự sinh ra
- * văn bản — nếu chưa seed, generateDocuments() vẫn trả 200 kèm message "Chưa cấu hình sinh văn bản
- * động cho bước này" (hành vi có sẵn của engine), KHÔNG coi là lỗi ở endpoint này.
+ * văn bản — nếu chưa seed, generateAllForStage() vẫn trả 200 kèm message "Chưa cấu hình sinh văn
+ * bản động cho bước này" (hành vi có sẵn của engine), KHÔNG coi là lỗi ở endpoint này.
  *
- * {@code @Lazy} trên DocumentGenerationService: service đó (và toàn bộ chuỗi phụ thuộc S3Client/
- * S3Config) đã tồn tại từ trước, nhưng nối trực tiếp ở đây sẽ kéo yêu cầu cấu hình S3 (S3_ENDPOINT/
- * S3_BUCKET_NAME/...) vào NGAY LÚC KHỞI ĐỘNG CaseController — tức là chặn luôn mọi endpoint khác
- * của case (search/get/workflow-action...) nếu môi trường chưa cấu hình S3, dù các endpoint đó
- * không liên quan gì tới lưu trữ văn bản. @Lazy trì hoãn khởi tạo tới lần gọi /archive đầu tiên.
+ * {@code @Lazy} trên DocumentContentGenerationService: service đó (và toàn bộ chuỗi phụ thuộc
+ * S3Client/S3Config) đã tồn tại từ trước, nhưng nối trực tiếp ở đây sẽ kéo yêu cầu cấu hình S3
+ * (S3_ENDPOINT/S3_BUCKET_NAME/...) vào NGAY LÚC KHỞI ĐỘNG CaseController — tức là chặn luôn mọi
+ * endpoint khác của case (search/get/workflow-action...) nếu môi trường chưa cấu hình S3, dù các
+ * endpoint đó không liên quan gì tới lưu trữ văn bản. @Lazy trì hoãn khởi tạo tới lần gọi /archive
+ * đầu tiên.
  */
 @Service
 public class ArchiveCaseService {
     private final CaseClient caseClient;
     private final UserService userService;
     private final CaseFlowRoleGuard caseFlowRoleGuard;
-    private final DocumentGenerationService documentGenerationService;
+    private final DocumentContentGenerationService documentContentGenerationService;
 
     public ArchiveCaseService(CaseClient caseClient, UserService userService, CaseFlowRoleGuard caseFlowRoleGuard,
-                               @Lazy DocumentGenerationService documentGenerationService) {
+                               @Lazy DocumentContentGenerationService documentContentGenerationService) {
         this.caseClient = caseClient;
         this.userService = userService;
         this.caseFlowRoleGuard = caseFlowRoleGuard;
-        this.documentGenerationService = documentGenerationService;
+        this.documentContentGenerationService = documentContentGenerationService;
     }
 
     public ArchiveCaseResponse archive(String caseId) {
@@ -58,7 +63,7 @@ public class ArchiveCaseService {
         caseFlowRoleGuard.requireCaseworkerRoleForFlow(existingCase, user.getRoleCodes());
 //        requireArchivedStage(existingCase);
 
-        GenerateDocumentsResponse documents = documentGenerationService.generateDocuments(caseId, existingCase.getStatusId());
+        GenerateDocumentsResponse documents = documentContentGenerationService.generateAllForStage(caseId, existingCase.getStatusId());
         return new ArchiveCaseResponse(caseId, existingCase.getStatusId(), documents);
     }
 

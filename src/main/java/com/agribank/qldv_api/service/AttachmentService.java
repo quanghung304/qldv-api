@@ -36,7 +36,7 @@ import java.util.Set;
  * còn cơ chế "thay thế theo bước" tự động như trước. Tái sử dụng nguyên vẹn {@link S3Service}/
  * {@link StorageKeyBuilder} (task sinh văn bản trước đó) và scope-check của
  * {@link OrganizationService#resolveScope()} (đúng pattern {@code CaseService}/
- * {@code DocumentGenerationService} — KHÔNG viết lại logic phạm vi).
+ * {@code DocumentContentGenerationService} — KHÔNG viết lại logic phạm vi).
  */
 @Slf4j
 @Service

@@ -3,8 +3,6 @@ package com.agribank.qldv_api.response.doctemplate;
 import lombok.Data;
 
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.util.List;
 
 @Data
 public class DocumentTemplateResponse {
@@ -16,10 +14,8 @@ public class DocumentTemplateResponse {
     private String conditionKey;
     private String templateName;
     private String storagePath;
-    private Integer version;
     private String status;
-    private LocalDate effectiveDate;
-    private List<PlaceholderMappingResponse> placeholders;
+    private String generatorKey;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

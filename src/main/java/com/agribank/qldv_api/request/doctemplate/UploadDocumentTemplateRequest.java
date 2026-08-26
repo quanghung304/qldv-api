@@ -40,6 +40,8 @@ public class UploadDocumentTemplateRequest {
     String workflowStage;
     String templateCode;
     String conditionKey;
+    /** Định danh hàm Java sinh nội dung (PMDV_DOCUMENT_TEMPLATE.generator_key) — gõ tay, chưa cần khớp bean nào đã có sẵn (xem entity DocumentTemplate). */
+    String generatorKey;
 
     public void validate() {
         Map<String, String> errors = new LinkedHashMap<>();
@@ -75,6 +77,9 @@ public class UploadDocumentTemplateRequest {
         }
         if (templateCode == null || templateCode.isBlank()) {
             errors.put("templateCode", "templateCode không được để trống");
+        }
+        if (generatorKey == null || generatorKey.isBlank()) {
+            errors.put("generatorKey", "generatorKey không được để trống");
         }
 
         if (!errors.isEmpty()) {
