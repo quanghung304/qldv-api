@@ -3,7 +3,7 @@ package com.agribank.qldv_api.service;
 import java.util.Collections;
 import java.util.Set;
 
-class OrganizationScope {
+public class OrganizationScope {
     private final boolean full;
     private final Set<String> allowedIds;
 
@@ -20,7 +20,7 @@ class OrganizationScope {
         return new OrganizationScope(false, allowedIds);
     }
 
-    boolean isFull() {
+    public boolean isFull() {
         return full;
     }
 
@@ -28,7 +28,7 @@ class OrganizationScope {
         return allowedIds;
     }
 
-    boolean isAllowed(String organizationId) {
+    public boolean isAllowed(String organizationId) {
         return full || allowedIds.contains(organizationId);
     }
 }

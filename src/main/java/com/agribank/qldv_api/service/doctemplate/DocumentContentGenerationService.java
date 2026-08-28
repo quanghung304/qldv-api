@@ -1,4 +1,4 @@
-package com.agribank.qldv_api.service;
+package com.agribank.qldv_api.service.doctemplate;
 
 import com.agribank.qldv_api.exception.ForbiddenException;
 import com.agribank.qldv_api.exception.NotFoundException;
@@ -8,6 +8,9 @@ import com.agribank.qldv_api.gateway.DocumentClient;
 import com.agribank.qldv_api.gateway.DocumentContentClient;
 import com.agribank.qldv_api.gateway.DocumentTemplateClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
+import com.agribank.qldv_api.service.OrganizationScope;
+import com.agribank.qldv_api.service.OrganizationService;
+import com.agribank.qldv_api.service.UserService;
 import com.agribank.qldv_api.response.doctemplate.CaseDocumentTemplateItemResponse;
 import com.agribank.qldv_api.response.doctemplate.CaseDocumentTemplatesResponse;
 import com.agribank.qldv_api.response.doctemplate.GenerateCaseDocumentResponse;
@@ -29,12 +32,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -82,6 +89,7 @@ public class DocumentContentGenerationService {
     private final WorkflowAssigneeGuard workflowAssigneeGuard;
     private final S3Service s3Service;
     private final StorageKeyBuilder storageKeyBuilder;
+    private final BranchNameByBrcdResolver branchNameByBrcdResolver;
 
     // ---------------------------------------------------------------- Phần 4
 
@@ -123,14 +131,14 @@ public class DocumentContentGenerationService {
 
     // ---------------------------------------------------------------- Phần 5
 
-    public GenerateCaseDocumentResponse generateDraft(String caseId, String templateId, String workflowStage) {
+    public GenerateCaseDocumentResponse generateDraft(String caseId, String templateId) {
         verifyCaseAccess(caseId);
         Case caseEntity = requireCase(caseId);
         DocumentTemplate template = documentTemplateClient.findById(templateId).getData().orElse(null);
         if (template == null) {
             throw new NotFoundException("Không tìm thấy mẫu văn bản");
         }
-        validateTemplateMatchesCase(template, caseEntity, workflowStage);
+        validateTemplateMatchesCase(template, caseEntity);
 
         Map<String, String> values = resolveContentOrThrow(template, caseId);
         MergeResult merged = mergeAndUpload(caseEntity, template, values);
@@ -157,25 +165,38 @@ public class DocumentContentGenerationService {
         return document;
     }
 
-    private void validateTemplateMatchesCase(DocumentTemplate template, Case caseEntity, String workflowStage) {
+    private void validateTemplateMatchesCase(DocumentTemplate template, Case caseEntity) {
         if (!Constants.STATUS_ACTIVE.equals(template.getStatus())) {
             throw new CommonException("Mẫu văn bản '" + template.getTemplateName() + "' không còn hiệu lực (status="
                     + template.getStatus() + ")");
         }
         boolean matches = template.getCaseTypeId().equals(caseEntity.getCaseTypeId())
-                && template.getAuthorityLevel().equals(caseEntity.getAuthorityLevel())
-                && template.getWorkflowStage().equals(workflowStage);
+                && template.getAuthorityLevel().equals(caseEntity.getAuthorityLevel());
+
         if (!matches) {
-            throw new CommonException("Mẫu văn bản '" + template.getTemplateName()
-                    + "' không khớp loại hồ sơ/cấp thẩm quyền của hồ sơ này, hoặc không thuộc bước workflowStage="
-                    + workflowStage + " đã chọn");
+            throw new CommonException("Mẫu văn bản '" + template.getTemplateName() + "' không khớp loại hồ sơ/cấp thẩm quyền của hồ sơ này");
         }
     }
 
     private Map<String, String> resolveContentOrThrow(DocumentTemplate template, String caseId) {
-        return documentContentClient.resolve(template.getGeneratorKey(), caseId).getData()
+        Map<String, String> values = new LinkedHashMap<>(documentContentClient.resolve(template.getGeneratorKey(), caseId).getData()
                 .orElseThrow(() -> new CommonException("Chưa có hàm sinh nội dung cho mẫu '" + template.getTemplateName()
-                        + "' (generatorKey='" + template.getGeneratorKey() + "'), vui lòng liên hệ đội phát triển"));
+                        + "' (generatorKey='" + template.getGeneratorKey() + "'), vui lòng liên hệ đội phát triển")));
+        enrichExternalFields(caseId, values);
+        return values;
+    }
+
+    /**
+     * Field CHỈ tra được ở tầng qldv-api (qldv-db không gọi được IAM/BranchService — đúng ranh giới
+     * kiến trúc) — hiện có duy nhất professional_unit_name (tên chi nhánh theo brcd, xem
+     * {@link BranchNameByBrcdResolver}). Chỉ put khi tra được giá trị THẬT: key vắng mặt khiến merge
+     * giữ nguyên "[professional_unit_name]" gốc, đúng quy ước áp dụng cho mọi field DocumentContentProvider.
+     */
+    private void enrichExternalFields(String caseId, Map<String, String> values) {
+        String branchName = branchNameByBrcdResolver.resolve(caseId);
+        if (branchName != null && !branchName.isBlank()) {
+            values.put("professional_unit_name", branchName);
+        }
     }
 
     // ---------------------------------------------------------- Bulk theo bước (ArchiveCaseService)
@@ -247,13 +268,15 @@ public class DocumentContentGenerationService {
     }
 
     private GenerateDocumentResultResponse generateFromTemplateForResult(Case caseEntity, DocumentTemplate template) {
-        Optional<Map<String, String>> values = documentContentClient.resolve(template.getGeneratorKey(), caseEntity.getId()).getData();
-        if (values.isEmpty()) {
+        Optional<Map<String, String>> resolved = documentContentClient.resolve(template.getGeneratorKey(), caseEntity.getId()).getData();
+        if (resolved.isEmpty()) {
             return new GenerateDocumentResultResponse(template.getId(), template.getTemplateCode(), template.getTemplateName(),
                     "PROVIDER_NOT_FOUND", false, null, "Chưa có hàm sinh nội dung cho mẫu '" + template.getTemplateName()
                     + "' (generatorKey='" + template.getGeneratorKey() + "')");
         }
-        MergeResult merged = mergeAndUpload(caseEntity, template, values.get());
+        Map<String, String> values = new LinkedHashMap<>(resolved.get());
+        enrichExternalFields(caseEntity.getId(), values);
+        MergeResult merged = mergeAndUpload(caseEntity, template, values);
         String downloadPath = "/api/v1/document-templates/download?caseId=%s&templateId=%s".formatted(caseEntity.getId(), template.getId());
         return new GenerateDocumentResultResponse(template.getId(), template.getTemplateCode(), template.getTemplateName(),
                 "GENERATED", merged.hasUnresolvedFields(), downloadPath, null);
@@ -292,10 +315,27 @@ public class DocumentContentGenerationService {
             for (XWPFParagraph paragraph : document.getParagraphs()) {
                 mergeParagraph(paragraph, values, hasUnresolved);
             }
+            for (XWPFTable table : document.getTables()) {
+                mergeTable(table, values, hasUnresolved);
+            }
             document.write(bos);
             return new MergeResult(bos.toByteArray(), hasUnresolved[0]);
         } catch (IOException e) {
             throw new CommonException("Không merge được file mẫu .docx");
+        }
+    }
+
+    /** Đệ quy xuống bảng lồng trong ô (cell) — hầu hết placeholder của các mẫu phiếu/biên bản kiểm phiếu nằm trong bảng, không phải paragraph cấp document. */
+    private void mergeTable(XWPFTable table, Map<String, String> values, boolean[] hasUnresolved) {
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+                for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                    mergeParagraph(paragraph, values, hasUnresolved);
+                }
+                for (XWPFTable nestedTable : cell.getTables()) {
+                    mergeTable(nestedTable, values, hasUnresolved);
+                }
+            }
         }
     }
 
