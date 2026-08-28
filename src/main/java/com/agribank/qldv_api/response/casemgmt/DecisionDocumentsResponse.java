@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 /**
- * Cùng tên field với {@code DecisionDocumentsRequest} (thay vì trả nguyên {@code List<Document>}
+ * Cùng tên field với {@code DecisionDocumentsRequest} (thay vì trả nguyên {@code List<GeneratedDocument>}
  * chung chung) để GET/PUT đối chiếu trực tiếp được, không cần tự lọc theo document_name.
  *
  * {@code missing} CHỈ mang tính thông tin (đã đủ điều kiện để R-CV tự trình kiểm soát — SUBMIT_

@@ -7,7 +7,7 @@ import com.agribank.qldv_api.response.doctemplate.GenerateCaseDocumentResponse;
 import com.agribank.qldv_api.security.RequirePermission;
 import com.agribank.qldv_api.service.doctemplate.DocumentContentGenerationService;
 import com.agribank.qldv_api.service.doctemplate.DocumentTemplateService;
-import com.agribank.qldvutils.entity.Document;
+import com.agribank.qldvutils.entity.GeneratedDocument;
 import com.agribank.qldvutils.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -106,7 +106,7 @@ public class DocumentTemplateController {
     @RequirePermission(function = "FN4", action = "VIEW")
     @GetMapping("/download")
     public ResponseEntity<byte[]> downloadCaseDocumentDraft(@RequestParam String caseId, @RequestParam String templateId) {
-        Document document = documentContentGenerationService.getDocument(caseId, templateId);
+        GeneratedDocument document = documentContentGenerationService.getDocument(caseId, templateId);
         byte[] content = documentContentGenerationService.downloadDraft(caseId, templateId);
         String timestamp = LocalDateTime.now().format(DOWNLOAD_FILENAME_TIMESTAMP_FORMAT);
         String filename = "%s_%s.docx".formatted(document.getTemplateCode(), timestamp);

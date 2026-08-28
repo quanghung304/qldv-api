@@ -8,14 +8,14 @@ import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.AttachmentClient;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseEstablishmentClient;
-import com.agribank.qldv_api.gateway.DocumentClient;
+import com.agribank.qldv_api.gateway.GeneratedDocumentClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.DecisionDocumentsRequest;
 import com.agribank.qldv_api.response.casemgmt.DecisionDocumentsResponse;
 import com.agribank.qldvutils.entity.Attachment;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseEstablishment;
-import com.agribank.qldvutils.entity.Document;
+import com.agribank.qldvutils.entity.GeneratedDocument;
 import com.agribank.qldvutils.enums.EDocumentOrigin;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,7 +61,7 @@ public class DecisionDocumentsService {
     private final CaseService caseService;
     private final CaseClient caseClient;
     private final CaseEstablishmentClient caseEstablishmentClient;
-    private final DocumentClient documentClient;
+    private final GeneratedDocumentClient generatedDocumentClient;
     private final AttachmentClient attachmentClient;
     private final UserService userService;
 
@@ -72,9 +72,9 @@ public class DecisionDocumentsService {
         }
         UserDetailsImpl user = requireUser();
 
-        Document existingEstablishDoc = findDocument(caseId, ESTABLISH_DECISION_NAME);
-        Document existingCommitteeDoc = findDocument(caseId, COMMITTEE_APPOINTMENT_DECISION_NAME);
-        Document existingPoliticalDoc = findDocument(caseId, POLITICAL_STANDARD_CONCLUSION_NAME);
+        GeneratedDocument existingEstablishDoc = findDocument(caseId, ESTABLISH_DECISION_NAME);
+        GeneratedDocument existingCommitteeDoc = findDocument(caseId, COMMITTEE_APPOINTMENT_DECISION_NAME);
+        GeneratedDocument existingPoliticalDoc = findDocument(caseId, POLITICAL_STANDARD_CONCLUSION_NAME);
 
         Map<String, String> errors = new LinkedHashMap<>();
         Map<String, String> warnings = new LinkedHashMap<>();
@@ -91,13 +91,13 @@ public class DecisionDocumentsService {
             throw new FieldValidationException(errors);
         }
 
-        Document establishDoc = upsertDocument(existingEstablishDoc, caseId, ESTABLISH_DECISION_NAME,
+        GeneratedDocument establishDoc = upsertDocument(existingEstablishDoc, caseId, ESTABLISH_DECISION_NAME,
                 request.getEstablishDecisionNo(), request.getEstablishDecisionIssueDate(),
                 request.getEstablishDecisionEffectiveDate(), user.getId(), EDocumentOrigin.GENERATED.getId());
-        Document committeeDoc = upsertDocument(existingCommitteeDoc, caseId, COMMITTEE_APPOINTMENT_DECISION_NAME,
+        GeneratedDocument committeeDoc = upsertDocument(existingCommitteeDoc, caseId, COMMITTEE_APPOINTMENT_DECISION_NAME,
                 request.getCommitteeAppointmentDecisionNo(), request.getCommitteeAppointmentIssueDate(),
                 request.getCommitteeAppointmentEffectiveDate(), user.getId(), EDocumentOrigin.GENERATED.getId());
-        Document politicalDoc = upsertDocument(existingPoliticalDoc, caseId, POLITICAL_STANDARD_CONCLUSION_NAME,
+        GeneratedDocument politicalDoc = upsertDocument(existingPoliticalDoc, caseId, POLITICAL_STANDARD_CONCLUSION_NAME,
                 request.getPoliticalStandardConclusionNoFinal(), request.getPoliticalStandardConclusionIssueDate(),
                 request.getPoliticalStandardConclusionEffectiveDate(), user.getId(), EDocumentOrigin.REFERENCE.getId());
 
@@ -114,18 +114,18 @@ public class DecisionDocumentsService {
     public DecisionDocumentsResponse get(String caseId) {
         Case existingCase = requireCaseInScope(caseId);
 
-        Document establishDoc = findDocument(caseId, ESTABLISH_DECISION_NAME);
-        Document committeeDoc = findDocument(caseId, COMMITTEE_APPOINTMENT_DECISION_NAME);
-        Document politicalDoc = findDocument(caseId, POLITICAL_STANDARD_CONCLUSION_NAME);
+        GeneratedDocument establishDoc = findDocument(caseId, ESTABLISH_DECISION_NAME);
+        GeneratedDocument committeeDoc = findDocument(caseId, COMMITTEE_APPOINTMENT_DECISION_NAME);
+        GeneratedDocument politicalDoc = findDocument(caseId, POLITICAL_STANDARD_CONCLUSION_NAME);
 
         Map<String, String> missing = computeMissing(establishDoc, committeeDoc, politicalDoc);
 
         return buildResponse(caseId, existingCase.getStatusId(), establishDoc, committeeDoc, politicalDoc, missing, Map.of());
     }
 
-    /** Ánh xạ lại 3 Document (schema chung document_name/document_no/document_date) sang ĐÚNG tên field của request, dễ đối chiếu. */
-    private DecisionDocumentsResponse buildResponse(String caseId, String statusId, Document establishDoc,
-                                                      Document committeeDoc, Document politicalDoc,
+    /** Ánh xạ lại 3 GeneratedDocument (schema chung document_name/document_no/document_date) sang ĐÚNG tên field của request, dễ đối chiếu. */
+    private DecisionDocumentsResponse buildResponse(String caseId, String statusId, GeneratedDocument establishDoc,
+                                                      GeneratedDocument committeeDoc, GeneratedDocument politicalDoc,
                                                       Map<String, String> missing, Map<String, String> warnings) {
         DecisionDocumentsResponse response = new DecisionDocumentsResponse();
         response.setCaseId(caseId);
@@ -169,16 +169,16 @@ public class DecisionDocumentsService {
         return user;
     }
 
-    private Document findDocument(String caseId, String documentName) {
-        return documentClient.findByCaseIdAndDocumentName(caseId, documentName).getData().orElse(null);
+    private GeneratedDocument findDocument(String caseId, String documentName) {
+        return generatedDocumentClient.findByCaseIdAndDocumentName(caseId, documentName).getData().orElse(null);
     }
 
-    private void validateUniqueDocumentNo(Map<String, String> errors, String field, String no, Document existing) {
+    private void validateUniqueDocumentNo(Map<String, String> errors, String field, String no, GeneratedDocument existing) {
         if (no == null) {
             return;
         }
         String excludeId = existing != null ? existing.getId() : null;
-        Boolean exists = documentClient.existsByDocumentNo(no, excludeId).getData();
+        Boolean exists = generatedDocumentClient.existsByDocumentNo(no, excludeId).getData();
         if (Boolean.TRUE.equals(exists)) {
             errors.put(field, "ERR-SC05-01: " + field + " đã tồn tại ở hồ sơ khác trong hệ thống");
         }
@@ -196,12 +196,12 @@ public class DecisionDocumentsService {
         }
     }
 
-    private Document upsertDocument(Document existing, String caseId, String documentName, String no,
+    private GeneratedDocument upsertDocument(GeneratedDocument existing, String caseId, String documentName, String no,
                                      LocalDate issueDate, LocalDate effectiveDate, String createdBy, Integer origin) {
         if (no == null && issueDate == null && effectiveDate == null) {
             return existing;
         }
-        Document target = existing != null ? existing : Document.builder()
+        GeneratedDocument target = existing != null ? existing : GeneratedDocument.builder()
                 .caseId(caseId)
                 .documentName(documentName)
                 .origin(origin)
@@ -210,13 +210,13 @@ public class DecisionDocumentsService {
         target.setDocumentNo(no);
         target.setDocumentDate(issueDate);
         target.setEffectiveDate(effectiveDate);
-        return documentClient.save(target).getData();
+        return generatedDocumentClient.save(target).getData();
     }
 
     /** Chỉ mang tính THÔNG TIN (đủ điều kiện để trình kiểm soát chưa) — không còn tự động chuyển trạng thái. */
-    private Map<String, String> computeMissing(Document establishDoc, Document committeeDoc, Document politicalDoc) {
+    private Map<String, String> computeMissing(GeneratedDocument establishDoc, GeneratedDocument committeeDoc, GeneratedDocument politicalDoc) {
         List<String> allDocIds = Stream.of(establishDoc, committeeDoc, politicalDoc)
-                .filter(Objects::nonNull).map(Document::getId).toList();
+                .filter(Objects::nonNull).map(GeneratedDocument::getId).toList();
         Map<String, Long> attachmentCountByDocId = allDocIds.isEmpty() ? Map.of()
                 : safeList(attachmentClient.findByDocumentIds(allDocIds).getData()).stream()
                         .collect(Collectors.groupingBy(Attachment::getDocumentId, Collectors.counting()));
@@ -228,7 +228,7 @@ public class DecisionDocumentsService {
         return missing;
     }
 
-    private void checkMissing(Map<String, String> missing, String label, Document document,
+    private void checkMissing(Map<String, String> missing, String label, GeneratedDocument document,
                                Map<String, Long> attachmentCountByDocId) {
         if (document == null || document.getDocumentNo() == null || document.getDocumentDate() == null
                 || document.getEffectiveDate() == null) {

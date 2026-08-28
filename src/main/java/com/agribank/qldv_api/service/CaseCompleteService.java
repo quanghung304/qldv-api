@@ -12,7 +12,7 @@ import com.agribank.qldv_api.gateway.CaseEstablishmentClient;
 import com.agribank.qldv_api.gateway.CaseEstablishmentCommitteeClient;
 import com.agribank.qldv_api.gateway.CaseOrganizationClient;
 import com.agribank.qldv_api.gateway.CaseTypeClient;
-import com.agribank.qldv_api.gateway.DocumentClient;
+import com.agribank.qldv_api.gateway.GeneratedDocumentClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.OrganizationTypeClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -29,7 +29,7 @@ import com.agribank.qldvutils.entity.CaseEstablishment;
 import com.agribank.qldvutils.entity.CaseEstablishmentCommittee;
 import com.agribank.qldvutils.entity.CaseType;
 import com.agribank.qldvutils.entity.CommitteeMember;
-import com.agribank.qldvutils.entity.Document;
+import com.agribank.qldvutils.entity.GeneratedDocument;
 import com.agribank.qldvutils.entity.Organization;
 import com.agribank.qldvutils.entity.OrganizationType;
 import com.agribank.qldvutils.enums.ECaseWorkflowAction;
@@ -105,7 +105,7 @@ public class CaseCompleteService {
     private final CaseChangeTargetClient caseChangeTargetClient;
     private final CaseChangeTargetCommitteeClient caseChangeTargetCommitteeClient;
     private final CaseOrganizationClient caseOrganizationClient;
-    private final DocumentClient documentClient;
+    private final GeneratedDocumentClient generatedDocumentClient;
     private final OrganizationClient organizationClient;
     private final OrganizationTypeClient organizationTypeClient;
     private final UserService userService;
@@ -191,7 +191,7 @@ public class CaseCompleteService {
     private CaseCompletePersistRequest buildEstablishPersistRequest(Case existingCase) {
         CaseEstablishment establishment = caseEstablishmentClient.findByCaseId(existingCase.getId()).getData()
                 .orElseThrow(() -> new CommonException("Chưa có dữ liệu Bước 1 (PMDV_CASE_ESTABLISHMENT) của hồ sơ này"));
-        Document establishDoc = requireEstablishDecisionDocument(existingCase.getId());
+        GeneratedDocument establishDoc = requireEstablishDecisionDocument(existingCase.getId());
         String organizationName = requireOrganizationName(existingCase);
 
         Map<String, String> errors = new LinkedHashMap<>();
@@ -228,8 +228,8 @@ public class CaseCompleteService {
         return request;
     }
 
-    private Document requireEstablishDecisionDocument(String caseId) {
-        Document document = documentClient.findByCaseIdAndDocumentName(caseId, Constants.ESTABLISH_DECISION_DOCUMENT_NAME)
+    private GeneratedDocument requireEstablishDecisionDocument(String caseId) {
+        GeneratedDocument document = generatedDocumentClient.findByCaseIdAndDocumentName(caseId, Constants.ESTABLISH_DECISION_DOCUMENT_NAME)
                 .getData().orElse(null);
         if (document == null || document.getDocumentNo() == null || document.getDocumentDate() == null) {
             throw new CommonException("Chưa có đủ dữ liệu Quyết định thành lập tổ chức đảng (Bước 3) của hồ sơ này");

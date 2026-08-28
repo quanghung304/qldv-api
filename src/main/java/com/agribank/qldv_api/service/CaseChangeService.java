@@ -1,23 +1,29 @@
 package com.agribank.qldv_api.service;
 
 import com.agribank.qldv_api.enums.Constants;
-import com.agribank.qldv_api.enums.ECaseStatusCode;
 import com.agribank.qldv_api.exception.FieldValidationException;
 import com.agribank.qldv_api.exception.ForbiddenException;
 import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.CaseChangeClient;
+import com.agribank.qldv_api.gateway.CaseChangeTargetClient;
+import com.agribank.qldv_api.gateway.CaseChangeTargetCommitteeClient;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseOrganizationClient;
 import com.agribank.qldv_api.gateway.CaseTypeClient;
 import com.agribank.qldv_api.gateway.CommitteeMemberClient;
+import com.agribank.qldv_api.gateway.EmployeeInfoClient;
 import com.agribank.qldv_api.gateway.OrganizationClient;
 import com.agribank.qldv_api.gateway.OrganizationTypeClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.request.casemgmt.CaseChangeCommitteeMemberRequest;
 import com.agribank.qldv_api.request.casemgmt.CaseChangeRequest;
 import com.agribank.qldv_api.request.casemgmt.CaseChangeTargetRequest;
+import com.agribank.qldv_api.response.casemgmt.CaseChangeDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseChangeResponse;
+import com.agribank.qldv_api.response.casemgmt.CaseChangeTargetDetailResponse;
+import com.agribank.qldv_api.response.casemgmt.ProposedCommitteeMemberDetailResponse;
 import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
+import com.agribank.qldvutils.dto.EmployeeInfoDto;
 import com.agribank.qldvutils.entity.Case;
 import com.agribank.qldvutils.entity.CaseChange;
 import com.agribank.qldvutils.entity.CaseChangeTarget;
@@ -33,6 +39,7 @@ import com.agribank.qldvutils.enums.EOperationStatus;
 import com.agribank.qldvutils.exception.CommonException;
 import com.agribank.qldvutils.request.casemgmt.CaseChangePersistRequest;
 import com.agribank.qldvutils.request.casemgmt.CaseChangeTargetEntry;
+import com.agribank.qldvutils.response.casemgmt.CaseListItemResponse;
 import com.agribank.qldvutils.response.casemgmt.CaseOrganizationSummaryResponse;
 import com.agribank.qldvutils.response.organization.CommitteeMemberResponse;
 import lombok.RequiredArgsConstructor;
@@ -88,11 +95,14 @@ public class CaseChangeService {
 
     private final CaseClient caseClient;
     private final CaseChangeClient caseChangeClient;
+    private final CaseChangeTargetClient caseChangeTargetClient;
+    private final CaseChangeTargetCommitteeClient caseChangeTargetCommitteeClient;
     private final CaseOrganizationClient caseOrganizationClient;
     private final CaseTypeClient caseTypeClient;
     private final OrganizationClient organizationClient;
     private final OrganizationTypeClient organizationTypeClient;
     private final CommitteeMemberClient committeeMemberClient;
+    private final EmployeeInfoClient employeeInfoClient;
     private final UserService userService;
     private final EstablishmentCaseService establishmentCaseService;
     private final WorkflowAssigneeGuard workflowAssigneeGuard;
@@ -183,7 +193,7 @@ public class CaseChangeService {
     /**
      * API-SC08-02. Cập nhật MỘT PHẦN — field null trong request nghĩa là "không đổi". Chỉ cho
      * phép khi status_id đang đúng bước 1 CỦA ĐÚNG LUỒNG hồ sơ này (A-01/B-01/C-01 tuỳ
-     * origin_flow đã lưu — KHÔNG hardcode A-01, xem {@link #initialStatusForFlow}). caseTypeId
+     * origin_flow đã lưu — KHÔNG hardcode A-01. caseTypeId
      * BẤT BIẾN, luôn lấy từ hồ sơ gốc — request.getCaseTypeId() (nếu có gửi) bị bỏ qua hoàn toàn.
      * {@code targets}: null = không đổi (giữ nguyên danh sách cũ); non-null (kể cả rỗng) = thay
      * TOÀN BỘ bằng danh sách mới — cùng ngữ nghĩa "tất cả hoặc không gì" với {@code organizationIds}
@@ -305,6 +315,102 @@ public class CaseChangeService {
 
         return new CaseChangeResponse(savedCase.getId(), savedCase.getCaseCode(), savedCase.getStatusId(),
                 savedCase.getCreatedAt(), savedCase.getUpdatedAt(), warnings);
+    }
+
+    /**
+     * GET /cases/{id}/change — chi tiết đầy đủ Bước 1 SC-08, cùng pattern với
+     * {@code EstablishmentCaseService#getEstablishmentCaseDetail}. Hồ sơ tồn tại nhưng chưa từng
+     * lưu CaseChange (trường hợp hiếm) thì các field CaseChange trả về null thay vì lỗi 404 — 404
+     * chỉ áp dụng khi chính PMDV_CASE không tồn tại.
+     */
+    public CaseChangeDetailResponse getCaseChangeDetail(String caseId) {
+        CaseListItemResponse caseInfo = caseClient.findDetailById(caseId).getData()
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ nghiệp vụ"));
+
+        CaseChange caseChange = caseChangeClient.findByCaseId(caseId).getData().orElse(null);
+
+        List<CaseOrganizationSummaryResponse> organizations = safeList(
+                caseOrganizationClient.findWithOrganizationByCaseId(caseId).getData()).stream()
+                .filter(link -> Objects.equals(link.getLinkRole(), ELinkRole.SOURCE.getId()))
+                .toList();
+
+        List<CaseChangeTarget> targets = safeList(caseChangeTargetClient.findByCaseId(caseId).getData());
+
+        return CaseChangeDetailResponse.builder()
+                .caseId(caseInfo.getCaseId())
+                .caseCode(caseInfo.getCaseCode())
+                .caseTypeId(caseInfo.getCaseTypeId())
+                .caseTypeName(caseInfo.getCaseTypeName())
+                .statusId(caseInfo.getStatusId())
+                .statusName(caseInfo.getStatusName())
+                .authorityLevel(caseInfo.getAuthorityLevel())
+                .originFlow(caseInfo.getOriginFlow())
+                .createdBy(caseInfo.getCreatedBy())
+                .createdByName(caseInfo.getCreatedByName())
+                .createdAt(caseInfo.getCreatedAt())
+                .updatedAt(caseInfo.getUpdatedAt())
+                .completedAt(caseInfo.getCompletedAt())
+                .proposedOrganizationName(caseInfo.getProposedOrganizationName())
+                .organizations(organizations)
+                .survivorOrganizationId(caseChange != null ? caseChange.getSurvivorOrganizationId() : null)
+                .boardDecisionNo(caseChange != null ? caseChange.getBoardDecisionNo() : null)
+                .boardDecisionDate(caseChange != null ? caseChange.getBoardDecisionDate() : null)
+                .affectedMemberCount(caseChange != null ? caseChange.getAffectedMemberCount() : null)
+                .affectedCommitteeMemberCount(caseChange != null ? caseChange.getAffectedCommitteeMemberCount() : null)
+                .targets(resolveTargets(targets))
+                .build();
+    }
+
+    /** organizationTypeId + cấp ủy dự kiến của TỪNG target tra hàng loạt (IN) — tránh N+1 khi Chia tách có nhiều targets. */
+    private List<CaseChangeTargetDetailResponse> resolveTargets(List<CaseChangeTarget> targets) {
+        if (targets.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> organizationTypeIds = targets.stream()
+                .map(CaseChangeTarget::getOrganizationTypeId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<String, String> typeNameById = organizationTypeIds.isEmpty() ? Map.of()
+                : safeList(organizationTypeClient.findAllById(organizationTypeIds).getData()).stream()
+                        .collect(Collectors.toMap(OrganizationType::getId, OrganizationType::getName, (a, b) -> a));
+
+        List<String> targetIds = targets.stream().map(CaseChangeTarget::getId).toList();
+        List<CaseChangeTargetCommittee> committeeRows = safeList(
+                caseChangeTargetCommitteeClient.findByCaseChangeTargetIds(targetIds).getData());
+        List<String> staffCodes = committeeRows.stream().map(CaseChangeTargetCommittee::getStaffCode).distinct().toList();
+        Map<String, String> staffNameByCode = staffCodes.isEmpty() ? Map.of()
+                : safeList(employeeInfoClient.findByEmpnos(staffCodes).getData()).stream()
+                        .collect(Collectors.toMap(EmployeeInfoDto::getStaffCode, EmployeeInfoDto::getFullName, (a, b) -> a));
+        Map<String, List<CaseChangeTargetCommittee>> committeeByTargetId = committeeRows.stream()
+                .collect(Collectors.groupingBy(CaseChangeTargetCommittee::getCaseChangeTargetId));
+
+        return targets.stream()
+                .map(target -> {
+                    List<ProposedCommitteeMemberDetailResponse> committee = safeList(committeeByTargetId.get(target.getId())).stream()
+                            .map(row -> new ProposedCommitteeMemberDetailResponse(
+                                    row.getStaffCode(),
+                                    staffNameByCode.get(row.getStaffCode()),
+                                    resolvePositionName(row.getProposedPosition())))
+                            .toList();
+                    return new CaseChangeTargetDetailResponse(target.getId(), target.getOrganizationName(),
+                            target.getOrganizationTypeId(), typeNameById.get(target.getOrganizationTypeId()),
+                            target.getMemberCount(), committee);
+                })
+                .toList();
+    }
+
+    private String resolvePositionName(Integer positionId) {
+        if (positionId == null) {
+            return null;
+        }
+        for (ECommitteePosition position : ECommitteePosition.values()) {
+            if (position.getId() == positionId) {
+                return position.name();
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------- helpers (đều cần DB)

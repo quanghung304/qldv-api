@@ -10,6 +10,7 @@ import com.agribank.qldv_api.request.casemgmt.EstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.GrassrootsEstablishmentCaseRequest;
 import com.agribank.qldv_api.request.casemgmt.WorkflowActionRequest;
 import com.agribank.qldv_api.response.casemgmt.ArchiveCaseResponse;
+import com.agribank.qldv_api.response.casemgmt.CaseChangeDetailResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseChangeResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseDeleteResponse;
 import com.agribank.qldv_api.response.casemgmt.CaseDetailResponse;
@@ -198,6 +199,14 @@ public class CaseController {
     public ResponseEntity<BaseResponse<CaseChangeResponse>> updateCaseChange(@PathVariable String id, @RequestBody CaseChangeRequest request) {
         request.validateForUpdate();
         return BaseResponse.success(caseChangeService.updateCaseChange(id, request));
+    }
+
+    /** Xem chi tiết đầy đủ Bước 1 SC-08 — cùng vai trò với GET /{id}/establishment (SC-02), dùng chung cho cả 5 nghiệp vụ biến động TCĐ. */
+    @Operation(summary = "Xem chi tiết hồ sơ biến động tổ chức đảng: Giải thể/Sáp nhập/Hợp nhất/Chia tách/Đổi tên")
+    @RequirePermission(function = "FN1", action = "VIEW")
+    @GetMapping("/{id}/change")
+    public ResponseEntity<BaseResponse<CaseChangeDetailResponse>> getCaseChangeDetail(@PathVariable String id) {
+        return BaseResponse.success(caseChangeService.getCaseChangeDetail(id));
     }
 
     /** API-SC04-01 — guard status A-04 (R-CV) hoặc A-06 ("Trình kiểm soát (trước họp BCH)", R-KS) + assignedUserId (ở service). */
