@@ -5,7 +5,7 @@ import com.agribank.qldv_api.response.doctemplate.CaseDocumentTemplatesResponse;
 import com.agribank.qldv_api.response.doctemplate.DocumentTemplateResponse;
 import com.agribank.qldv_api.response.doctemplate.GenerateCaseDocumentResponse;
 import com.agribank.qldv_api.security.RequirePermission;
-import com.agribank.qldv_api.service.DocumentContentGenerationService;
+import com.agribank.qldv_api.service.doctemplate.DocumentContentGenerationService;
 import com.agribank.qldv_api.service.doctemplate.DocumentTemplateService;
 import com.agribank.qldvutils.entity.Document;
 import com.agribank.qldvutils.response.BaseResponse;
@@ -96,8 +96,8 @@ public class DocumentTemplateController {
     @RequirePermission(function = "FN6", action = "CREATE")
     @PostMapping("/generate")
     public ResponseEntity<BaseResponse<GenerateCaseDocumentResponse>> generateCaseDocument(
-            @RequestParam String caseId, @RequestParam String templateId, @RequestParam String workflowStage) {
-        return BaseResponse.success(documentContentGenerationService.generateDraft(caseId, templateId, workflowStage));
+            @RequestParam String caseId, @RequestParam String templateId) {
+        return BaseResponse.success(documentContentGenerationService.generateDraft(caseId, templateId));
     }
 
     @Operation(summary = "Tải bản draft văn bản đã sinh (không sinh lại)",

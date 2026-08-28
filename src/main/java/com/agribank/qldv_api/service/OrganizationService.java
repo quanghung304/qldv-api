@@ -162,7 +162,7 @@ public class OrganizationService {
      * phạm vi tổ chức đảng cho API tra cứu hồ sơ nghiệp vụ — cùng logic phân giải role_code,
      * không viết lại.
      */
-    OrganizationScope resolveScope() {
+    public OrganizationScope resolveScope() {
         UserDetailsImpl userRequested = userService.getUserRequested();
         if (userRequested == null) {
             throw new ForbiddenException("ERR-GL-02: Không xác thực được người dùng");

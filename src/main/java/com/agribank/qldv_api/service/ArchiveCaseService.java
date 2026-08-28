@@ -8,6 +8,7 @@ import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
 import com.agribank.qldv_api.response.casemgmt.ArchiveCaseResponse;
 import com.agribank.qldv_api.response.doctemplate.GenerateDocumentsResponse;
+import com.agribank.qldv_api.service.doctemplate.DocumentContentGenerationService;
 import com.agribank.qldvutils.entity.Case;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
