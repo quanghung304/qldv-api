@@ -4,7 +4,7 @@ import com.agribank.qldv_api.exception.ForbiddenException;
 import com.agribank.qldv_api.exception.NotFoundException;
 import com.agribank.qldv_api.gateway.CaseClient;
 import com.agribank.qldv_api.gateway.CaseOrganizationClient;
-import com.agribank.qldv_api.gateway.DocumentClient;
+import com.agribank.qldv_api.gateway.GeneratedDocumentClient;
 import com.agribank.qldv_api.gateway.DocumentContentClient;
 import com.agribank.qldv_api.gateway.DocumentTemplateClient;
 import com.agribank.qldv_api.jwt.UserDetailsImpl;
@@ -21,7 +21,7 @@ import com.agribank.qldv_api.storage.StorageKeyBuilder;
 import com.agribank.qldv_api.workflow.WorkflowAssigneeGuard;
 import com.agribank.qldv_api.workflow.WorkflowConditionResolver;
 import com.agribank.qldvutils.entity.Case;
-import com.agribank.qldvutils.entity.Document;
+import com.agribank.qldvutils.entity.GeneratedDocument;
 import com.agribank.qldvutils.entity.DocumentTemplate;
 import com.agribank.qldvutils.enums.Constants;
 import com.agribank.qldvutils.enums.EDocumentOrigin;
@@ -45,6 +45,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -80,7 +81,7 @@ public class DocumentContentGenerationService {
 
     private final CaseClient caseClient;
     private final DocumentTemplateClient documentTemplateClient;
-    private final DocumentClient documentClient;
+    private final GeneratedDocumentClient generatedDocumentClient;
     private final DocumentContentClient documentContentClient;
     private final CaseOrganizationClient caseOrganizationClient;
     private final OrganizationService organizationService;
@@ -101,10 +102,14 @@ public class DocumentContentGenerationService {
                 caseEntity.getCaseTypeId(), caseEntity.getAuthorityLevel(), workflowStage).getData());
         String conditionValue = workflowConditionResolver.resolveConditionValue(caseEntity, workflowStage);
 
+        Set<String> generatedTemplateIds = safeList(generatedDocumentClient.findByCaseId(caseId).getData()).stream()
+                .map(GeneratedDocument::getTemplateId)
+                .collect(Collectors.toSet());
+
         boolean[] hasHidden = {false};
         List<CaseDocumentTemplateItemResponse> visible = activeTemplates.stream()
                 .filter(t -> isVisible(t, conditionValue, hasHidden))
-                .map(DocumentContentGenerationService::toItemResponse)
+                .map(t -> toItemResponse(t, generatedTemplateIds))
                 .toList();
 
         String warningMessage = hasHidden[0]
@@ -124,9 +129,9 @@ public class DocumentContentGenerationService {
         return template.getConditionKey().equals(conditionValue);
     }
 
-    private static CaseDocumentTemplateItemResponse toItemResponse(DocumentTemplate template) {
+    private static CaseDocumentTemplateItemResponse toItemResponse(DocumentTemplate template, Set<String> generatedTemplateIds) {
         return new CaseDocumentTemplateItemResponse(template.getId(), template.getTemplateName(),
-                template.getTemplateCode(), template.getGeneratorKey());
+                template.getTemplateCode(), template.getGeneratorKey(), generatedTemplateIds.contains(template.getId()));
     }
 
     // ---------------------------------------------------------------- Phần 5
@@ -148,7 +153,7 @@ public class DocumentContentGenerationService {
 
     public byte[] downloadDraft(String caseId, String templateId) {
         verifyCaseAccess(caseId);
-        Document document = documentClient.findByCaseIdAndTemplateId(caseId, templateId).getData().orElse(null);
+        GeneratedDocument document = generatedDocumentClient.findByCaseIdAndTemplateId(caseId, templateId).getData().orElse(null);
         if (document == null) {
             throw new NotFoundException("Chưa từng sinh văn bản này, vui lòng gọi chức năng sinh văn bản trước");
         }
@@ -157,8 +162,8 @@ public class DocumentContentGenerationService {
         return s3Service.downloadObject(key);
     }
 
-    public Document getDocument(String caseId, String templateId) {
-        Document document = documentClient.findByCaseIdAndTemplateId(caseId, templateId).getData().orElse(null);
+    public GeneratedDocument getDocument(String caseId, String templateId) {
+        GeneratedDocument document = generatedDocumentClient.findByCaseIdAndTemplateId(caseId, templateId).getData().orElse(null);
         if (document == null) {
             throw new NotFoundException("Chưa từng sinh văn bản này, vui lòng gọi chức năng sinh văn bản trước");
         }
@@ -295,12 +300,12 @@ public class DocumentContentGenerationService {
 
     /** Upsert theo (case_id, template_id) — xem comment DocumentRepository.findByCaseIdAndTemplateId. */
     private void upsertGeneratedDocument(String caseId, String templateId, String templateCode) {
-        Document document = documentClient.findByCaseIdAndTemplateId(caseId, templateId).getData()
-                .orElseGet(() -> Document.builder().caseId(caseId).templateId(templateId).build());
+        GeneratedDocument document = generatedDocumentClient.findByCaseIdAndTemplateId(caseId, templateId).getData()
+                .orElseGet(() -> GeneratedDocument.builder().caseId(caseId).templateId(templateId).build());
         document.setTemplateId(templateId);
         document.setTemplateCode(templateCode);
         document.setOrigin(EDocumentOrigin.GENERATED.getId());
-        documentClient.save(document);
+        generatedDocumentClient.save(document);
     }
 
     private record MergeResult(byte[] content, boolean hasUnresolvedFields) {

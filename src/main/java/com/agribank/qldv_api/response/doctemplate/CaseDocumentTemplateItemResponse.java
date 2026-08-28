@@ -13,4 +13,6 @@ public class CaseDocumentTemplateItemResponse {
     private String templateCode;
     /** Trả kèm để debug dễ hơn — FE không bắt buộc phải dùng. */
     private String generatorKey;
+    /** true nếu đã từng sinh bản draft cho (caseId, templateId) này (PMDV_DOCUMENT tồn tại) — FE hiển thị trạng thái "đã sinh"/"chưa sinh". */
+    private boolean generated;
 }
