@@ -51,17 +51,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Sinh văn bản (lần 3) — THAY THẾ HOÀN TOÀN {@code DocumentGenerationService} cũ (Resolver
- * Registry/field_mapping_config, đã xoá). Đọc động 100% từ PMDV_DOCUMENT_TEMPLATE, tra giá trị
+ * Sinh văn bản (lần 3). Đọc động 100% từ PMDV_DOCUMENT_TEMPLATE, tra giá trị
  * placeholder qua {@link DocumentContentClient} (DocumentContentProvider, generator_key, qldv-db)
- * thay vì field_mapping_config.
  *
  * 3 điểm vào:
  * <ul>
  *   <li>{@link #listAvailableTemplates}: Phần 4 — danh mục biểu mẫu cho hồ sơ ở 1 bước cụ thể;
- *   {@code workflowStage} do caller truyền vào TƯỜNG MINH (query param, KHÔNG tự suy ra từ
- *   {@code case.status_id} hiện tại — cho phép xem/sinh lại văn bản của bước đã qua), lọc theo
- *   {@link WorkflowConditionResolver}.</li>
  *   <li>{@link #generateDraft}: Phần 5 — sinh 1 văn bản cụ thể theo templateId + workflowStage
  *   (cũng truyền tường minh, không tự suy ra); lỗi cấu hình (provider chưa đăng ký, template không
  *   khớp case/workflowStage) NÉM lỗi rõ ràng chặn ngay request này.</li>
@@ -94,13 +89,12 @@ public class DocumentContentGenerationService {
 
     // ---------------------------------------------------------------- Phần 4
 
-    public CaseDocumentTemplatesResponse listAvailableTemplates(String caseId, String workflowStage) {
+    public CaseDocumentTemplatesResponse listAvailableTemplates(String caseId, String workflowStage, String conditionKey) {
         verifyCaseAccess(caseId);
         Case caseEntity = requireCase(caseId);
 
         List<DocumentTemplate> activeTemplates = safeList(documentTemplateClient.findActiveByStage(
                 caseEntity.getCaseTypeId(), caseEntity.getAuthorityLevel(), workflowStage).getData());
-        String conditionValue = workflowConditionResolver.resolveConditionValue(caseEntity, workflowStage);
 
         Set<String> generatedTemplateIds = safeList(generatedDocumentClient.findByCaseId(caseId).getData()).stream()
                 .map(GeneratedDocument::getTemplateId)
@@ -108,25 +102,25 @@ public class DocumentContentGenerationService {
 
         boolean[] hasHidden = {false};
         List<CaseDocumentTemplateItemResponse> visible = activeTemplates.stream()
-                .filter(t -> isVisible(t, conditionValue, hasHidden))
+                .filter(t -> isVisible(t, conditionKey, hasHidden))
                 .map(t -> toItemResponse(t, generatedTemplateIds))
                 .toList();
 
         String warningMessage = hasHidden[0]
-                ? "Một số mẫu chưa hiển thị do hồ sơ chưa xác định hình thức xử lý (họp/không họp) của bước liên quan"
+                ? "Một số mẫu chưa hiển thị do chưa truyền conditionKey (MEETING/BALLOT) — bổ sung tham số này nếu cần xem đủ danh mục"
                 : null;
         return new CaseDocumentTemplatesResponse(visible, hasHidden[0], warningMessage);
     }
 
-    private static boolean isVisible(DocumentTemplate template, String conditionValue, boolean[] hasHidden) {
+    private static boolean isVisible(DocumentTemplate template, String conditionKey, boolean[] hasHidden) {
         if (template.getConditionKey() == null) {
             return true;
         }
-        if (conditionValue == null) {
+        if (conditionKey == null || conditionKey.isBlank()) {
             hasHidden[0] = true;
             return false;
         }
-        return template.getConditionKey().equals(conditionValue);
+        return template.getConditionKey().equals(conditionKey);
     }
 
     private static CaseDocumentTemplateItemResponse toItemResponse(DocumentTemplate template, Set<String> generatedTemplateIds) {

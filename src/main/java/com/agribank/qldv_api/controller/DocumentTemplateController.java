@@ -32,13 +32,12 @@ import java.util.List;
  *   {@link DocumentTemplateService}, FN10 chưa seed permission nên chưa gắn
  *   {@code @RequirePermission} như các API khác).</li>
  *   <li>Sinh văn bản theo hồ sơ (lần 3 — DocumentContentProvider/generator_key) —
- *   {@code GET /api/v1/document-templates/cases/{caseId}?workflowStage=} (danh mục),
+ *   {@code GET /api/v1/document-templates/cases/{caseId}?workflowStage=&conditionKey=} (danh mục),
  *   {@code POST /api/v1/document-templates/generate?caseId=&templateId=&workflowStage=} (sinh
  *   draft), {@code GET /api/v1/document-templates/download?caseId=&templateId=} (tải draft).
  *   {@code workflowStage} LUÔN do FE truyền tường minh, KHÔNG tự mặc định lấy bước hiện tại của hồ
- *   sơ. THAY THẾ HOÀN TOÀN route cũ ở {@code CaseDocumentController}
- *   (`/api/v1/generated-documents/*`, đã xoá) — BREAKING CHANGE có chủ đích, không giữ song song
- *   nhiều bộ endpoint.</li>
+ *   sơ. {@code conditionKey} (MEETING/BALLOT) KHÔNG bắt buộc, chỉ dùng để lọc khi FE có truyền —
+ *   xem {@link DocumentContentGenerationService#listAvailableTemplates}.
  * </ul>
  */
 @RestController
@@ -81,13 +80,13 @@ public class DocumentTemplateController {
 
     @Operation(summary = "Danh mục biểu mẫu có thể sinh cho hồ sơ ở 1 bước cụ thể",
             description = "Đọc động PMDV_DOCUMENT_TEMPLATE (status=ACTIVE) theo case_type_id/authority_level/workflowStage, "
-                    + "lọc thêm theo điều kiện họp/không họp (condition_key) nếu template có khai báo. workflowStage do FE truyền "
-                    + "tường minh — KHÔNG tự mặc định lấy bước hiện tại (status_id) của hồ sơ")
+                    + "lọc thêm theo điều kiện họp/không họp (condition_key) nếu template có khai báo.")
     @RequirePermission(function = "FN6", action = "VIEW")
     @GetMapping("/cases/{caseId}")
     public ResponseEntity<BaseResponse<CaseDocumentTemplatesResponse>> listCaseTemplates(
-            @PathVariable String caseId, @RequestParam String workflowStage) {
-        return BaseResponse.success(documentContentGenerationService.listAvailableTemplates(caseId, workflowStage));
+            @PathVariable String caseId, @RequestParam String workflowStage,
+            @RequestParam(required = false) String conditionKey) {
+        return BaseResponse.success(documentContentGenerationService.listAvailableTemplates(caseId, workflowStage, conditionKey));
     }
 
     @Operation(summary = "Sinh bản draft văn bản cho 1 mẫu cụ thể",
